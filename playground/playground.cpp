@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 #include <chrono>
 using std::vector;
@@ -32,6 +33,7 @@ struct world_t {
 
 	vector<GLfloat> vertex_buffer;
 	vector<GLfloat> vertex_colors;
+	vector<GLfloat> vertex_uvs;
 
 	void update_buffers() {
 		vertex_buffer.clear();
@@ -60,6 +62,13 @@ struct world_t {
 						vertex_colors.push_back(color.x);
 						vertex_colors.push_back(color.y);
 						vertex_colors.push_back(color.z);
+
+						const glm::vec2 uv(
+							single_block_uv[2*i+0],
+							single_block_uv[2*i+1]
+						);
+						vertex_uvs.push_back(uv.x);
+						vertex_uvs.push_back(uv.y);
 					}
 				}
 			}
@@ -143,6 +152,45 @@ struct world_t {
 		0.673f,  0.211f,  0.457f,
 		0.820f,  0.883f,  0.371f,
 		0.982f,  0.099f,  0.879f
+	};
+
+	static constexpr GLfloat single_block_uv[] = {
+		0.000059f, 0.000004f,
+		0.000103f, 0.336048f,
+		0.335973f, 0.335903f,
+		1.000023f, 0.000013f,
+		0.667979f, 0.335851f,
+		0.999958f, 0.336064f,
+		0.667979f, 0.335851f,
+		0.336024f, 0.671877f,
+		0.667969f, 0.671889f,
+		1.000023f, 0.000013f,
+		0.668104f, 0.000013f,
+		0.667979f, 0.335851f,
+		0.000059f, 0.000004f,
+		0.335973f, 0.335903f,
+		0.336098f, 0.000071f,
+		0.667979f, 0.335851f,
+		0.335973f, 0.335903f,
+		0.336024f, 0.671877f,
+		1.000004f, 0.671847f,
+		0.999958f, 0.336064f,
+		0.667979f, 0.335851f,
+		0.668104f, 0.000013f,
+		0.335973f, 0.335903f,
+		0.667979f, 0.335851f,
+		0.335973f, 0.335903f,
+		0.668104f, 0.000013f,
+		0.336098f, 0.000071f,
+		0.000103f, 0.336048f,
+		0.000004f, 0.671870f,
+		0.336024f, 0.671877f,
+		0.000103f, 0.336048f,
+		0.336024f, 0.671877f,
+		0.335973f, 0.335903f,
+		0.667969f, 0.671889f,
+		1.000004f, 0.671847f,
+		0.667979f, 0.335851f
 	};
 };
 
@@ -263,6 +311,101 @@ void computeMatricesFromInputs(){
 	lastTime = currentTime;
 }
 
+#define FOURCC_DXT1 0x31545844 // Equivalent to "DXT1" in ASCII
+#define FOURCC_DXT3 0x33545844 // Equivalent to "DXT3" in ASCII
+#define FOURCC_DXT5 0x35545844 // Equivalent to "DXT5" in ASCII
+
+GLuint loadDDS(const char * imagepath){
+
+	unsigned char header[124];
+
+	FILE *fp;
+
+	/* try to open the file */
+	fp = fopen(imagepath, "rb");
+	if (fp == NULL){
+		printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", imagepath); getchar();
+		return 0;
+	}
+
+	/* verify the type of file */
+	char filecode[4];
+	fread(filecode, 1, 4, fp);
+	if (strncmp(filecode, "DDS ", 4) != 0) {
+		fclose(fp);
+		return 0;
+	}
+
+	/* get the surface desc */
+	fread(&header, 124, 1, fp);
+
+	unsigned int height      = *(unsigned int*)&(header[8 ]);
+	unsigned int width	     = *(unsigned int*)&(header[12]);
+	unsigned int linearSize	 = *(unsigned int*)&(header[16]);
+	unsigned int mipMapCount = *(unsigned int*)&(header[24]);
+	unsigned int fourCC      = *(unsigned int*)&(header[80]);
+
+
+	unsigned char * buffer;
+	unsigned int bufsize;
+	/* how big is it going to be including all mipmaps? */
+	bufsize = mipMapCount > 1 ? linearSize * 2 : linearSize;
+	buffer = (unsigned char*)malloc(bufsize * sizeof(unsigned char));
+	fread(buffer, 1, bufsize, fp);
+	/* close the file pointer */
+	fclose(fp);
+
+	unsigned int components  = (fourCC == FOURCC_DXT1) ? 3 : 4;
+	unsigned int format;
+	switch(fourCC)
+	{
+		case FOURCC_DXT1:
+			format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+			break;
+		case FOURCC_DXT3:
+			format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+			break;
+		case FOURCC_DXT5:
+			format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			break;
+		default:
+			free(buffer);
+			return 0;
+	}
+
+	// Create one OpenGL texture
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+
+	// "Bind" the newly created texture : all future texture functions will modify this texture
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+
+	unsigned int blockSize = (format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ? 8 : 16;
+	unsigned int offset = 0;
+
+	/* load the mipmaps */
+	for (unsigned int level = 0; level < mipMapCount && (width || height); ++level)
+	{
+		unsigned int size = ((width+3)/4)*((height+3)/4)*blockSize;
+		glCompressedTexImage2D(GL_TEXTURE_2D, level, format, width, height,
+				0, size, buffer + offset);
+
+		offset += size;
+		width  /= 2;
+		height /= 2;
+
+		// Deal with Non-Power-Of-Two textures. This code is not included in the webpage to reduce clutter.
+		if(width < 1) width = 1;
+		if(height < 1) height = 1;
+
+	}
+
+	free(buffer);
+
+	return textureID;
+}
+
 void window_size_callback(GLFWwindow* window, int width, int height) {
 	windowWidth = width;
 	windowHeight = height;
@@ -337,6 +480,9 @@ int main( void )
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
+	GLuint Texture = loadDDS("sand.dds");
+	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
+
 	world_t world(4, 3, 2);
 	world.content[0][0][0] = 1;
 	world.content[1][0][0] = 1;
@@ -355,11 +501,16 @@ int main( void )
 	// glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 	glBufferData(GL_ARRAY_BUFFER, world.vertex_buffer.size()*sizeof(GLfloat), &world.vertex_buffer[0], GL_STATIC_DRAW);
 
-	GLuint colorbuffer;
-	glGenBuffers(1, &colorbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-	// glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, world.vertex_colors.size()*sizeof(GLfloat), &world.vertex_colors[0], GL_STATIC_DRAW);
+	// GLuint colorbuffer;
+	// glGenBuffers(1, &colorbuffer);
+	// glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+	// // glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+	// glBufferData(GL_ARRAY_BUFFER, world.vertex_colors.size()*sizeof(GLfloat), &world.vertex_colors[0], GL_STATIC_DRAW);
+
+	GLuint uvbuffer;
+	glGenBuffers(1, &uvbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+	glBufferData(GL_ARRAY_BUFFER, world.vertex_uvs.size()*sizeof(GLfloat), &world.vertex_uvs[0], GL_STATIC_DRAW);
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> timer = std::chrono::high_resolution_clock::now();
 
@@ -381,6 +532,13 @@ int main( void )
 		glm::mat4 MVP = Projection * View * Model;
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
+		// Bind our texture in Texture Unit 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, Texture);
+		// Set our "myTextureSampler" sampler to use Texture Unit 0
+		glUniform1i(TextureID, 0);
+
+
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -393,23 +551,35 @@ int main( void )
 				(void*)0            // array buffer offset
 				);
 
-		// 2nd attribute buffer : colors
+		// // 2nd attribute buffer : colors
+		// glEnableVertexAttribArray(1);
+		// glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+		// glVertexAttribPointer(
+		// 		1,                  // attribute. No particular reason for 1, but must match the layout in the shader.
+		// 		3,                  // size
+		// 		GL_FLOAT,           // type
+		// 		GL_FALSE,           // normalized?
+		// 		0,                  // stride
+		// 		(void*)0            // array buffer offset
+		// 		);
+
+		// 2nd attribute buffer : UV coordinates
 		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
 		glVertexAttribPointer(
 				1,                  // attribute. No particular reason for 1, but must match the layout in the shader.
-				3,                  // size
+				2,                  // size
 				GL_FLOAT,           // type
 				GL_FALSE,           // normalized?
 				0,                  // stride
 				(void*)0            // array buffer offset
 				);
 
-
 		// Draw the triangle !
 		// glDrawArrays(GL_TRIANGLES, 0, 12*3);
 			// 3 indices starting at 0 -> 1 triangle
-		glDrawArrays(GL_TRIANGLES, 0, world.vertex_buffer.size());
+		// glDrawArrays(GL_TRIANGLES, 0, world.vertex_buffer.size());
+		glDrawArrays(GL_TRIANGLES, 0, world.vertex_buffer.size()/3);
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
@@ -440,7 +610,8 @@ int main( void )
 
 	// Cleanup VBO
 	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteBuffers(1, &colorbuffer);
+	glDeleteBuffers(1, &uvbuffer);
+	glDeleteTextures(1, &Texture);
 	glDeleteVertexArrays(1, &VertexArrayID);
 	glDeleteProgram(programID);
 
