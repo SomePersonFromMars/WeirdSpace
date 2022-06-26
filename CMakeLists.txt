@@ -30,3 +30,4 @@ add_definitions(
 	)
 
 add_subdirectory(playground)
+add_subdirectory(tools/obj_dump)
