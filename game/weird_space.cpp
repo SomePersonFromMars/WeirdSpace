@@ -19,7 +19,8 @@ using namespace glm;
 #include "utils/controls.hpp"
 #include "utils/texture.hpp"
 
-#include "world.hpp"
+#include "chunk.hpp"
+#include "world_generator.hpp"
 
 void window_size_callback(GLFWwindow* window, int width, int height) {
 	windowWidth = width;
@@ -98,34 +99,36 @@ int main( void )
 	GLuint Texture = loadDDS("sand.dds");
 	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
 
-	world_t world(4, 3, 2);
-	world.content[0][0][0] = 1;
-	world.content[1][0][0] = 1;
+	world_generator_t generator;
+	generator.gen_chunk(0, 0);
+	chunk_t &chunk = generator.chunks[0];
+	chunk.content[0][0][0] = 1;
+	chunk.content[1][0][0] = 1;
 
-	world.content[2][0][0] = 1;
-	world.content[2][1][0] = 1;
-	world.content[2][2][0] = 1;
+	chunk.content[2][0][0] = 1;
+	chunk.content[2][1][0] = 1;
+	chunk.content[2][2][0] = 1;
 
-	world.content[3][0][0] = 1;
-	world.content[3][0][1] = 1;
-	world.update_buffers();
+	chunk.content[3][0][0] = 1;
+	chunk.content[3][0][1] = 1;
+	chunk.update_buffers();
 
 	GLuint vertexbuffer;
 	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	// glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, world.vertex_buffer.size()*sizeof(GLfloat), &world.vertex_buffer[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, chunk.vertex_buffer.size()*sizeof(GLfloat), &chunk.vertex_buffer[0], GL_STATIC_DRAW);
 
 	// GLuint colorbuffer;
 	// glGenBuffers(1, &colorbuffer);
 	// glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
 	// // glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
-	// glBufferData(GL_ARRAY_BUFFER, world.vertex_colors.size()*sizeof(GLfloat), &world.vertex_colors[0], GL_STATIC_DRAW);
+	// glBufferData(GL_ARRAY_BUFFER, chunk.vertex_colors.size()*sizeof(GLfloat), &chunk.vertex_colors[0], GL_STATIC_DRAW);
 
 	GLuint uvbuffer;
 	glGenBuffers(1, &uvbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, world.vertex_uvs.size()*sizeof(GLfloat), &world.vertex_uvs[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, chunk.vertex_uvs.size()*sizeof(GLfloat), &chunk.vertex_uvs[0], GL_STATIC_DRAW);
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> timer = std::chrono::high_resolution_clock::now();
 
@@ -193,8 +196,8 @@ int main( void )
 		// Draw the triangle !
 		// glDrawArrays(GL_TRIANGLES, 0, 12*3);
 			// 3 indices starting at 0 -> 1 triangle
-		// glDrawArrays(GL_TRIANGLES, 0, world.vertex_buffer.size());
-		glDrawArrays(GL_TRIANGLES, 0, world.vertex_buffer.size()/3);
+		// glDrawArrays(GL_TRIANGLES, 0, chunk.vertex_buffer.size());
+		glDrawArrays(GL_TRIANGLES, 0, chunk.vertex_buffer.size()/3);
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);

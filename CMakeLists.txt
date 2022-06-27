@@ -29,5 +29,5 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 	)
 
-add_subdirectory(playground)
+add_subdirectory(game)
 add_subdirectory(tools/obj_dump)

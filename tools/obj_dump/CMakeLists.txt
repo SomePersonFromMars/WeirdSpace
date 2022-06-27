@@ -1,5 +1,5 @@
 set(UTILS_PATH
-	${CMAKE_SOURCE_DIR}/playground/utils)
+	${CMAKE_SOURCE_DIR}/game/utils)
 
 # Obj_dump
 include_directories(
