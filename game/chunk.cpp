@@ -44,6 +44,15 @@ void chunk_t::update_buffers() {
 					);
 					vertex_uvs.push_back(uv.x);
 					vertex_uvs.push_back(uv.y);
+
+					const glm::vec3 normal(
+						single_block_normals[3*i+0] + 2.0f * x,
+						single_block_normals[3*i+1] + 2.0f * y,
+						single_block_normals[3*i+2] + -2.0f * z
+					);
+					vertex_normals.push_back(normal.x);
+					vertex_normals.push_back(normal.y);
+					vertex_normals.push_back(normal.z);
 				}
 			}
 		}

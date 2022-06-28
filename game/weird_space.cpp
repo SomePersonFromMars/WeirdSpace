@@ -74,7 +74,7 @@ int main( void )
 	// glfwSetCursorPos(window, windowHeight/2, windowWidth/2);
 
 	// Dark blue background
-	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+	glClearColor(0.0f, 0.8f, 1.0f, 0.0f);
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
@@ -95,6 +95,10 @@ int main( void )
 
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+	GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
+	GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
+	// glUseProgram(programID); // Probably not useful instruction
+	GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
 	GLuint Texture = loadDDS("sand.dds");
 	GLuint TextureID = glGetUniformLocation(programID, "myTextureSampler");
@@ -130,6 +134,11 @@ int main( void )
 	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
 	glBufferData(GL_ARRAY_BUFFER, chunk.vertex_uvs.size()*sizeof(GLfloat), &chunk.vertex_uvs[0], GL_STATIC_DRAW);
 
+	GLuint normalbuffer;
+	glGenBuffers(1, &normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, chunk.vertex_normals.size()*sizeof(GLfloat), &chunk.vertex_normals[0], GL_STATIC_DRAW);
+
 	std::chrono::time_point<std::chrono::high_resolution_clock> timer = std::chrono::high_resolution_clock::now();
 
 	do{
@@ -148,7 +157,14 @@ int main( void )
 		glm::mat4 View = getViewMatrix();
 		glm::mat4 Model = glm::mat4(1.0f);
 		glm::mat4 MVP = Projection * View * Model;
+
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &Model[0][0]);
+		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &View[0][0]);
+
+		glm::vec3 lightPos = glm::vec3(5, 40, -6);
+		// glm::vec3 lightPos = position;
+		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
 		// Bind our texture in Texture Unit 0
 		glActiveTexture(GL_TEXTURE0);
@@ -193,6 +209,18 @@ int main( void )
 				(void*)0            // array buffer offset
 				);
 
+		// 3rd attribute buffer : normals
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		glVertexAttribPointer(
+				2,                                // attribute
+				3,                                // size
+				GL_FLOAT,                         // type
+				GL_FALSE,                         // normalized?
+				0,                                // stride
+				(void*)0                          // array buffer offset
+				);
+
 		// Draw the triangle !
 		// glDrawArrays(GL_TRIANGLES, 0, 12*3);
 			// 3 indices starting at 0 -> 1 triangle
@@ -201,6 +229,7 @@ int main( void )
 
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -229,6 +258,7 @@ int main( void )
 	// Cleanup VBO
 	glDeleteBuffers(1, &vertexbuffer);
 	glDeleteBuffers(1, &uvbuffer);
+	glDeleteBuffers(1, &normalbuffer);
 	glDeleteTextures(1, &Texture);
 	glDeleteVertexArrays(1, &VertexArrayID);
 	glDeleteProgram(programID);
