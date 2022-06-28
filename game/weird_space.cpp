@@ -106,15 +106,13 @@ int main( void )
 	world_generator_t generator;
 	generator.gen_chunk(0, 0);
 	chunk_t &chunk = generator.chunks[0];
-	chunk.content[0][0][0] = 1;
-	chunk.content[1][0][0] = 1;
-
-	chunk.content[2][0][0] = 1;
-	chunk.content[2][1][0] = 1;
-	chunk.content[2][2][0] = 1;
-
-	chunk.content[3][0][0] = 1;
-	chunk.content[3][0][1] = 1;
+	// chunk.content[0][0][0] = 1;
+	// chunk.content[1][0][0] = 1;
+	// chunk.content[2][0][0] = 1;
+	// chunk.content[2][1][0] = 1;
+	// chunk.content[2][2][0] = 1;
+	// chunk.content[3][0][0] = 1;
+	// chunk.content[3][0][1] = 1;
 	chunk.update_buffers();
 
 	GLuint vertexbuffer;
@@ -268,4 +266,3 @@ int main( void )
 
 	return 0;
 }
-
