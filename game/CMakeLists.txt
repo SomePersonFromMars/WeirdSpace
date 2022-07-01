@@ -10,6 +10,8 @@ add_executable(weird_space
 	weird_space.cpp
 	chunk.cpp
 	noise.cpp
+	world_buffer.cpp
+	world_renderer.cpp
 	world_generator.cpp
 	${UTILS_SRC}
 	)

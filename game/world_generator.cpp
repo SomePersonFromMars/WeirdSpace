@@ -1,7 +1,12 @@
 #include "world_generator.hpp"
 
+world_generator_t::world_generator_t(world_buffer_t &buffer)
+	:buffer{buffer}
+{  }
+
 void world_generator_t::gen_chunk(int chunk_x, int global_x) {
-	chunk_t &chunk = chunks[chunk_x];
+	chunk_t &chunk = buffer.chunks[chunk_x];
+
 	for (int x = 0; x < static_cast<int>(chunk.width); ++x) {
 		for (int z = 0; z < static_cast<int>(chunk.depth); ++z) {
 			const float p =
@@ -13,7 +18,7 @@ void world_generator_t::gen_chunk(int chunk_x, int global_x) {
 			printf("%f\n", p);
 			const int y = ( p * static_cast<float>(chunk.height) );
 			// const int y = (x/2+z)%chunk.height;
-			chunk.content AT3(x, y, z) = 1;
+			chunk.content AT3(x, y, z) = block_type::sand;
 		}
 	}
 }
