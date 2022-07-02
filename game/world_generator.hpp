@@ -3,7 +3,6 @@
 #define WORLD_GENERATOR_HPP
 
 #include <cstdio>
-#include <map>
 #include <glm/glm.hpp>
 #include "world_buffer.hpp"
 #include "chunk.hpp"
@@ -12,7 +11,7 @@
 
 struct world_generator_t {
 	world_generator_t(world_buffer_t &buffer);
-	void gen_chunk(int chunk_x, int global_x);
+	void gen_chunk(const glm::ivec2 &chunk_pos);
 
 private:
 	world_buffer_t &buffer;

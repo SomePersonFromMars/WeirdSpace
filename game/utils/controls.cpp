@@ -33,9 +33,10 @@ float horizontalAngle = 3.0f;
 float verticalAngle = 6.0f;
 
 // Initial Field of View
-float initialFoV = 90.0f;
+float initialFoV = 120.0f;
 
-float speed = 8.0f; // 3 units / second
+constexpr float speed_normal = 8.0f; // 3 units / second
+constexpr float speed_accelerated = 64.0f; // 3 units / second
 float mouseSpeed = 0.005f;
 
 
@@ -91,6 +92,11 @@ void computeMatricesFromInputs(GLint windowWidth, GLint windowHeight ){
 	// Up vector
 	glm::vec3 up = glm::cross( right, direction );
 
+	float speed = speed_normal;
+	// Speed acceleration
+	if (glfwGetKey( window, GLFW_KEY_K ) == GLFW_PRESS){
+		speed = speed_accelerated;
+	}
 	// Move forward
 	if (glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS){
 		position += direction * deltaTime * speed;

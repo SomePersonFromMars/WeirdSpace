@@ -3,10 +3,11 @@
 #define WORLD_BUFFER_HPP
 
 #include <map>
+#include "utils/useful.hpp"
 #include "chunk.hpp"
 
 struct world_buffer_t {
-	std::map<int, chunk_t> chunks;
+	std::map<glm::ivec2, chunk_t, ivec2_cmp_t> chunks;
 };
 
 #endif

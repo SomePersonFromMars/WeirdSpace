@@ -31,8 +31,13 @@ void world_renderer_t::clear_preprocessing_data() {
 	}
 }
 
-void world_renderer_t::preprocess_chunk(int chunk_x) {
-	const auto &content = buffer.chunks[chunk_x].content;
+void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
+	const auto &content = buffer.chunks[chunk_pos].content;
+	const glm::vec2 offset(
+		chunk_pos.x * static_cast<float>(chunk_t::width),
+		chunk_pos.y * static_cast<float>(chunk_t::depth)
+	);
+	// const float x_offset = chunk_pos.x * static_cast<float>(chunk_t::width);
 
 	for (size_t x = 0; x < content.size(); ++x) {
 		for (size_t y = 0; y < content[x].size(); ++y) {
@@ -46,9 +51,9 @@ void world_renderer_t::preprocess_chunk(int chunk_x) {
 						single_block_positions[3*i+1] + 2.0f * y,
 						single_block_positions[3*i+2] + -2.0f * z
 					);
-					strct.positions_buffer.push_back(pos.x / 2.0f);
+					strct.positions_buffer.push_back(pos.x / 2.0f + offset.x);
 					strct.positions_buffer.push_back(pos.y / 2.0f);
-					strct.positions_buffer.push_back(pos.z / 2.0f);
+					strct.positions_buffer.push_back(pos.z / 2.0f + offset.y);
 
 					const glm::vec2 uv(
 						single_block_uv[2*i+0],
@@ -62,9 +67,9 @@ void world_renderer_t::preprocess_chunk(int chunk_x) {
 						single_block_normals[3*i+1] + 2.0f * y,
 						single_block_normals[3*i+2] + -2.0f * z
 					);
-					strct.normals_buffer.push_back(normal.x / 2.0f);
+					strct.normals_buffer.push_back(normal.x / 2.0f + offset.x);
 					strct.normals_buffer.push_back(normal.y / 2.0f);
-					strct.normals_buffer.push_back(normal.z / 2.0f);
+					strct.normals_buffer.push_back(normal.z / 2.0f + offset.y);
 				}
 			}
 		}

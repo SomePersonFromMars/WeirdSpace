@@ -33,7 +33,8 @@ struct world_renderer_t {
 	void init();
 
 	void clear_preprocessing_data();
-	void preprocess_chunk(int chunk_x);
+	// chunk_pos means position in plane XZ
+	void preprocess_chunk(const glm::ivec2 &chunk_pos);
 	void finish_preprocessing();
 
 	void draw(
