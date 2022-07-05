@@ -9,8 +9,11 @@ void world_renderer_t::init() {
 	MVP_matrix_uniform = glGetUniformLocation(program_id, "MVP");
 	view_matrix_uniform = glGetUniformLocation(program_id, "V");
 	model_matrix_uniform = glGetUniformLocation(program_id, "M");
+	projection_matrix_uniform = glGetUniformLocation(program_id, "P");
 	light_uniform = glGetUniformLocation(program_id,
 			"LightPosition_worldspace");
+	light_color_uniform = glGetUniformLocation(program_id,
+			"LightColor");
 
 	for (uint8_t i = 1; i < static_cast<uint8_t>(block_type::cnt); ++i) {
 		strcts[i].texture_id = loadDDS("sand.dds");
@@ -62,14 +65,24 @@ void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
 					strct.uvs_buffer.push_back(uv.x);
 					strct.uvs_buffer.push_back(uv.y);
 
+					// This somehow works not that bad
+					// const glm::vec3 normal(
+					// 	single_block_positions[3*i+0] + 2.0f * x,
+					// 	single_block_positions[3*i+1] + 2.0f * y,
+					// 	single_block_positions[3*i+2] + -2.0f * z
+					// );
+					// strct.normals_buffer.push_back(normal.x / 2.0f + offset.x);
+					// strct.normals_buffer.push_back(normal.y / 2.0f);
+					// strct.normals_buffer.push_back(normal.z / 2.0f + offset.y);
+
 					const glm::vec3 normal(
-						single_block_normals[3*i+0] + 2.0f * x,
-						single_block_normals[3*i+1] + 2.0f * y,
-						single_block_normals[3*i+2] + -2.0f * z
+						single_block_normals[3*i+0],
+						single_block_normals[3*i+1],
+						single_block_normals[3*i+2]
 					);
-					strct.normals_buffer.push_back(normal.x / 2.0f + offset.x);
-					strct.normals_buffer.push_back(normal.y / 2.0f);
-					strct.normals_buffer.push_back(normal.z / 2.0f + offset.y);
+					strct.normals_buffer.push_back(normal.x);
+					strct.normals_buffer.push_back(normal.y);
+					strct.normals_buffer.push_back(normal.z);
 				}
 			}
 		}
@@ -109,9 +122,20 @@ void world_renderer_t::draw(
 	glUniformMatrix4fv(MVP_matrix_uniform, 1, GL_FALSE, &MVP_matrix[0][0]);
 	glUniformMatrix4fv(model_matrix_uniform, 1, GL_FALSE, &model_matrix[0][0]);
 	glUniformMatrix4fv(view_matrix_uniform, 1, GL_FALSE, &view_matrix[0][0]);
+	glUniformMatrix4fv(projection_matrix_uniform, 1, GL_FALSE,
+			&projection_matrix[0][0]);
 
-	const glm::vec3 light_pos = glm::vec3(10, 20, -10) + camera_pos;
+	// const glm::vec3 light_pos = glm::vec3(10, 20, -10) + camera_pos;
+	const glm::vec3 light_pos = glm::vec3(0, 0, 0) + camera_pos;
+	// const glm::vec3 light_pos = glm::vec3(0, 20, 0);
+	// const glm::vec3 light_color = color_hex_to_vec3(0xf9c88b);
+	const glm::vec3 light_color = color_hex_to_vec3(0xf7d5ad);
+	// const glm::vec3 light_color = color_hex_to_vec3(0xffffff);
 	glUniform3f(light_uniform, light_pos.x, light_pos.y, light_pos.z);
+	glUniform3f(light_color_uniform,
+			light_color.x,
+			light_color.y,
+			light_color.z);
 
 	for (uint8_t i = 1; i < static_cast<uint8_t>(block_type::cnt); ++i) {
 		// Bind our texture in Texture Unit 0

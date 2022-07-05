@@ -19,4 +19,12 @@ struct ivec2_cmp_t {
 	}
 };
 
+inline glm::vec3 color_hex_to_vec3(uint32_t hex) {
+	return glm::vec3(
+		static_cast<double>( (hex & 0xff0000u) >> 16  ) / 255.0,
+		static_cast<double>( (hex & 0x00ff00u) >> 8  ) / 255.0,
+		static_cast<double>( (hex & 0x0000ffu) >> 0 ) / 255.0
+	);
+}
+
 #endif

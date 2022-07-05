@@ -73,8 +73,17 @@ int main( void )
 	// Set the mouse at the center of the screen
 	glfwPollEvents();
 
-	// Dark blue background
-	glClearColor(0.0f, 0.8f, 1.0f, 0.0f);
+	// Background color
+
+	// Light blue
+	// const glm::vec3 background_color(0.0f, 0.8f, 1.0f);
+
+	// Light orange
+	// const auto background_color = color_hex_to_vec3(0xfcb967);
+	const auto background_color = color_hex_to_vec3(0xfccc92);
+
+	glClearColor(background_color.x, background_color.y, background_color.z,
+			0.0f);
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
@@ -96,8 +105,8 @@ int main( void )
 	world_renderer.init();
 
 	world_generator_t world_generator(world_buffer);
-	for (int x = 0; x < 20; ++x) {
-		for (int y = 0; y < 20; ++y) {
+	for (int x = 0; x < 10; ++x) {
+		for (int y = 0; y < 10; ++y) {
 			world_generator.gen_chunk({x, y});
 			world_renderer.preprocess_chunk({x, y});
 		}
@@ -109,9 +118,11 @@ int main( void )
 	world_renderer.finish_preprocessing();
 
 	position = vec3(0, 16, 0);
-	std::chrono::time_point<std::chrono::high_resolution_clock> timer = std::chrono::high_resolution_clock::now();
+	std::chrono::time_point<std::chrono::high_resolution_clock>
+		timer_debugging= std::chrono::high_resolution_clock::now();
+	double timer_fps_cnter = glfwGetTime();
 
-	do{
+	do {
 
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -129,20 +140,30 @@ int main( void )
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-		auto now = std::chrono::high_resolution_clock::now();
-		const auto delta_time = now - timer;
+		double fps_cnt;
+		{ // FPS cnter
+			const double now = glfwGetTime();
+			const double delta_time = now - timer_fps_cnter;
+			fps_cnt = 1.0 / delta_time;
+			timer_fps_cnter = now;
+		}
+		{ // Debug output
+			const auto now = std::chrono::high_resolution_clock::now();
+			const auto delta_time = now - timer_debugging;
+			using namespace std::chrono_literals;
+			if (delta_time >= 500ms) {
+				timer_debugging = now;
 
-		using namespace std::chrono_literals;
-		if (delta_time >= 500ms) {
-			timer = now;
-
-			fprintf(stderr, "pos=(%f, %f, %f)",
-					position.x,
-					position.y,
-					position.z);
-			fprintf(stderr, ", angle=(%f, %f)\n",
-					horizontalAngle,
-					verticalAngle);
+				fprintf(stderr, "pos=(%f, %f, %f)",
+						position.x,
+						position.y,
+						position.z);
+				fprintf(stderr, ", angle=(%f, %f)",
+						horizontalAngle,
+						verticalAngle);
+				fprintf(stderr, ", fps_cnt=%f\n",
+						fps_cnt);
+			}
 		}
 
 	} // Check if the ESC key was pressed or the window was closed

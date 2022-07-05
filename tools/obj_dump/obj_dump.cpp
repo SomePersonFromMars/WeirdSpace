@@ -36,8 +36,8 @@ int main(int argc, char **argv) {
 	}
 	printf("};\n");
 
-	printf("glm::vec3 out_normals[%zu] = {\n", out_uvs.size()*3);
-	for (const glm::vec3 &vec : out_vertices) {
+	printf("glm::vec3 out_normals[%zu] = {\n", out_normals.size()*3);
+	for (const glm::vec3 &vec : out_normals) {
 		printf("\t%9.6f, %9.6f, %9.6f,\n", vec.x, vec.y, vec.z);
 	}
 	printf("};\n");
