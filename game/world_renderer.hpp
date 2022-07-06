@@ -14,6 +14,8 @@
 
 #include "world_buffer.hpp"
 
+#include "settings.hpp"
+
 struct block_type_renderer_strct_t {
 	GLuint texture_id; // Returned by glGenTextures
 	GLuint texture_uniform;

@@ -24,6 +24,8 @@ using namespace glm;
 #include "world_renderer.hpp"
 #include "world_generator.hpp"
 
+#include "settings.hpp"
+
 void window_size_callback(GLFWwindow* window, int width, int height) {
 	windowWidth = width;
 	windowHeight = height;
@@ -74,14 +76,7 @@ int main( void )
 	glfwPollEvents();
 
 	// Background color
-
-	// Light blue
-	// const glm::vec3 background_color(0.0f, 0.8f, 1.0f);
-
-	// Light orange
-	// const auto background_color = color_hex_to_vec3(0xfcb967);
-	const auto background_color = color_hex_to_vec3(0xfccc92);
-
+	const auto background_color = color_hex_to_vec3(SKY_COLOR);
 	glClearColor(background_color.x, background_color.y, background_color.z,
 			0.0f);
 

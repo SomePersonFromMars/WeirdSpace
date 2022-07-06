@@ -5,7 +5,7 @@ world_renderer_t::world_renderer_t(world_buffer_t &buffer)
 {  }
 
 void world_renderer_t::init() {
-	program_id = LoadShaders( "vertex.vs", "fragment.fs" );
+	program_id = LoadShaders( "runtime/vertex.vs", "runtime/fragment.fs" );
 	MVP_matrix_uniform = glGetUniformLocation(program_id, "MVP");
 	view_matrix_uniform = glGetUniformLocation(program_id, "V");
 	model_matrix_uniform = glGetUniformLocation(program_id, "M");
@@ -16,7 +16,7 @@ void world_renderer_t::init() {
 			"LightColor");
 
 	for (uint8_t i = 1; i < static_cast<uint8_t>(block_type::cnt); ++i) {
-		strcts[i].texture_id = loadDDS("sand.dds");
+		strcts[i].texture_id = loadDDS("runtime/sand.dds");
 		strcts[i].texture_uniform = glGetUniformLocation(program_id,
 				"myTextureSampler");
 
@@ -40,7 +40,6 @@ void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
 		chunk_pos.x * static_cast<float>(chunk_t::width),
 		chunk_pos.y * static_cast<float>(chunk_t::depth)
 	);
-	// const float x_offset = chunk_pos.x * static_cast<float>(chunk_t::width);
 
 	for (size_t x = 0; x < content.size(); ++x) {
 		for (size_t y = 0; y < content[x].size(); ++y) {
@@ -64,16 +63,6 @@ void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
 					);
 					strct.uvs_buffer.push_back(uv.x);
 					strct.uvs_buffer.push_back(uv.y);
-
-					// This somehow works not that bad
-					// const glm::vec3 normal(
-					// 	single_block_positions[3*i+0] + 2.0f * x,
-					// 	single_block_positions[3*i+1] + 2.0f * y,
-					// 	single_block_positions[3*i+2] + -2.0f * z
-					// );
-					// strct.normals_buffer.push_back(normal.x / 2.0f + offset.x);
-					// strct.normals_buffer.push_back(normal.y / 2.0f);
-					// strct.normals_buffer.push_back(normal.z / 2.0f + offset.y);
 
 					const glm::vec3 normal(
 						single_block_normals[3*i+0],
@@ -127,10 +116,10 @@ void world_renderer_t::draw(
 
 	// const glm::vec3 light_pos = glm::vec3(10, 20, -10) + camera_pos;
 	const glm::vec3 light_pos = glm::vec3(0, 0, 0) + camera_pos;
+
 	// const glm::vec3 light_pos = glm::vec3(0, 20, 0);
-	// const glm::vec3 light_color = color_hex_to_vec3(0xf9c88b);
-	const glm::vec3 light_color = color_hex_to_vec3(0xf7d5ad);
-	// const glm::vec3 light_color = color_hex_to_vec3(0xffffff);
+	const glm::vec3 light_color = color_hex_to_vec3(LIGHT_COLOR);
+
 	glUniform3f(light_uniform, light_pos.x, light_pos.y, light_pos.z);
 	glUniform3f(light_color_uniform,
 			light_color.x,

@@ -1,0 +1,2 @@
+~/.software/Compressonator-Amd/compressonatorcli_linux_x86_64_4.2.5150/compressonatorcli -miplevels 9 -fd DXT3 sand.bmp sand.dds
+make -j4 && ./obj_dump ~/Dev/WeirdSpace/game/sand.obj
