@@ -12,13 +12,14 @@
 #include "utils/shader.hpp"
 #include "utils/texture.hpp"
 
+#include "shader_A.hpp"
 #include "world_buffer.hpp"
 
 #include "settings.hpp"
 
 struct block_type_renderer_strct_t {
 	GLuint texture_id; // Returned by glGenTextures
-	GLuint texture_uniform;
+	// GLuint texture_uniform;
 
 	GLuint positions_buffer_id;
 	GLuint uvs_buffer_id;
@@ -30,7 +31,10 @@ struct block_type_renderer_strct_t {
 };
 
 struct world_renderer_t {
-	world_renderer_t(world_buffer_t &buffer);
+	world_renderer_t(
+		shader_A_t &shader,
+		world_buffer_t &buffer
+	);
 
 	void init();
 
@@ -49,18 +53,19 @@ struct world_renderer_t {
 	void deinit();
 
 private:
+	shader_A_t &shader;
 	world_buffer_t &buffer;
 
 	// Program
-	GLuint program_id;
+	// GLuint program_id;
 
 	// Uniforms
-	GLuint MVP_matrix_uniform;
-	GLuint view_matrix_uniform;
-	GLuint model_matrix_uniform;
-	GLuint projection_matrix_uniform;
-	GLuint light_uniform;
-	GLuint light_color_uniform;
+	// GLuint MVP_matrix_uniform;
+	// GLuint view_matrix_uniform;
+	// GLuint model_matrix_uniform;
+	// GLuint projection_matrix_uniform;
+	// GLuint light_uniform;
+	// GLuint light_color_uniform;
 
 	block_type_renderer_strct_t strcts[static_cast<uint8_t>(block_type::cnt)];
 

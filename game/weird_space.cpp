@@ -17,7 +17,8 @@ using namespace glm;
 
 #include "utils/shader.hpp"
 #include "utils/controls.hpp"
-#include "utils/texture.hpp"
+
+#include "shader_A.hpp"
 
 #include "chunk.hpp"
 #include "world_buffer.hpp"
@@ -94,9 +95,12 @@ int main( void )
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
 
+	shader_A_t shader;
+	shader.init();
+
 	world_buffer_t world_buffer;
 
-	world_renderer_t world_renderer(world_buffer);
+	world_renderer_t world_renderer(shader, world_buffer);
 	world_renderer.init();
 
 	world_generator_t world_generator(world_buffer);
@@ -168,6 +172,7 @@ int main( void )
 	// Cleanup VBO
 	glDeleteVertexArrays(1, &VertexArrayID);
 	world_renderer.deinit();
+	shader.deinit();
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();

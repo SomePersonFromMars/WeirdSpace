@@ -2,6 +2,9 @@
 #ifndef SETTINGS_HPP
 #define SETTINGS_HPP
 
+#define SHADER_A_VERTEX_PATH "runtime/shader_A_vertex.glsl"
+#define SHADER_A_FRAGMENT_PATH "runtime/shader_A_fragment.glsl"
+
 #define ATMOSPHERE 2
 #if ATMOSPHERE == 1
 	// Soft-blue, soft-yellow

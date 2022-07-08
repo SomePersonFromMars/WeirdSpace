@@ -12,32 +12,32 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	std::vector<glm::vec3> out_vertices;
-	std::vector<glm::vec2> out_uvs;
-	std::vector<glm::vec3> out_normals;
+	std::vector<glm::vec3> positions;
+	std::vector<glm::vec2> uvs;
+	std::vector<glm::vec3> normals;
 
 	if (!loadOBJ(argv[1],
-			out_vertices,
-			out_uvs,
-			out_normals)) {
+			positions,
+			uvs,
+			normals)) {
 		fprintf(stderr, "Error opening obj file \"%s\"\n", argv[1]);
 		return 1;
 	}
 
-	printf("glm::vec3 out_vertices[%zu] = {\n", out_vertices.size()*3);
-	for (const glm::vec3 &vec : out_vertices) {
+	printf("float positions[%zu] = {\n", positions.size()*3);
+	for (const glm::vec3 &vec : positions) {
 		printf("\t%9.6f, %9.6f, %9.6f,\n", vec.x, vec.y, vec.z);
 	}
 	printf("};\n");
 
-	printf("glm::vec2 out_uvs[%zu] = {\n", out_uvs.size()*2);
-	for (const glm::vec2 &vec : out_uvs) {
+	printf("float uvs[%zu] = {\n", uvs.size()*2);
+	for (const glm::vec2 &vec : uvs) {
 		printf("\t%9.6f, %9.6f,\n", vec.x, vec.y);
 	}
 	printf("};\n");
 
-	printf("glm::vec3 out_normals[%zu] = {\n", out_normals.size()*3);
-	for (const glm::vec3 &vec : out_normals) {
+	printf("float normals[%zu] = {\n", normals.size()*3);
+	for (const glm::vec3 &vec : normals) {
 		printf("\t%9.6f, %9.6f, %9.6f,\n", vec.x, vec.y, vec.z);
 	}
 	printf("};\n");

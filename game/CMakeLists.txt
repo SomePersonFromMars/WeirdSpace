@@ -13,6 +13,8 @@ add_executable(weird_space
 	world_buffer.cpp
 	world_renderer.cpp
 	world_generator.cpp
+	player.cpp
+	shader_A.cpp
 	${UTILS_SRC}
 	)
 target_link_libraries(weird_space

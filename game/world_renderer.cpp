@@ -1,24 +1,28 @@
 #include "world_renderer.hpp"
 
-world_renderer_t::world_renderer_t(world_buffer_t &buffer)
-	:buffer{buffer}
+world_renderer_t::world_renderer_t(
+		shader_A_t &shader,
+		world_buffer_t &buffer
+	)
+	:shader{shader}
+	,buffer{buffer}
 {  }
 
 void world_renderer_t::init() {
-	program_id = LoadShaders( "runtime/vertex.vs", "runtime/fragment.fs" );
-	MVP_matrix_uniform = glGetUniformLocation(program_id, "MVP");
-	view_matrix_uniform = glGetUniformLocation(program_id, "V");
-	model_matrix_uniform = glGetUniformLocation(program_id, "M");
-	projection_matrix_uniform = glGetUniformLocation(program_id, "P");
-	light_uniform = glGetUniformLocation(program_id,
-			"LightPosition_worldspace");
-	light_color_uniform = glGetUniformLocation(program_id,
-			"LightColor");
+	// program_id = LoadShaders( "runtime/vertex.vs", "runtime/fragment.fs" );
+	// MVP_matrix_uniform = glGetUniformLocation(program_id, "MVP");
+	// view_matrix_uniform = glGetUniformLocation(program_id, "V");
+	// model_matrix_uniform = glGetUniformLocation(program_id, "M");
+	// projection_matrix_uniform = glGetUniformLocation(program_id, "P");
+	// light_uniform = glGetUniformLocation(program_id,
+	// 		"LightPosition_worldspace");
+	// light_color_uniform = glGetUniformLocation(program_id,
+	// 		"LightColor");
 
 	for (uint8_t i = 1; i < static_cast<uint8_t>(block_type::cnt); ++i) {
 		strcts[i].texture_id = loadDDS("runtime/sand.dds");
-		strcts[i].texture_uniform = glGetUniformLocation(program_id,
-				"myTextureSampler");
+		// strcts[i].texture_uniform = glGetUniformLocation(program_id,
+		// 		"myTextureSampler");
 
 		glGenBuffers(1, &strcts[i].positions_buffer_id);
 		glGenBuffers(1, &strcts[i].uvs_buffer_id);
@@ -104,15 +108,19 @@ void world_renderer_t::draw(
 	const glm::mat4 &model_matrix
 ) {
 	// Use our shader
-	glUseProgram(program_id);
+	// glUseProgram(program_id);
+	glUseProgram(shader.program_id);
 
 	glm::mat4 MVP_matrix = projection_matrix * view_matrix * model_matrix;
 
-	glUniformMatrix4fv(MVP_matrix_uniform, 1, GL_FALSE, &MVP_matrix[0][0]);
-	glUniformMatrix4fv(model_matrix_uniform, 1, GL_FALSE, &model_matrix[0][0]);
-	glUniformMatrix4fv(view_matrix_uniform, 1, GL_FALSE, &view_matrix[0][0]);
-	glUniformMatrix4fv(projection_matrix_uniform, 1, GL_FALSE,
-			&projection_matrix[0][0]);
+	glUniformMatrix4fv(shader.MVP_matrix_uniform,
+			1, GL_FALSE, &MVP_matrix[0][0]);
+	glUniformMatrix4fv(shader.model_matrix_uniform,
+			1, GL_FALSE, &model_matrix[0][0]);
+	glUniformMatrix4fv(shader.view_matrix_uniform,
+			1, GL_FALSE, &view_matrix[0][0]);
+	glUniformMatrix4fv(shader.projection_matrix_uniform,
+			1, GL_FALSE, &projection_matrix[0][0]);
 
 	// const glm::vec3 light_pos = glm::vec3(10, 20, -10) + camera_pos;
 	const glm::vec3 light_pos = glm::vec3(0, 0, 0) + camera_pos;
@@ -120,8 +128,9 @@ void world_renderer_t::draw(
 	// const glm::vec3 light_pos = glm::vec3(0, 20, 0);
 	const glm::vec3 light_color = color_hex_to_vec3(LIGHT_COLOR);
 
-	glUniform3f(light_uniform, light_pos.x, light_pos.y, light_pos.z);
-	glUniform3f(light_color_uniform,
+	glUniform3f(shader.light_uniform,
+			light_pos.x, light_pos.y, light_pos.z);
+	glUniform3f(shader.light_color_uniform,
 			light_color.x,
 			light_color.y,
 			light_color.z);
@@ -131,7 +140,8 @@ void world_renderer_t::draw(
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, strcts[i].texture_id);
 		// Set our "myTextureSampler" sampler to use Texture Unit 0
-		glUniform1i(strcts[i].texture_uniform, 0);
+		glUniform1i(shader.texture_uniform,
+				0);
 
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
@@ -185,5 +195,5 @@ void world_renderer_t::deinit() {
 		glDeleteTextures(1, &strcts[i].texture_id);
 	}
 
-	glDeleteProgram(program_id);
+	// glDeleteProgram(program_id);
 }
