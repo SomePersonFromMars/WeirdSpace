@@ -107,10 +107,10 @@ int main( void )
 			world_renderer.preprocess_chunk({x, y});
 		}
 	}
-	// world_generator.gen_chunk(0);
-	// world_generator.gen_chunk(1);
-	// world_renderer.preprocess_chunk(0);
-	// world_renderer.preprocess_chunk(1);
+	// world_generator.gen_chunk({0, 0});
+	// world_generator.gen_chunk({1, 0});
+	// world_renderer.preprocess_chunk({0, 0});
+	// world_renderer.preprocess_chunk({1, 0});
 	world_renderer.finish_preprocessing();
 
 	position = vec3(0, 16, 0);

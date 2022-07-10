@@ -7,17 +7,16 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include "utils/shader.hpp"
 
 struct player_t {
-	glm::vec3 position;
-
 	void init();
 
 private:
-	GLuint vao;
+	glm::vec3 position;
+
+	GLuint texture_id;
+
+	GLuint vao_id;
 
 	GLuint positions_buffer_id;
 	GLuint uvs_buffer_id;

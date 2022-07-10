@@ -1,5 +1,11 @@
 #include "world_renderer.hpp"
 
+#include <cstdio>
+
+#include <glm/gtc/matrix_transform.hpp>
+#include "utils/shader.hpp"
+#include "utils/texture.hpp"
+
 world_renderer_t::world_renderer_t(
 		shader_A_t &shader,
 		world_buffer_t &buffer
@@ -17,6 +23,22 @@ void world_renderer_t::init() {
 	glGenBuffers(1, &positions_buffer_id);
 	glGenBuffers(1, &uvs_buffer_id);
 	glGenBuffers(1, &normals_buffer_id);
+	glGenBuffers(1, &positions_instanced_buffer_id);
+
+	glBindBuffer(GL_ARRAY_BUFFER, positions_buffer_id);
+	glBufferData(GL_ARRAY_BUFFER,
+			sizeof(single_block_positions),
+			single_block_positions, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, uvs_buffer_id);
+	glBufferData(GL_ARRAY_BUFFER,
+			sizeof(single_block_uvs),
+			single_block_uvs, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, normals_buffer_id);
+	glBufferData(GL_ARRAY_BUFFER,
+			sizeof(single_block_normals),
+			single_block_normals, GL_STATIC_DRAW);
 
 	// 1rst attribute buffer: vertices
 	glEnableVertexAttribArray(0);
@@ -33,13 +55,17 @@ void world_renderer_t::init() {
 	glBindBuffer(GL_ARRAY_BUFFER, normals_buffer_id);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+	// 4th attribute buffer: vertices
+	glEnableVertexAttribArray(3);
+	glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribDivisor(3, 1);
+
 	glBindVertexArray(0); // Unbind vao, not necessary
 }
 
 void world_renderer_t::clear_preprocessing_data() {
-	positions_buffer.clear();
-	uvs_buffer.clear();
-	normals_buffer.clear();
+	positions_instanced_buffer.clear();
 }
 
 void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
@@ -54,52 +80,24 @@ void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
 			for (size_t z = 0; z < content[x][y].size(); ++z) {
 				if (content[x][y][z] == block_type::none) continue;
 
-				for (size_t i = 0; i < single_block_points_cnt; ++i) {
-					const glm::vec3 pos(
-						single_block_positions[3*i+0] + 2.0f * x,
-						single_block_positions[3*i+1] + 2.0f * y,
-						single_block_positions[3*i+2] + -2.0f * z
-					);
-					positions_buffer.push_back(pos.x / 2.0f + offset.x);
-					positions_buffer.push_back(pos.y / 2.0f);
-					positions_buffer.push_back(pos.z / 2.0f + offset.y);
-
-					const glm::vec2 uv(
-						single_block_uv[2*i+0],
-						single_block_uv[2*i+1]
-					);
-					uvs_buffer.push_back(uv.x);
-					uvs_buffer.push_back(uv.y);
-
-					const glm::vec3 normal(
-						single_block_normals[3*i+0],
-						single_block_normals[3*i+1],
-						single_block_normals[3*i+2]
-					);
-					normals_buffer.push_back(normal.x);
-					normals_buffer.push_back(normal.y);
-					normals_buffer.push_back(normal.z);
-				}
+				const glm::vec3 block_pos(
+					static_cast<float>(x) + offset.x,
+					static_cast<float>(y),
+					-static_cast<float>(z) + offset.y
+				);
+				positions_instanced_buffer.push_back(block_pos.x);
+				positions_instanced_buffer.push_back(block_pos.y);
+				positions_instanced_buffer.push_back(block_pos.z);
 			}
 		}
 	}
 }
 
 void world_renderer_t::finish_preprocessing() {
-	glBindBuffer(GL_ARRAY_BUFFER, positions_buffer_id);
+	glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
 	glBufferData(GL_ARRAY_BUFFER,
-			positions_buffer.size()*sizeof(GLfloat),
-			&positions_buffer[0], GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER, uvs_buffer_id);
-	glBufferData(GL_ARRAY_BUFFER,
-			uvs_buffer.size()*sizeof(GLfloat),
-			&uvs_buffer[0], GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ARRAY_BUFFER, normals_buffer_id);
-	glBufferData(GL_ARRAY_BUFFER,
-			normals_buffer.size()*sizeof(GLfloat),
-			&normals_buffer[0], GL_STATIC_DRAW);
+			positions_instanced_buffer.size()*sizeof(GLfloat),
+			&positions_instanced_buffer[0], GL_STATIC_DRAW);
 }
 
 void world_renderer_t::draw(
@@ -135,7 +133,11 @@ void world_renderer_t::draw(
 			0);
 
 	glBindVertexArray(vao_id);
-	glDrawArrays(GL_TRIANGLES, 0, positions_buffer.size()/3);
+	glDrawArraysInstanced(GL_TRIANGLES,
+		0, single_block_points_cnt,
+		positions_instanced_buffer.size()/3
+	);
+
 	// glBindVertexArray(0); // Not necessary
 }
 
@@ -143,6 +145,7 @@ void world_renderer_t::deinit() {
 	glDeleteBuffers(1,  &positions_buffer_id);
 	glDeleteBuffers(1,  &uvs_buffer_id);
 	glDeleteBuffers(1,  &normals_buffer_id);
+	glDeleteBuffers(1,  &positions_instanced_buffer_id);
 	glDeleteTextures(1, &texture_id);
 
 	glDeleteVertexArrays(1, &vao_id);

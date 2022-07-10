@@ -4,6 +4,17 @@
 
 #include <glm/glm.hpp>
 
+#define DEBUG
+#ifdef DEBUG
+	#define PRINT_ZU(var) printf(#var " = %zu\n", var)
+	#define PRINT_F(var) printf(#var " = %f\n", var)
+#else
+	#define PRINT_ZU(var)
+	#define PRINT_F(var)
+#endif
+
+#define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
 #define AT3(x, y, z) \
 	[static_cast<size_t>(x)] \
 	[static_cast<size_t>(y)] \

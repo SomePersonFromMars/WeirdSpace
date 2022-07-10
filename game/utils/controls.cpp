@@ -20,16 +20,11 @@ glm::mat4 getProjectionMatrix(){
 }
 
 
-// Initial position : on +Z
+// Initial position
 glm::vec3 position = glm::vec3( 0, 1, 5 );
-// // Initial horizontal angle : toward -Z
-// float horizontalAngle = 3.14f;
-// // Initial vertical angle : none
-// float verticalAngle = 0.0f;
-
-// Initial horizontal angle : toward -Z
+// Initial horizontal angle
 float horizontalAngle = 3.0f;
-// Initial vertical angle : none
+// Initial vertical angle
 float verticalAngle = 6.0f;
 
 // Initial Field of View
@@ -37,6 +32,8 @@ float initialFoV = 120.0f;
 
 constexpr float speed_normal = 8.0f; // 3 units / second
 constexpr float speed_accelerated = 64.0f; // 3 units / second
+constexpr float rotate_speed_normal = 2.0f;
+constexpr float rotate_speed_slowed = 0.5f;
 float mouseSpeed = 0.005f;
 
 void computeMatricesFromInputs(GLint windowWidth, GLint windowHeight ){
@@ -59,18 +56,26 @@ void computeMatricesFromInputs(GLint windowWidth, GLint windowHeight ){
 	// horizontalAngle += mouseSpeed * float(windowHeight/2 - xpos );
 	// verticalAngle   += mouseSpeed * float( windowWidth/2 - ypos );
 
-	const float diffAngle = 2.0f * 3.1415f / 180.0f * 50.0f * deltaTime;
+	// Speed acceleration and rotation slowing down
+	float speed = speed_normal;
+	float rotate_speed = rotate_speed_normal;
+	if (glfwGetKey( window, GLFW_KEY_LEFT_SHIFT ) == GLFW_PRESS){
+		speed = speed_accelerated;
+		rotate_speed = rotate_speed_slowed;
+	}
+
+	const float rotate_angle = rotate_speed * deltaTime;
 	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS) {
-		verticalAngle += diffAngle;
+		verticalAngle += rotate_angle;
 	}
 	if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS) {
-		verticalAngle -= diffAngle;
+		verticalAngle -= rotate_angle;
 	}
 	if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS) {
-		horizontalAngle += diffAngle;
+		horizontalAngle += rotate_angle;
 	}
 	if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS) {
-		horizontalAngle -= diffAngle;
+		horizontalAngle -= rotate_angle;
 	}
 
 	// Direction : Spherical coordinates to Cartesian coordinates conversion
@@ -90,11 +95,6 @@ void computeMatricesFromInputs(GLint windowWidth, GLint windowHeight ){
 	// Up vector
 	glm::vec3 up = glm::cross( right, direction );
 
-	float speed = speed_normal;
-	// Speed acceleration
-	if (glfwGetKey( window, GLFW_KEY_K ) == GLFW_PRESS){
-		speed = speed_accelerated;
-	}
 	// Move forward
 	if (glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS){
 		position += direction * deltaTime * speed;
