@@ -17,19 +17,6 @@
 
 #include "settings.hpp"
 
-struct block_type_renderer_strct_t {
-	GLuint texture_id; // Returned by glGenTextures
-	// GLuint texture_uniform;
-
-	GLuint positions_buffer_id;
-	GLuint uvs_buffer_id;
-	GLuint normals_buffer_id;
-
-	std::vector<float> positions_buffer;
-	std::vector<float> uvs_buffer;
-	std::vector<float> normals_buffer;
-};
-
 struct world_renderer_t {
 	world_renderer_t(
 		shader_A_t &shader,
@@ -56,18 +43,20 @@ private:
 	shader_A_t &shader;
 	world_buffer_t &buffer;
 
-	// Program
-	// GLuint program_id;
+	// All blocks combined texture
+	// *Returned by glGenTextures*
+	GLuint texture_id;
 
-	// Uniforms
-	// GLuint MVP_matrix_uniform;
-	// GLuint view_matrix_uniform;
-	// GLuint model_matrix_uniform;
-	// GLuint projection_matrix_uniform;
-	// GLuint light_uniform;
-	// GLuint light_color_uniform;
+	// Vertex array object
+	GLuint vao_id;
 
-	block_type_renderer_strct_t strcts[static_cast<uint8_t>(block_type::cnt)];
+	GLuint positions_buffer_id;
+	GLuint uvs_buffer_id;
+	GLuint normals_buffer_id;
+
+	std::vector<float> positions_buffer;
+	std::vector<float> uvs_buffer;
+	std::vector<float> normals_buffer;
 
 private:
 	static constexpr size_t single_block_points_cnt = 6*2 * 3;
@@ -111,42 +100,42 @@ private:
 	};
 
 	static constexpr GLfloat single_block_uv[] = {
-		0.492188, -0.507812,
-		0.257812, -0.742188,
-		0.257812, -0.507812,
-		0.257812, -0.757812,
-		0.492188, -0.992188,
-		0.257812, -0.992188,
-		0.507812, -0.742188,
-		0.742188, -0.507812,
-		0.742188, -0.742188,
-		0.257812, -0.242188,
-		0.492188, -0.007812,
-		0.492188, -0.242188,
-		0.242188, -0.507812,
-		0.007812, -0.742188,
-		0.007812, -0.507812,
-		0.492188, -0.492188,
-		0.257812, -0.257812,
-		0.492188, -0.257812,
-		0.492188, -0.507812,
-		0.492188, -0.742188,
-		0.257812, -0.742188,
-		0.257812, -0.757812,
-		0.492188, -0.757812,
-		0.492188, -0.992188,
-		0.507812, -0.742188,
-		0.507812, -0.507812,
-		0.742188, -0.507812,
-		0.257812, -0.242188,
-		0.257812, -0.007812,
-		0.492188, -0.007812,
-		0.242188, -0.507812,
-		0.242188, -0.742188,
-		0.007812, -0.742188,
-		0.492188, -0.492188,
-		0.257812, -0.492188,
-		0.257812, -0.257812,
+		0.999900, -0.000100,
+		0.000100, -0.999900,
+		0.000100, -0.000100,
+		0.000100, -0.000100,
+		0.999900, -0.999900,
+		0.000100, -0.999900,
+		0.999900, -0.999900,
+		0.000100, -0.000100,
+		0.999900, -0.000100,
+		0.999900, -0.000100,
+		0.000100, -0.999900,
+		0.000100, -0.000100,
+		0.000100, -0.000100,
+		0.999900, -0.999900,
+		0.000100, -0.999900,
+		0.999900, -0.999900,
+		0.000100, -0.000100,
+		0.999900, -0.000100,
+		0.999900, -0.000100,
+		0.999900, -0.999900,
+		0.000100, -0.999900,
+		0.000100, -0.000100,
+		0.999900, -0.000100,
+		0.999900, -0.999900,
+		0.999900, -0.999900,
+		0.000100, -0.999900,
+		0.000100, -0.000100,
+		0.999900, -0.000100,
+		0.999900, -0.999900,
+		0.000100, -0.999900,
+		0.000100, -0.000100,
+		0.999900, -0.000100,
+		0.999900, -0.999900,
+		0.999900, -0.999900,
+		0.000100, -0.999900,
+		0.000100, -0.000100,
 	};
 
 	static constexpr GLfloat single_block_normals[] = {

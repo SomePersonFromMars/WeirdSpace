@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+#include <thread>
 #include <chrono>
 using std::vector;
 
@@ -91,10 +92,6 @@ int main( void )
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetWindowSizeCallback(window, window_size_callback);
 
-	GLuint VertexArrayID;
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
-
 	shader_A_t shader;
 	shader.init();
 
@@ -122,6 +119,12 @@ int main( void )
 	double timer_fps_cnter = glfwGetTime();
 
 	do {
+		constexpr auto frame_min_duration
+			= std::chrono::milliseconds(FRAME_MIN_DURATION);
+
+		const auto frame_beg_time = std::chrono::high_resolution_clock::now();
+		const auto frame_end_time
+			= frame_beg_time + frame_min_duration;
 
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -134,10 +137,6 @@ int main( void )
 		glm::mat4 Model = glm::mat4(1.0f);
 
 		world_renderer.draw(position, Projection, View, Model);
-
-		// Swap buffers
-		glfwSwapBuffers(window);
-		glfwPollEvents();
 
 		double fps_cnt;
 		{ // FPS cnter
@@ -165,12 +164,17 @@ int main( void )
 			}
 		}
 
+
+		// Swap buffers
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+
+		std::this_thread::sleep_until(frame_end_time);
 	} // Check if the ESC key was pressed or the window was closed
 	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
 			glfwWindowShouldClose(window) == 0 );
 
 	// Cleanup VBO
-	glDeleteVertexArrays(1, &VertexArrayID);
 	world_renderer.deinit();
 	shader.deinit();
 

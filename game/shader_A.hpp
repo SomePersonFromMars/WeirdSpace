@@ -9,18 +9,20 @@
 
 #include "settings.hpp"
 
-// Usage:
-//
-// Initialization:
-// shader_A_t shader;
-// shader.init();
-//
-// Drawing single VAO:
-// glUseProgram(shader.program_id);
-// glBindVertexArray(vao_id);
-// glUniform*(shader.*_uniform, new_value);
-// glDraw*(*);
-// glBindVertexArray(0); // Unbinding not necessary
+/*
+	* Usage:
+
+	* Initialization:
+		shader_A_t shader;
+		shader.init();
+
+	* Drawing single VAO:
+		glUseProgram(shader.program_id);
+		glBindVertexArray(vao_id);
+		glUniform*(shader.*_uniform, new_value);
+		glDraw*(*);
+		glBindVertexArray(0); // Unbinding not necessary
+*/
 
 struct shader_A_t {
 
@@ -35,13 +37,12 @@ struct shader_A_t {
 	GLuint program_id;
 
 	// Uniforms
-	GLuint MVP_matrix_uniform;
 	GLuint view_matrix_uniform;
 	GLuint model_matrix_uniform;
 	GLuint projection_matrix_uniform;
-	GLuint light_uniform;
+	GLuint light_pos_worldspace_uniform;
 	GLuint light_color_uniform;
-	GLuint texture_uniform;
+	GLuint texture_sampler_uniform;
 };
 
 #endif

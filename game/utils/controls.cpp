@@ -39,8 +39,6 @@ constexpr float speed_normal = 8.0f; // 3 units / second
 constexpr float speed_accelerated = 64.0f; // 3 units / second
 float mouseSpeed = 0.005f;
 
-
-
 void computeMatricesFromInputs(GLint windowWidth, GLint windowHeight ){
 
 	// glfwGetTime is called only once, the first time this function is called
@@ -48,7 +46,7 @@ void computeMatricesFromInputs(GLint windowWidth, GLint windowHeight ){
 
 	// Compute time difference between current and last frame
 	double currentTime = glfwGetTime();
-	float deltaTime = float(currentTime - lastTime);
+	const float deltaTime = float(currentTime - lastTime);
 
 	// Get mouse position
 	double xpos, ypos;
@@ -61,7 +59,7 @@ void computeMatricesFromInputs(GLint windowWidth, GLint windowHeight ){
 	// horizontalAngle += mouseSpeed * float(windowHeight/2 - xpos );
 	// verticalAngle   += mouseSpeed * float( windowWidth/2 - ypos );
 
-	constexpr float diffAngle = 2.0f * 3.1415f / 180.0f;
+	const float diffAngle = 2.0f * 3.1415f / 180.0f * 50.0f * deltaTime;
 	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS) {
 		verticalAngle += diffAngle;
 	}

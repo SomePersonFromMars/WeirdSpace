@@ -9,33 +9,37 @@ world_renderer_t::world_renderer_t(
 {  }
 
 void world_renderer_t::init() {
-	// program_id = LoadShaders( "runtime/vertex.vs", "runtime/fragment.fs" );
-	// MVP_matrix_uniform = glGetUniformLocation(program_id, "MVP");
-	// view_matrix_uniform = glGetUniformLocation(program_id, "V");
-	// model_matrix_uniform = glGetUniformLocation(program_id, "M");
-	// projection_matrix_uniform = glGetUniformLocation(program_id, "P");
-	// light_uniform = glGetUniformLocation(program_id,
-	// 		"LightPosition_worldspace");
-	// light_color_uniform = glGetUniformLocation(program_id,
-	// 		"LightColor");
+	texture_id = load_texture("runtime/blocks_combined.png");
 
-	for (uint8_t i = 1; i < static_cast<uint8_t>(block_type::cnt); ++i) {
-		strcts[i].texture_id = loadDDS("runtime/sand.dds");
-		// strcts[i].texture_uniform = glGetUniformLocation(program_id,
-		// 		"myTextureSampler");
+	glGenVertexArrays(1, &vao_id);
+	glBindVertexArray(vao_id);
 
-		glGenBuffers(1, &strcts[i].positions_buffer_id);
-		glGenBuffers(1, &strcts[i].uvs_buffer_id);
-		glGenBuffers(1, &strcts[i].normals_buffer_id);
-	}
+	glGenBuffers(1, &positions_buffer_id);
+	glGenBuffers(1, &uvs_buffer_id);
+	glGenBuffers(1, &normals_buffer_id);
+
+	// 1rst attribute buffer: vertices
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, positions_buffer_id);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	// 2nd attribute buffer: UV coordinates
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, uvs_buffer_id);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	// 3rd attribute buffer: normals
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, normals_buffer_id);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	glBindVertexArray(0); // Unbind vao, not necessary
 }
 
 void world_renderer_t::clear_preprocessing_data() {
-	for (uint8_t i = 1; i < static_cast<uint8_t>(block_type::cnt); ++i) {
-		strcts[i].positions_buffer.clear();
-		strcts[i].uvs_buffer.clear();
-		strcts[i].normals_buffer.clear();
-	}
+	positions_buffer.clear();
+	uvs_buffer.clear();
+	normals_buffer.clear();
 }
 
 void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
@@ -49,7 +53,6 @@ void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
 		for (size_t y = 0; y < content[x].size(); ++y) {
 			for (size_t z = 0; z < content[x][y].size(); ++z) {
 				if (content[x][y][z] == block_type::none) continue;
-				auto &strct = strcts[static_cast<uint8_t>(content[x][y][z])];
 
 				for (size_t i = 0; i < single_block_points_cnt; ++i) {
 					const glm::vec3 pos(
@@ -57,25 +60,25 @@ void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
 						single_block_positions[3*i+1] + 2.0f * y,
 						single_block_positions[3*i+2] + -2.0f * z
 					);
-					strct.positions_buffer.push_back(pos.x / 2.0f + offset.x);
-					strct.positions_buffer.push_back(pos.y / 2.0f);
-					strct.positions_buffer.push_back(pos.z / 2.0f + offset.y);
+					positions_buffer.push_back(pos.x / 2.0f + offset.x);
+					positions_buffer.push_back(pos.y / 2.0f);
+					positions_buffer.push_back(pos.z / 2.0f + offset.y);
 
 					const glm::vec2 uv(
 						single_block_uv[2*i+0],
 						single_block_uv[2*i+1]
 					);
-					strct.uvs_buffer.push_back(uv.x);
-					strct.uvs_buffer.push_back(uv.y);
+					uvs_buffer.push_back(uv.x);
+					uvs_buffer.push_back(uv.y);
 
 					const glm::vec3 normal(
 						single_block_normals[3*i+0],
 						single_block_normals[3*i+1],
 						single_block_normals[3*i+2]
 					);
-					strct.normals_buffer.push_back(normal.x);
-					strct.normals_buffer.push_back(normal.y);
-					strct.normals_buffer.push_back(normal.z);
+					normals_buffer.push_back(normal.x);
+					normals_buffer.push_back(normal.y);
+					normals_buffer.push_back(normal.z);
 				}
 			}
 		}
@@ -83,22 +86,20 @@ void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
 }
 
 void world_renderer_t::finish_preprocessing() {
-	for (uint8_t i = 1; i < static_cast<uint8_t>(block_type::cnt); ++i) {
-		glBindBuffer(GL_ARRAY_BUFFER, strcts[i].positions_buffer_id);
-		glBufferData(GL_ARRAY_BUFFER,
-				strcts[i].positions_buffer.size()*sizeof(GLfloat),
-				&strcts[i].positions_buffer[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, positions_buffer_id);
+	glBufferData(GL_ARRAY_BUFFER,
+			positions_buffer.size()*sizeof(GLfloat),
+			&positions_buffer[0], GL_STATIC_DRAW);
 
-		glBindBuffer(GL_ARRAY_BUFFER, strcts[i].uvs_buffer_id);
-		glBufferData(GL_ARRAY_BUFFER,
-				strcts[i].uvs_buffer.size()*sizeof(GLfloat),
-				&strcts[i].uvs_buffer[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, uvs_buffer_id);
+	glBufferData(GL_ARRAY_BUFFER,
+			uvs_buffer.size()*sizeof(GLfloat),
+			&uvs_buffer[0], GL_STATIC_DRAW);
 
-		glBindBuffer(GL_ARRAY_BUFFER, strcts[i].normals_buffer_id);
-		glBufferData(GL_ARRAY_BUFFER,
-				strcts[i].normals_buffer.size()*sizeof(GLfloat),
-				&strcts[i].normals_buffer[0], GL_STATIC_DRAW);
-	}
+	glBindBuffer(GL_ARRAY_BUFFER, normals_buffer_id);
+	glBufferData(GL_ARRAY_BUFFER,
+			normals_buffer.size()*sizeof(GLfloat),
+			&normals_buffer[0], GL_STATIC_DRAW);
 }
 
 void world_renderer_t::draw(
@@ -107,14 +108,8 @@ void world_renderer_t::draw(
 	const glm::mat4 &view_matrix,
 	const glm::mat4 &model_matrix
 ) {
-	// Use our shader
-	// glUseProgram(program_id);
 	glUseProgram(shader.program_id);
 
-	glm::mat4 MVP_matrix = projection_matrix * view_matrix * model_matrix;
-
-	glUniformMatrix4fv(shader.MVP_matrix_uniform,
-			1, GL_FALSE, &MVP_matrix[0][0]);
 	glUniformMatrix4fv(shader.model_matrix_uniform,
 			1, GL_FALSE, &model_matrix[0][0]);
 	glUniformMatrix4fv(shader.view_matrix_uniform,
@@ -122,78 +117,33 @@ void world_renderer_t::draw(
 	glUniformMatrix4fv(shader.projection_matrix_uniform,
 			1, GL_FALSE, &projection_matrix[0][0]);
 
-	// const glm::vec3 light_pos = glm::vec3(10, 20, -10) + camera_pos;
 	const glm::vec3 light_pos = glm::vec3(0, 0, 0) + camera_pos;
-
-	// const glm::vec3 light_pos = glm::vec3(0, 20, 0);
 	const glm::vec3 light_color = color_hex_to_vec3(LIGHT_COLOR);
 
-	glUniform3f(shader.light_uniform,
+	glUniform3f(shader.light_pos_worldspace_uniform,
 			light_pos.x, light_pos.y, light_pos.z);
 	glUniform3f(shader.light_color_uniform,
 			light_color.x,
 			light_color.y,
 			light_color.z);
 
-	for (uint8_t i = 1; i < static_cast<uint8_t>(block_type::cnt); ++i) {
-		// Bind our texture in Texture Unit 0
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, strcts[i].texture_id);
-		// Set our "myTextureSampler" sampler to use Texture Unit 0
-		glUniform1i(shader.texture_uniform,
-				0);
+	// Bind our texture in Texture Unit 0
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	// Set texture_sampler sampler to use Texture Unit 0
+	glUniform1i(shader.texture_sampler_uniform,
+			0);
 
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, strcts[i].positions_buffer_id);
-		glVertexAttribPointer(
-				0,                  // attribute
-				3,                  // size
-				GL_FLOAT,           // type
-				GL_FALSE,           // normalized?
-				0,                  // stride
-				(void*)0            // array buffer offset
-				);
-
-		// 2nd attribute buffer : UV coordinates
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, strcts[i].uvs_buffer_id);
-		glVertexAttribPointer(
-				1,                  // attribute
-				2,                  // size
-				GL_FLOAT,           // type
-				GL_FALSE,           // normalized?
-				0,                  // stride
-				(void*)0            // array buffer offset
-				);
-
-		// 3rd attribute buffer : normals
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, strcts[i].normals_buffer_id);
-		glVertexAttribPointer(
-				2,                                // attribute
-				3,                                // size
-				GL_FLOAT,                         // type
-				GL_FALSE,                         // normalized?
-				0,                                // stride
-				(void*)0                          // array buffer offset
-				);
-
-		glDrawArrays(GL_TRIANGLES, 0, strcts[i].positions_buffer.size()/3);
-
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
-	}
+	glBindVertexArray(vao_id);
+	glDrawArrays(GL_TRIANGLES, 0, positions_buffer.size()/3);
+	// glBindVertexArray(0); // Not necessary
 }
 
 void world_renderer_t::deinit() {
-	for (uint8_t i = 1; i < static_cast<uint8_t>(block_type::cnt); ++i) {
-		glDeleteBuffers(1,  &strcts[i].positions_buffer_id);
-		glDeleteBuffers(1,  &strcts[i].uvs_buffer_id);
-		glDeleteBuffers(1,  &strcts[i].normals_buffer_id);
-		glDeleteTextures(1, &strcts[i].texture_id);
-	}
+	glDeleteBuffers(1,  &positions_buffer_id);
+	glDeleteBuffers(1,  &uvs_buffer_id);
+	glDeleteBuffers(1,  &normals_buffer_id);
+	glDeleteTextures(1, &texture_id);
 
-	// glDeleteProgram(program_id);
+	glDeleteVertexArrays(1, &vao_id);
 }
