@@ -12,9 +12,11 @@ uniform sampler2D texture_sampler;
 
 void main()
 {
-	vec3 objectColor = texture( texture_sampler, fragment_UV ).rgb;
-	// vec3 light_color = vec3(1, 1, 1);
-	vec3 light_color = light_color;
+	vec4 objectColor = texture( texture_sampler, fragment_UV ).rgba;
+	if (objectColor.a == 0.0)
+		discard;
+
+	// light_color = vec3(1, 1, 1);
 
 	// ambient
 	float ambientStrength = 0.3;
@@ -30,7 +32,7 @@ void main()
 	// float dist = length(light_pos_worldspace - fragment_pos_worldspace);
 	// vec3 diffuse = diff * light_color * 100 / dist / dist;
 
-	vec3 result = (ambient + diffuse) * objectColor;
+	vec3 result = (ambient + diffuse) * objectColor.rgb;
 	color = vec4(result, 1.0);
 
 	// // Disable the light

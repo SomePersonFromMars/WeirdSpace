@@ -120,9 +120,9 @@ GLuint load_texture(const char *texture_path) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	// load and generate the texture
 	int width, height, nrChannels;
-	unsigned char *data = stbi_load(texture_path, &width, &height, &nrChannels, 3);
+	unsigned char *data = stbi_load(texture_path, &width, &height, &nrChannels, 4);
 	if (data) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	} else {
 		fprintf(stderr, "Failed to load texture.\n");

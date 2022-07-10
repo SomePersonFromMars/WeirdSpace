@@ -15,6 +15,7 @@ world_renderer_t::world_renderer_t(
 {  }
 
 void world_renderer_t::init() {
+	// Generate OpenGL ids
 	texture_id = load_texture("runtime/blocks_combined.png");
 
 	glGenVertexArrays(1, &vao_id);
@@ -25,6 +26,7 @@ void world_renderer_t::init() {
 	glGenBuffers(1, &normals_buffer_id);
 	glGenBuffers(1, &positions_instanced_buffer_id);
 
+	// Initialize VBOs with single instance data
 	glBindBuffer(GL_ARRAY_BUFFER, positions_buffer_id);
 	glBufferData(GL_ARRAY_BUFFER,
 			sizeof(single_block_positions),
@@ -40,6 +42,7 @@ void world_renderer_t::init() {
 			sizeof(single_block_normals),
 			single_block_normals, GL_STATIC_DRAW);
 
+	// Add shader vertex attributes to the VAO
 	// 1rst attribute buffer: vertices
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, positions_buffer_id);
@@ -125,7 +128,7 @@ void world_renderer_t::draw(
 			light_color.y,
 			light_color.z);
 
-	// Bind our texture in Texture Unit 0
+	// Bind texture in Texture Unit 0
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 	// Set texture_sampler sampler to use Texture Unit 0

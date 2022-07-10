@@ -21,10 +21,10 @@ using namespace glm;
 
 #include "shader_A.hpp"
 
-#include "chunk.hpp"
 #include "world_buffer.hpp"
 #include "world_renderer.hpp"
 #include "world_generator.hpp"
+#include "player.hpp"
 
 #include "settings.hpp"
 
@@ -96,10 +96,8 @@ int main( void )
 	shader.init();
 
 	world_buffer_t world_buffer;
-
 	world_renderer_t world_renderer(shader, world_buffer);
 	world_renderer.init();
-
 	world_generator_t world_generator(world_buffer);
 	for (int x = 0; x < 10; ++x) {
 		for (int y = 0; y < 10; ++y) {
@@ -112,6 +110,10 @@ int main( void )
 	// world_renderer.preprocess_chunk({0, 0});
 	// world_renderer.preprocess_chunk({1, 0});
 	world_renderer.finish_preprocessing();
+
+	player_t player(shader);
+	player.set_position({5, 10.5, 8});
+	player.init();
 
 	position = vec3(0, 16, 0);
 	std::chrono::time_point<std::chrono::high_resolution_clock>
@@ -137,6 +139,7 @@ int main( void )
 		glm::mat4 Model = glm::mat4(1.0f);
 
 		world_renderer.draw(position, Projection, View, Model);
+		player.draw(position, Projection, View, Model);
 
 		double fps_cnt;
 		{ // FPS cnter
