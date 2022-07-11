@@ -22,5 +22,6 @@ void main()
 		= mat3(transpose(inverse(M))) * vertex_normal_modelspace;
 
 	gl_Position = P * V * vec4(fragment_pos_worldspace, 1.0);
+	gl_Position.z /= 2.0;
 	fragment_UV = vertex_UV;
 }

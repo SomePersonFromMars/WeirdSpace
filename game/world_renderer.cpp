@@ -86,7 +86,7 @@ void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
 				const glm::vec3 block_pos(
 					static_cast<float>(x) + offset.x,
 					static_cast<float>(y),
-					-static_cast<float>(z) + offset.y
+					static_cast<float>(z) + offset.y
 				);
 				positions_instanced_buffer.push_back(block_pos.x);
 				positions_instanced_buffer.push_back(block_pos.y);

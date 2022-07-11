@@ -99,8 +99,8 @@ int main( void )
 	world_renderer_t world_renderer(shader, world_buffer);
 	world_renderer.init();
 	world_generator_t world_generator(world_buffer);
-	for (int x = 0; x < 10; ++x) {
-		for (int y = 0; y < 10; ++y) {
+	for (int x = 0; x < 5; ++x) {
+		for (int y = 0; y < 5; ++y) {
 			world_generator.gen_chunk({x, y});
 			world_renderer.preprocess_chunk({x, y});
 		}
@@ -112,7 +112,8 @@ int main( void )
 	world_renderer.finish_preprocessing();
 
 	player_t player(shader);
-	player.set_position({5, 10.5, 8});
+	// player.set_position({5, 10.5, 8});
+	player.set_position({0, 9, 3});
 	player.init();
 
 	position = vec3(0, 16, 0);

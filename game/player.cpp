@@ -62,7 +62,7 @@ void player_t::init() {
 	glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
 	glBufferData(GL_ARRAY_BUFFER,
 			sizeof(position),
-			&position, GL_STATIC_DRAW);
+			&position, GL_DYNAMIC_DRAW);
 
 	glBindVertexArray(0); // Unbind vao, not necessary
 }
