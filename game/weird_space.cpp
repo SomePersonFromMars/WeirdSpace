@@ -9,16 +9,15 @@ using std::vector;
 #include <GL/glew.h>
 
 #include <GLFW/glfw3.h>
-GLFWwindow* window;
-GLint windowHeight = 768, windowWidth = 1536;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 
 #include "utils/shader.hpp"
-#include "utils/controls.hpp"
 
+#include "callbacks.hpp"
+#include "camera.hpp"
 #include "shader_A.hpp"
 
 #include "world_buffer.hpp"
@@ -28,17 +27,11 @@ using namespace glm;
 
 #include "settings.hpp"
 
-void window_size_callback(GLFWwindow* window, int width, int height) {
-	windowWidth = width;
-	windowHeight = height;
-}
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-	glViewport(0, 0, width, height);
-}
-
 int main( void )
 {
+	GLFWwindow* window;
+	GLint window_width = 1536, window_height = 768;
+
 	// Initialise GLFW
 	if( !glfwInit() )
 	{
@@ -53,7 +46,7 @@ int main( void )
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( windowWidth, windowHeight, "Playground", NULL, NULL);
+	window = glfwCreateWindow( window_width, window_height, "Playground", NULL, NULL);
 	if( window == NULL ){
 		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 		getchar();
@@ -71,9 +64,6 @@ int main( void )
 		return -1;
 	}
 
-	// Ensure we can capture the escape key being pressed below
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
 	// Set the mouse at the center of the screen
 	glfwPollEvents();
 
@@ -89,8 +79,15 @@ int main( void )
 
 	glEnable(GL_CULL_FACE);
 
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetWindowSizeCallback(window, window_size_callback);
+	double delta_time = 0.0;
+	camera_t camera({0, 16, 0}, 1.2, 6.0f, 120.0f);
+	callbacks_strct_t callbacks_strct(
+			window,
+			window_width,
+			window_height,
+			delta_time,
+			camera
+		);
 
 	shader_A_t shader;
 	shader.init();
@@ -99,8 +96,8 @@ int main( void )
 	world_renderer_t world_renderer(shader, world_buffer);
 	world_renderer.init();
 	world_generator_t world_generator(world_buffer);
-	for (int x = 0; x < 5; ++x) {
-		for (int y = 0; y < 5; ++y) {
+	for (int x = 0; x < 20; ++x) {
+		for (int y = 0; y < 20; ++y) {
 			world_generator.gen_chunk({x, y});
 			world_renderer.preprocess_chunk({x, y});
 		}
@@ -116,12 +113,12 @@ int main( void )
 	player.set_position({0, 9, 3});
 	player.init();
 
-	position = vec3(0, 16, 0);
 	std::chrono::time_point<std::chrono::high_resolution_clock>
 		timer_debugging= std::chrono::high_resolution_clock::now();
 	double timer_fps_cnter = glfwGetTime();
 
-	do {
+	while (glfwWindowShouldClose(window) == GLFW_FALSE) {
+
 		constexpr auto frame_min_duration
 			= std::chrono::milliseconds(FRAME_MIN_DURATION);
 
@@ -132,20 +129,18 @@ int main( void )
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Send our transformation to the currently bound shader,
-		// in the "MVP" uniform
-		computeMatricesFromInputs(windowWidth, windowHeight);
-		glm::mat4 Projection = getProjectionMatrix();
-		glm::mat4 View = getViewMatrix();
+		glm::mat4 Projection = camera.get_projection_matrix(
+				window_width, window_height);
+		glm::mat4 View = camera.get_view_matrix();
 		glm::mat4 Model = glm::mat4(1.0f);
 
-		world_renderer.draw(position, Projection, View, Model);
-		player.draw(position, Projection, View, Model);
+		world_renderer.draw(camera.get_position(), Projection, View, Model);
+		player.draw(camera.get_position(), Projection, View, Model);
 
 		double fps_cnt;
 		{ // FPS cnter
 			const double now = glfwGetTime();
-			const double delta_time = now - timer_fps_cnter;
+			delta_time = now - timer_fps_cnter;
 			fps_cnt = 1.0 / delta_time;
 			timer_fps_cnter = now;
 		}
@@ -157,26 +152,23 @@ int main( void )
 				timer_debugging = now;
 
 				fprintf(stderr, "pos=(%f, %f, %f)",
-						position.x,
-						position.y,
-						position.z);
+						camera.get_position().x,
+						camera.get_position().y,
+						camera.get_position().z);
 				fprintf(stderr, ", angle=(%f, %f)",
-						horizontalAngle,
-						verticalAngle);
+						camera.get_horizontal_angle(),
+						camera.get_vertical_angle());
 				fprintf(stderr, ", fps_cnt=%f\n",
 						fps_cnt);
 			}
 		}
 
-
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
+		callbacks_strct.handle_input();
 		std::this_thread::sleep_until(frame_end_time);
-	} // Check if the ESC key was pressed or the window was closed
-	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
-			glfwWindowShouldClose(window) == 0 );
+	}
 
 	// Cleanup VBO
 	world_renderer.deinit();

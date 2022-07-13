@@ -8,6 +8,8 @@ file(GLOB UTILS_SRC utils/*.cpp)
 
 add_executable(weird_space
 	weird_space.cpp
+	callbacks.cpp
+	camera.cpp
 	chunk.cpp
 	noise.cpp
 	world_buffer.cpp

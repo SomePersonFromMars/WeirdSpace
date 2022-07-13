@@ -8,9 +8,11 @@
 #ifdef DEBUG
 	#define PRINT_ZU(var) printf(#var " = %zu\n", var)
 	#define PRINT_F(var) printf(#var " = %f\n", var)
+	#define WHERE printf("%s:%d\n", __func__, __LINE__)
 #else
 	#define PRINT_ZU(var)
 	#define PRINT_F(var)
+	#define WHERE
 #endif
 
 #define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
