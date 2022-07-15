@@ -3,9 +3,12 @@
 #define CALLBACKS_HPP
 
 #include <bitset>
+
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include "camera.hpp"
+#include "player.hpp"
 
 void window_size_callback(GLFWwindow* window, int width, int height);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -18,7 +21,8 @@ struct callbacks_strct_t {
 			GLint &window_width,
 			GLint &window_height,
 			double &delta_time,
-			camera_t &camera
+			camera_t &camera,
+			player_t &player
 		);
 	void handle_input();
 
@@ -27,6 +31,7 @@ private:
 	GLint &window_height;
 	double &delta_time;
 	camera_t &camera;
+	player_t &player;
 
 	std::bitset<GLFW_KEY_LAST+1> key_holded;
 

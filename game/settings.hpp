@@ -10,7 +10,7 @@
 #define SHADER_A_VERTEX_PATH "runtime/shader_A_vertex.glsl"
 #define SHADER_A_FRAGMENT_PATH "runtime/shader_A_fragment.glsl"
 
-#define ATMOSPHERE 3
+#define ATMOSPHERE 2
 #if ATMOSPHERE == 1
 	// Soft-blue, soft-yellow
 	#define SKY_COLOR 0xd7e6e8

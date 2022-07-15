@@ -15,6 +15,8 @@
 	#define WHERE
 #endif
 
+constexpr double PI = 3.14159265358979323846;
+
 #define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
 #define AT3(x, y, z) \

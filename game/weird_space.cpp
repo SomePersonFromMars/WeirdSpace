@@ -80,14 +80,7 @@ int main( void )
 	glEnable(GL_CULL_FACE);
 
 	double delta_time = 0.0;
-	camera_t camera({0, 16, 0}, 1.2, 6.0f, 120.0f);
-	callbacks_strct_t callbacks_strct(
-			window,
-			window_width,
-			window_height,
-			delta_time,
-			camera
-		);
+	camera_t camera({9, 12, -3}, 2*PI, 6.0f, 120.0f);
 
 	shader_A_t shader;
 	shader.init();
@@ -108,10 +101,18 @@ int main( void )
 	// world_renderer.preprocess_chunk({1, 0});
 	world_renderer.finish_preprocessing();
 
-	player_t player(shader);
-	// player.set_position({5, 10.5, 8});
-	player.set_position({0, 9, 3});
+	player_t player(shader, world_buffer);
+	player.set_position({9, 9, 0.5});
 	player.init();
+
+	callbacks_strct_t callbacks_strct(
+			window,
+			window_width,
+			window_height,
+			delta_time,
+			camera,
+			player
+		);
 
 	std::chrono::time_point<std::chrono::high_resolution_clock>
 		timer_debugging= std::chrono::high_resolution_clock::now();
@@ -134,8 +135,9 @@ int main( void )
 		glm::mat4 View = camera.get_view_matrix();
 		glm::mat4 Model = glm::mat4(1.0f);
 
-		world_renderer.draw(camera.get_position(), Projection, View, Model);
-		player.draw(camera.get_position(), Projection, View, Model);
+		const glm::vec3 light_pos = camera.get_position() + glm::vec3(0, 3, 0);
+		world_renderer.draw(light_pos, Projection, View, Model);
+		player.draw(light_pos, Projection, View, Model);
 
 		double fps_cnt;
 		{ // FPS cnter

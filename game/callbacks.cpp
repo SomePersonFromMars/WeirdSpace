@@ -7,12 +7,14 @@ callbacks_strct_t::callbacks_strct_t(
 		GLint &window_width,
 		GLint &window_height,
 		double &delta_time,
-		camera_t &camera
+		camera_t &camera,
+		player_t &player
 	)
 	:window_width{window_width}
 	,window_height{window_height}
 	,delta_time{delta_time}
 	,camera{camera}
+	,player{player}
 {
 	glfwSetWindowUserPointer(
 			window,
@@ -52,6 +54,43 @@ void callbacks_strct_t::handle_input() {
 
 	if (key_holded[GLFW_KEY_A])
 		camera.move_left(delta_time);
+
+
+	if (key_holded[GLFW_KEY_KP_8])
+		player.move_up(delta_time);
+
+	if (key_holded[GLFW_KEY_KP_2])
+		player.move_down(delta_time);
+
+	if (key_holded[GLFW_KEY_KP_6])
+		player.move_right(delta_time);
+
+	if (key_holded[GLFW_KEY_KP_4])
+		player.move_left(delta_time);
+
+	if (key_holded[GLFW_KEY_KP_0])
+		player.jump(delta_time);
+
+
+	if (key_holded[GLFW_KEY_KP_7]) {
+		player.move_up(delta_time);
+		player.move_left(delta_time);
+	}
+
+	if (key_holded[GLFW_KEY_KP_1]) {
+		player.move_down(delta_time);
+		player.move_left(delta_time);
+	}
+
+	if (key_holded[GLFW_KEY_KP_9]) {
+		player.move_up(delta_time);
+		player.move_right(delta_time);
+	}
+
+	if (key_holded[GLFW_KEY_KP_3]) {
+		player.move_down(delta_time);
+		player.move_right(delta_time);
+	}
 }
 
 void window_size_callback(GLFWwindow* window, int width, int height) {
