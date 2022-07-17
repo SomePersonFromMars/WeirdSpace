@@ -36,8 +36,10 @@ private:
 	std::bitset<GLFW_KEY_LAST+1> key_holded;
 
 	static inline callbacks_strct_t* get_strct(GLFWwindow *window);
-	friend void window_size_callback(GLFWwindow* window, int width, int height);
-	friend void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+	friend void window_size_callback
+		(GLFWwindow* window, int width, int height);
+	friend void framebuffer_size_callback
+		(GLFWwindow* window, int width, int height);
 	friend void key_callback(GLFWwindow *window,
 			int key, int scancode, int action, int mods);
 };

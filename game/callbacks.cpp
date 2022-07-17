@@ -121,6 +121,9 @@ void key_callback(GLFWwindow *window,
 			case GLFW_KEY_ESCAPE:
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
 				break;
+			case GLFW_KEY_F:
+				camera.switch_following_mode();
+				break;
 			default:
 				break;
 		}

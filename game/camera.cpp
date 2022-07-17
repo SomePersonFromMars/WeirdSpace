@@ -2,6 +2,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "utils/useful.hpp"
+
 camera_t::camera_t(glm::vec3 pos, float h_angle, float v_angle, float fov)
 	:position{pos}
 	,horizontal_angle{h_angle}
@@ -9,47 +11,61 @@ camera_t::camera_t(glm::vec3 pos, float h_angle, float v_angle, float fov)
 	,fov{fov}
 { }
 
-void camera_t::rotate_up     (float delta_time) {
+void camera_t::rotate_up(float delta_time) {
 	rotation_vectors_outdated = true;
 	vertical_angle += rotation_speed * delta_time;
 }
-void camera_t::rotate_down   (float delta_time) {
+void camera_t::rotate_down(float delta_time) {
 	rotation_vectors_outdated = true;
 	vertical_angle -= rotation_speed * delta_time;
 }
-void camera_t::rotate_right  (float delta_time) {
+void camera_t::rotate_right(float delta_time) {
 	rotation_vectors_outdated = true;
 	horizontal_angle -= rotation_speed * delta_time;
 }
-void camera_t::rotate_left   (float delta_time) {
+void camera_t::rotate_left(float delta_time) {
 	rotation_vectors_outdated = true;
 	horizontal_angle += rotation_speed * delta_time;
 }
 
-void camera_t::move_forward  (float delta_time) {
+void camera_t::move_forward(float delta_time) {
 	update_rotation_vectors();
 	position += direction_vec * delta_time * moving_speed;
+	if (get_following_mode())
+		target_dist -= delta_time * moving_speed;
 }
-void camera_t::move_backward (float delta_time) {
+void camera_t::move_backward(float delta_time) {
 	update_rotation_vectors();
 	position -= direction_vec * delta_time * moving_speed;
+	if (get_following_mode())
+		target_dist += delta_time * moving_speed;
 }
-void camera_t::move_right    (float delta_time) {
+void camera_t::move_right(float delta_time) {
 	update_rotation_vectors();
 	position += right_vec * delta_time * moving_speed;
 }
-void camera_t::move_left     (float delta_time) {
+void camera_t::move_left(float delta_time) {
 	update_rotation_vectors();
 	position -= right_vec * delta_time * moving_speed;
 }
 
-void camera_t::enable_moving_acceleration   (bool enable) {
+void camera_t::follow(float delta_time, glm::vec3 target) {
+	update_rotation_vectors();
+	// const glm::vec3 new_pos = target + glm::vec3(0, 3, -3);
+	const glm::vec3 new_pos = target - direction_vec * target_dist;
+	position = lerp(position, new_pos, delta_time*2.0f);
+}
+
+void camera_t::switch_following_mode() {
+	following_mode = !following_mode;
+}
+void camera_t::enable_moving_acceleration(bool enable) {
 	if (!enable)
 		moving_speed = moving_speed_normal;
 	else
 		moving_speed = moving_speed_accelerated;
 }
-void camera_t::enable_rotation_acceleration (bool enable) {
+void camera_t::enable_rotation_acceleration(bool enable) {
 	if (!enable)
 		rotation_speed = rotation_speed_normal;
 	else

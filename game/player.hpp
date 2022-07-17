@@ -29,7 +29,10 @@ struct player_t {
 
 	// Movement
 	inline void set_position(glm::vec3 new_pos);
-	void move_up     (float delta_time);
+	inline const glm::vec3& get_position() const;
+	glm::vec2 move_by(glm::vec2 offset);
+
+	void move_up        (float delta_time);
 	void move_down      (float delta_time);
 	void move_right     (float delta_time);
 	void move_left      (float delta_time);
@@ -96,6 +99,10 @@ private:
 
 inline void player_t::set_position(glm::vec3 new_pos) {
 	position = new_pos;
+}
+
+inline const glm::vec3& player_t::get_position() const {
+	return position;
 }
 
 #endif

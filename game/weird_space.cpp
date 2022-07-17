@@ -80,7 +80,6 @@ int main( void )
 	glEnable(GL_CULL_FACE);
 
 	double delta_time = 0.0;
-	camera_t camera({9, 12, -3}, 2*PI, 6.0f, 120.0f);
 
 	shader_A_t shader;
 	shader.init();
@@ -88,6 +87,17 @@ int main( void )
 	world_buffer_t world_buffer;
 	world_renderer_t world_renderer(shader, world_buffer);
 	world_renderer.init();
+
+	world_buffer.get({0, 0, 0}) = block_type::sand;
+	world_buffer.get({0, 1, 0}) = block_type::sand;
+	world_buffer.get({1, 0, 0}) = block_type::sand;
+	world_buffer.get({2, 0, 0}) = block_type::sand;
+	world_buffer.get({3, 0, 0}) = block_type::sand;
+	world_buffer.get({3, 1, 0}) = block_type::sand;
+	world_buffer.get({4, 0, 0}) = block_type::sand;
+	world_buffer.get({4, 1, 0}) = block_type::sand;
+	world_buffer.get({4, 2, 0}) = block_type::sand;
+
 	world_generator_t world_generator(world_buffer);
 	for (int x = 0; x < 20; ++x) {
 		for (int y = 0; y < 20; ++y) {
@@ -103,7 +113,27 @@ int main( void )
 
 	player_t player(shader, world_buffer);
 	player.set_position({9, 9, 0.5});
+	// player.set_position({2, 1, 0.5});
+	// player.set_position({2.189584, 1.923374, 0.500000});
+	// player.set_position({1.7, 1.5, 0.5});
+	// player.set_position(glm::vec3(1.5, 1.0, 0.500000)
+	// 		+ glm::vec3(0.2, 0.2, 0.0));
+	// player.set_position({4.148619, 3.648619, 0.500000});
 	player.init();
+
+	// camera_t camera({9, 12, -3}, 2*PI, 6.0f, 120.0f);
+	// camera_t camera(player.get_position()+glm::vec3(0, 1, -1.5),
+	// 		2*PI, 6.0f, 120.0f);
+	camera_t camera(glm::vec3(2, 1, 0.5)+glm::vec3(0, 1, -1.5),
+			2*PI, 6.0f, 120.0f);
+
+	// DEBUG
+	// player.move_by(glm::vec2(3.0f, 0.0f));
+	// player.move_by(glm::vec2(0.5f, 0.0f));
+	// player.move_by(glm::vec2(-1.0f, -1.0f));
+	// player.move_by(glm::vec2(-3.0f, -3.0f));
+	// return 0;
+	// ~DEBUG
 
 	callbacks_strct_t callbacks_strct(
 			window,
@@ -135,7 +165,8 @@ int main( void )
 		glm::mat4 View = camera.get_view_matrix();
 		glm::mat4 Model = glm::mat4(1.0f);
 
-		const glm::vec3 light_pos = camera.get_position() + glm::vec3(0, 3, 0);
+		const glm::vec3 light_pos
+			= camera.get_position() + glm::vec3(0, 5, 0);
 		world_renderer.draw(light_pos, Projection, View, Model);
 		player.draw(light_pos, Projection, View, Model);
 
@@ -150,18 +181,18 @@ int main( void )
 			const auto now = std::chrono::high_resolution_clock::now();
 			const auto delta_time = now - timer_debugging;
 			using namespace std::chrono_literals;
-			if (delta_time >= 500ms) {
+			if (delta_time >= 100ms) {
 				timer_debugging = now;
 
-				fprintf(stderr, "pos=(%f, %f, %f)",
-						camera.get_position().x,
-						camera.get_position().y,
-						camera.get_position().z);
-				fprintf(stderr, ", angle=(%f, %f)",
-						camera.get_horizontal_angle(),
-						camera.get_vertical_angle());
-				fprintf(stderr, ", fps_cnt=%f\n",
-						fps_cnt);
+				// fprintf(stderr, "pos=(%f, %f, %f)",
+				// 		player.get_position().x,
+				// 		player.get_position().y,
+				// 		player.get_position().z);
+				// fprintf(stderr, ", angle=(%f, %f)",
+				// 		camera.get_horizontal_angle(),
+				// 		camera.get_vertical_angle());
+				// fprintf(stderr, ", fps_cnt=%f\n",
+				// 		fps_cnt);
 			}
 		}
 
@@ -169,6 +200,8 @@ int main( void )
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 		callbacks_strct.handle_input();
+		if (camera.get_following_mode())
+			camera.follow(delta_time, player.get_position());
 		std::this_thread::sleep_until(frame_end_time);
 	}
 

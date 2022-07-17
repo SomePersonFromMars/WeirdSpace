@@ -11,9 +11,9 @@ struct camera_t {
 
 	// Speed
 	// `x` units per second
-	static constexpr float moving_speed_normal = 8.0f;
+	static constexpr float moving_speed_normal = 2.0f;
 	static constexpr float moving_speed_accelerated = 64.0f;
-	static constexpr float rotation_speed_normal = 2.0f;
+	static constexpr float rotation_speed_normal = 1.0f;
 	static constexpr float rotation_speed_accelerated = 0.5f;
 
 	// Interface
@@ -25,12 +25,15 @@ struct camera_t {
 	void move_backward (float delta_time);
 	void move_right    (float delta_time);
 	void move_left     (float delta_time);
+	void follow        (float delta_time, glm::vec3 target);
+	void switch_following_mode();
 	void enable_moving_acceleration   (bool enable);
 	void enable_rotation_acceleration (bool enable);
 
 	inline const glm::vec3& get_position() const;
 	inline const float get_horizontal_angle() const;
 	inline const float get_vertical_angle() const;
+	inline const bool get_following_mode() const;
 	glm::mat4 get_view_matrix();
 	glm::mat4 get_projection_matrix(
 			GLint window_width, GLint window_height) const;
@@ -41,6 +44,8 @@ private:
 	float horizontal_angle;
 	float vertical_angle;
 	float fov;
+	bool following_mode = true;
+	float target_dist = 3.0f;
 
 	// Kinematic state
 	float moving_speed = moving_speed_normal;
@@ -63,6 +68,9 @@ inline const float camera_t::get_horizontal_angle() const {
 }
 inline const float camera_t::get_vertical_angle() const {
 	return vertical_angle;
+}
+inline const bool camera_t::get_following_mode() const {
+	return following_mode;
 }
 
 #endif
