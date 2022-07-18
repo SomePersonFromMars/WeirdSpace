@@ -4,8 +4,6 @@
 #include "utils/shader.hpp"
 #include "utils/texture.hpp"
 
-#include <cstdio>
-
 player_t::player_t(shader_A_t &shader, world_buffer_t &world_buffer)
 	:shader{shader}
 	,world_buffer{world_buffer}
@@ -38,6 +36,12 @@ void player_t::init() {
 	glBufferData(GL_ARRAY_BUFFER,
 			sizeof(vertices_normals),
 			vertices_normals, GL_STATIC_DRAW);
+
+	const glm::vec3 dummy_pos(0, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
+	glBufferData(GL_ARRAY_BUFFER,
+			sizeof(dummy_pos),
+			&dummy_pos, GL_STATIC_DRAW);
 
 	// Add shader vertex attributes to the VAO
 	// 1rst attribute buffer: vertices
@@ -77,20 +81,15 @@ void player_t::deinit() {
 void player_t::draw(
 	const glm::vec3 &camera_pos,
 	const glm::mat4 &projection_matrix,
-	const glm::mat4 &view_matrix,
-	const glm::mat4 &model_matrix
+	const glm::mat4 &view_matrix
 	) {
-
-	// Update player world space position
-	glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
-	glBufferData(GL_ARRAY_BUFFER,
-			sizeof(position),
-			&position, GL_DYNAMIC_DRAW);
-
 	// Shader
 	glUseProgram(shader.program_id);
 
 	// Set uniforms
+	glm::mat4 model_matrix(1);
+	model_matrix = glm::translate(model_matrix, position);
+
 	glUniformMatrix4fv(shader.model_matrix_uniform,
 			1, GL_FALSE, &model_matrix[0][0]);
 	glUniformMatrix4fv(shader.view_matrix_uniform,
@@ -118,77 +117,95 @@ void player_t::draw(
 		0, ARR_SIZE(vertices_positions)/3,
 		1
 	);
-	// glBindVertexArray(0); // Not necessary
 }
 
 #define SPEED 3
 
 void player_t::move_up(float delta_time) {
-	// position += glm::vec3(0, SPEED * delta_time, 0);
 	move_by({0, SPEED * delta_time});
 }
 
 void player_t::move_down(float delta_time) {
-	// position -= glm::vec3(0, SPEED * delta_time, 0);
 	move_by({0, -SPEED * delta_time});
 }
 
 void player_t::move_right(float delta_time) {
-	// position -= glm::vec3(SPEED * delta_time, 0, 0);
 	move_by({-SPEED * delta_time, 0});
 }
 
 void player_t::move_left(float delta_time) {
-	// position += glm::vec3(SPEED * delta_time, 0, 0);
 	move_by({SPEED * delta_time, 0});
 }
 
 void player_t::jump(float delta_time) {
-	// position += glm::vec3(0, SPEED * delta_time, 0);
 }
 
+// TODO: Fix hitbox bug when colliding from the bottom
+// TODO: Fix the world_buffer.get probably modulo caused bug in the void
 glm::vec2 player_t::move_by(glm::vec2 offset) {
 	if (offset == glm::vec2(0, 0))
 		return offset;
 
+#ifdef DEBUG
+	const glm::vec3 initial_pos = position;
+#endif
+
 	const glm::vec2 lbc_pos
 		= glm::vec2(position.x, position.y)
-		+ glm::vec2(0.5f, 0.0f); // left-bottom corner position
+		+ glm::vec2(0.5f, 0.0f); // Left-bottom corner position
 
 	glm::vec2 output(0.0f, 0.0f);
 
-	while (offset != glm::vec2(0.0f, 0.0f)) {
+	while (offset != glm::vec2(0, 0)) {
 
 		glm::vec2 vec_constrained_x; // Closest potential collision down axis
 		glm::vec2 vec_constrained_y;
+		float position_constrained_single_component_x;
+		float position_constrained_single_component_y;
 		if (offset.x > 0) {
 			vec_constrained_x.x
 				= std::ceil(lbc_pos.x) - lbc_pos.x;
+			position_constrained_single_component_x
+				= std::ceil(lbc_pos.x) - 0.5;
 		} else {
 			vec_constrained_x.x
 				= std::floor(lbc_pos.x) - lbc_pos.x;
+			position_constrained_single_component_x
+				= std::floor(lbc_pos.x) - 0.5;
 		}
 		if (offset.y > 0) {
 			vec_constrained_y.y
 				= std::ceil(lbc_pos.y) - lbc_pos.y;
+			position_constrained_single_component_y
+				= std::ceil(lbc_pos.y) + 0;
 		} else {
 			vec_constrained_y.y
 				= std::floor(lbc_pos.y) - lbc_pos.y;
+			position_constrained_single_component_y
+				= std::floor(lbc_pos.y) + 0;
 		}
 		vec_constrained_x.y = offset.y * vec_constrained_x.x / offset.x;
 		vec_constrained_y.x = offset.x * vec_constrained_y.y / offset.y;
 
 		glm::vec2 vec_constrained;
+		glm::vec3 position_constrained;
 		glm::vec2 vec;
 		if (offset.y == 0.0f
 				|| len_sq(vec_constrained_x) < len_sq(vec_constrained_y)) {
 			vec_constrained = vec_constrained_x;
+			position_constrained = glm::vec3(
+					position_constrained_single_component_x,
+					position.y + vec_constrained.y,
+					position.z
+					);
+
 			if (offset.x > 0) {
 				vec.x = vec_constrained.x + 1.0f;
 				vec.x = std::min(vec.x, offset.x);
 				if (vec.x <= vec_constrained.x) {
 					output += offset;
 					position += vec2_to_vec3(offset);
+					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			} else {
@@ -197,18 +214,26 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 				if (vec.x >= vec_constrained.x) {
 					output += offset;
 					position += vec2_to_vec3(offset);
+					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			}
 			vec.y = offset.y * vec.x / offset.x;
 		} else {
 			vec_constrained = vec_constrained_y;
+			position_constrained = glm::vec3(
+					position.x + vec_constrained.x,
+					position_constrained_single_component_y,
+					position.z
+					);
+
 			if (offset.y > 0) {
 				vec.y = vec_constrained.y + 1.0f;
 				vec.y = std::min(vec.y, offset.y);
 				if (vec.y <= vec_constrained.y) {
 					output += offset;
 					position += vec2_to_vec3(offset);
+					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			} else {
@@ -217,6 +242,7 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 				if (vec.y >= vec_constrained.y) {
 					output += offset;
 					position += vec2_to_vec3(offset);
+					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			}
@@ -242,7 +268,8 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 							block_pos+glm::ivec3(dx, dy, 0)
 							) != block_type::none) {
 					output += vec_constrained;
-					position += vec2_to_vec3(vec_constrained);
+					position = position_constrained;
+					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			}
@@ -257,5 +284,4 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 }
 
 void player_t::update_physics(float delta_time) {
-
 }

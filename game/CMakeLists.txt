@@ -8,6 +8,7 @@ file(GLOB UTILS_SRC utils/*.cpp)
 
 add_executable(weird_space
 	weird_space.cpp
+	utils/useful.cpp
 	callbacks.cpp
 	camera.cpp
 	chunk.cpp

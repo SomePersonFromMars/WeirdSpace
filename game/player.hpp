@@ -17,14 +17,15 @@
 struct player_t {
 	player_t(shader_A_t &shader, world_buffer_t &world_buffer);
 
+	glm::vec3 debug_position;
+
 	// Rendering
 	void init();
 	void deinit();
 	void draw(
 		const glm::vec3 &camera_pos,
 		const glm::mat4 &projection_matrix,
-		const glm::mat4 &view_matrix,
-		const glm::mat4 &model_matrix
+		const glm::mat4 &view_matrix
 	);
 
 	// Movement
@@ -44,7 +45,6 @@ private:
 	world_buffer_t &world_buffer;
 
 	glm::vec3 position;
-	glm::vec3 speed;
 
 	GLuint texture_id;
 	GLuint vao_id;

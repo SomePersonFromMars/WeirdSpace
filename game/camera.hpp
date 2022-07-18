@@ -14,7 +14,7 @@ struct camera_t {
 	static constexpr float moving_speed_normal = 2.0f;
 	static constexpr float moving_speed_accelerated = 64.0f;
 	static constexpr float rotation_speed_normal = 1.0f;
-	static constexpr float rotation_speed_accelerated = 0.5f;
+	static constexpr float rotation_speed_accelerated = 4.0f;
 
 	// Interface
 	void rotate_up     (float delta_time);

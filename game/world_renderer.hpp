@@ -40,7 +40,6 @@ private:
 	world_buffer_t &buffer;
 
 	// All blocks combined texture
-	// *Returned by glGenTextures*
 	GLuint texture_id;
 
 	// Vertex array object

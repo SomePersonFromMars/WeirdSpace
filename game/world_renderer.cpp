@@ -63,8 +63,6 @@ void world_renderer_t::init() {
 	glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glVertexAttribDivisor(3, 1);
-
-	glBindVertexArray(0); // Unbind vao, not necessary
 }
 
 void world_renderer_t::clear_preprocessing_data() {
@@ -128,10 +126,8 @@ void world_renderer_t::draw(
 			light_color.y,
 			light_color.z);
 
-	// Bind texture in Texture Unit 0
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture_id);
-	// Set texture_sampler sampler to use Texture Unit 0
 	glUniform1i(shader.texture_sampler_uniform,
 			0);
 
@@ -140,8 +136,6 @@ void world_renderer_t::draw(
 		0, single_block_points_cnt,
 		positions_instanced_buffer.size()/3
 	);
-
-	// glBindVertexArray(0); // Not necessary
 }
 
 void world_renderer_t::deinit() {

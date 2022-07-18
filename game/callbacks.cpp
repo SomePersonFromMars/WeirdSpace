@@ -113,6 +113,7 @@ void key_callback(GLFWwindow *window,
 
 	const float delta_time = strct_ptr->delta_time;
 	camera_t &camera = strct_ptr->camera;
+	player_t &player = strct_ptr->player;
 
 	if (action == GLFW_PRESS) {
 		strct_ptr->key_holded[key] = true;
@@ -123,6 +124,9 @@ void key_callback(GLFWwindow *window,
 				break;
 			case GLFW_KEY_F:
 				camera.switch_following_mode();
+				break;
+			case GLFW_KEY_R:
+				player.set_position(player.debug_position);
 				break;
 			default:
 				break;

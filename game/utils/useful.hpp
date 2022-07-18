@@ -9,10 +9,16 @@
 	#define PRINT_ZU(var) printf(#var " = %zu\n", var)
 	#define PRINT_F(var) printf(#var " = %f\n", var)
 	#define WHERE printf("%s:%d\n", __func__, __LINE__)
+	#include <csignal>
+	extern bool enable_breakpoints;
+	#define BREAKPOINT (enable_breakpoints) ? std::raise(SIGINT) : 0
+	#define BREAKPOINT_IF(expr) (expr) ? (BREAKPOINT) : 0
 #else
 	#define PRINT_ZU(var)
 	#define PRINT_F(var)
 	#define WHERE
+	#define BREAKPOINT
+	#define BREAKPOINT_IF(expr)
 #endif
 
 constexpr double PI = 3.14159265358979323846;

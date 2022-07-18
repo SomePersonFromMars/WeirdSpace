@@ -112,7 +112,14 @@ int main( void )
 	world_renderer.finish_preprocessing();
 
 	player_t player(shader, world_buffer);
-	player.set_position({9, 9, 0.5});
+	// player.debug_position = {9+7, 9, 0.5};
+	player.debug_position = {15.5002546, 9, 0.5};	// Float collision
+													// checking counterexample
+	// player.debug_position = {2, 1, 0.5};
+	// player.debug_position = {5.703284, 0.296304, 0.5};	// Double collision
+															// checking
+															// counterexample
+	player.set_position(player.debug_position);
 	// player.set_position({2, 1, 0.5});
 	// player.set_position({2.189584, 1.923374, 0.500000});
 	// player.set_position({1.7, 1.5, 0.5});
@@ -125,15 +132,15 @@ int main( void )
 	// camera_t camera(player.get_position()+glm::vec3(0, 1, -1.5),
 	// 		2*PI, 6.0f, 120.0f);
 	camera_t camera(glm::vec3(2, 1, 0.5)+glm::vec3(0, 1, -1.5),
-			2*PI, 6.0f, 120.0f);
+			2*PI, 6.0f, 90.0f);
 
-	// DEBUG
 	// player.move_by(glm::vec2(3.0f, 0.0f));
 	// player.move_by(glm::vec2(0.5f, 0.0f));
 	// player.move_by(glm::vec2(-1.0f, -1.0f));
 	// player.move_by(glm::vec2(-3.0f, -3.0f));
+	// player.move_by(glm::vec2(-0.1f, 0.0f));
+	player.move_by(glm::vec2(-1, 0.0f));
 	// return 0;
-	// ~DEBUG
 
 	callbacks_strct_t callbacks_strct(
 			window,
@@ -168,7 +175,7 @@ int main( void )
 		const glm::vec3 light_pos
 			= camera.get_position() + glm::vec3(0, 5, 0);
 		world_renderer.draw(light_pos, Projection, View, Model);
-		player.draw(light_pos, Projection, View, Model);
+		player.draw(light_pos, Projection, View);
 
 		double fps_cnt;
 		{ // FPS cnter
@@ -181,18 +188,18 @@ int main( void )
 			const auto now = std::chrono::high_resolution_clock::now();
 			const auto delta_time = now - timer_debugging;
 			using namespace std::chrono_literals;
-			if (delta_time >= 100ms) {
+			if (delta_time >= 500ms) {
 				timer_debugging = now;
 
-				// fprintf(stderr, "pos=(%f, %f, %f)",
-				// 		player.get_position().x,
-				// 		player.get_position().y,
-				// 		player.get_position().z);
-				// fprintf(stderr, ", angle=(%f, %f)",
-				// 		camera.get_horizontal_angle(),
-				// 		camera.get_vertical_angle());
-				// fprintf(stderr, ", fps_cnt=%f\n",
-				// 		fps_cnt);
+				fprintf(stderr, "pos=(%f, %f, %f)",
+						player.get_position().x,
+						player.get_position().y,
+						player.get_position().z);
+				fprintf(stderr, ", angle=(%f, %f)",
+						camera.get_horizontal_angle(),
+						camera.get_vertical_angle());
+				fprintf(stderr, ", fps_cnt=%f\n",
+						fps_cnt);
 			}
 		}
 
@@ -201,7 +208,8 @@ int main( void )
 		glfwPollEvents();
 		callbacks_strct.handle_input();
 		if (camera.get_following_mode())
-			camera.follow(delta_time, player.get_position());
+			camera.follow(delta_time,
+					player.get_position() + glm::vec3(0, 1, 0));
 		std::this_thread::sleep_until(frame_end_time);
 	}
 
