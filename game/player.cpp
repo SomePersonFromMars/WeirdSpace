@@ -4,6 +4,8 @@
 #include "utils/shader.hpp"
 #include "utils/texture.hpp"
 
+const glm::vec2 player_t::hitbox_dimensions(1, 2);
+
 player_t::player_t(shader_A_t &shader, world_buffer_t &world_buffer)
 	:shader{shader}
 	,world_buffer{world_buffer}
@@ -120,33 +122,64 @@ void player_t::draw(
 
 #define SPEED 3
 void player_t::move_up(float delta_time) {
-	move_by({0, SPEED * delta_time});
+	// move_by({0, SPEED * delta_time});
+	on_axis_move_by(SPEED * delta_time, &glm::vec3::y);
 }
 
 void player_t::move_down(float delta_time) {
-	move_by({0, -SPEED * delta_time});
+	// move_by({0, -SPEED * delta_time});
+	on_axis_move_by(-SPEED * delta_time, &glm::vec3::y);
 }
 
 void player_t::move_right(float delta_time) {
-	move_by({-SPEED * delta_time, 0});
+	// move_by({-SPEED * delta_time, 0});
+	on_axis_move_by(-SPEED * delta_time, &glm::vec3::x);
 }
 
 void player_t::move_left(float delta_time) {
-	move_by({SPEED * delta_time, 0});
+	// move_by({SPEED * delta_time, 0});
+	on_axis_move_by(SPEED * delta_time, &glm::vec3::x);
 }
 
 void player_t::jump(float delta_time) {
 }
 #undef SPEED
 
-// void player_t::on_x_axis_move_by(float offset) {
-// 	if (offset == 0)
-// 		return;
-// }
-//
-// void player_t::on_y_axis_move_by(float offset) {
-//
-// }
+void player_t::on_axis_move_by(float offset, float glm::vec3::* axis_ptr) {
+	if (offset == 0)
+		return;
+
+	float constrained_offset;
+	float free_offset;
+	float constrained_pos_comp; // Constrained position's component
+	if (offset > 0) {
+		constrained_pos_comp
+			= std::ceil(position.*axis_ptr);
+		free_offset = 1;
+	} else {
+		constrained_pos_comp
+			= std::floor(position.*axis_ptr);
+		free_offset = -1;
+	}
+	constrained_offset
+		= constrained_pos_comp - position.*axis_ptr;
+	free_offset += constrained_offset;
+
+	if (std::abs(offset) < std::abs(free_offset))
+		free_offset = offset;
+	if (std::abs(free_offset) <= std::abs(constrained_offset)) {
+		position.*axis_ptr += free_offset;
+		return;
+	}
+
+	glm::vec3 free_pos = position;
+	free_pos.*axis_ptr += free_offset;
+	if (world_buffer.collision_check_XY_rect(free_pos, hitbox_dimensions)) {
+		position.*axis_ptr = constrained_pos_comp;
+	} else {
+		position.*axis_ptr += free_offset;
+	}
+}
 
 // TODO: When the vector is too long the player cuts through many blocks
 // TODO: It's impossible to enter a gap with player's own dimensions

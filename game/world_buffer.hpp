@@ -11,6 +11,12 @@ struct world_buffer_t {
 
 	inline block_type& get(glm::ivec3 pos);
 
+	// `pos` - Right-bottom-front rectangle position
+	// `dimensions` - Rectangle dimensions in XY plane
+	// Returns `true` if rect intersects with blocks
+	// 	different than block_type::none, `false` otherwise
+	bool collision_check_XY_rect(glm::vec3 pos, glm::vec2 dimensions);
+
 private:
 	block_type void_block = block_type::none;
 };

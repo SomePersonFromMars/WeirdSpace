@@ -31,8 +31,7 @@ struct player_t {
 	// Movement
 	inline void set_position(glm::vec3 new_pos);
 	inline const glm::vec3& get_position() const;
-	// void on_x_axis_move_by(float offset);
-	// void on_y_axis_move_by(float offset);
+	void on_axis_move_by(float offset, float glm::vec3::* axis_ptr);
 	glm::vec2 move_by(glm::vec2 offset);
 
 	void move_up        (float delta_time);
@@ -55,6 +54,8 @@ private:
 	GLuint uvs_buffer_id;
 	GLuint normals_buffer_id;
 	GLuint positions_instanced_buffer_id;
+
+	static const glm::vec2 hitbox_dimensions;
 
 	static constexpr float vertices_positions[] = {
 		1.000000,  0.000000,  0.000000,

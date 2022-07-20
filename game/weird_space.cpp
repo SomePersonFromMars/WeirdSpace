@@ -119,11 +119,13 @@ int main( void )
 	world_renderer.finish_preprocessing();
 
 	player_t player(shader, world_buffer);
-	// player.debug_position = {9+7, 9, 0.5};
+	// player.debug_position = {9+6, 9, 0.5};
+	// player.debug_position = {2, 2, 0.5};
+	player.debug_position = {2, -2, 0.5};
 	// player.debug_position = {15.5002546, 9, 0.5};
 	// player.debug_position = {2, 1, 0.5};
 	// player.debug_position = {-1.5, 0, 0.5};
-	player.debug_position = {24, 5, 0.5};
+	// player.debug_position = {24, 5, 0.5};
 	// player.debug_position = {5.703284, 0.296304, 0.5};
 	player.set_position(player.debug_position);
 	// player.set_position({2, 1, 0.5});
@@ -140,6 +142,8 @@ int main( void )
 	camera_t camera(glm::vec3(2, 1, 0.5)+glm::vec3(0, 1, -1.5),
 			2*PI, 6.0f, 90.0f);
 
+	// player.on_axis_move_by(-0.5, &glm::vec3::x);
+	player.on_axis_move_by(0.5, &glm::vec3::y);
 	// player.move_by(glm::vec2(3.0f, 0.0f));
 	// player.move_by(glm::vec2(0.5f, 0.0f));
 	// player.move_by(glm::vec2(-1.0f, -1.0f));
@@ -218,7 +222,7 @@ int main( void )
 		callbacks_strct.handle_input();
 		if (camera.get_following_mode())
 			camera.follow(delta_time,
-					player.get_position() + glm::vec3(0, 1, 0));
+					player.get_position() + glm::vec3(0.5, 1, 0));
 		std::this_thread::sleep_until(frame_end_time);
 	}
 
