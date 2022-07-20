@@ -27,7 +27,7 @@ struct world_renderer_t {
 	void finish_preprocessing();
 
 	void draw(
-		const glm::vec3 &camera_pos,
+		const glm::vec3 &light_pos,
 		const glm::mat4 &projection_matrix,
 		const glm::mat4 &view_matrix,
 		const glm::mat4 &model_matrix

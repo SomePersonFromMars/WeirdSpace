@@ -79,7 +79,7 @@ void player_t::deinit() {
 }
 
 void player_t::draw(
-	const glm::vec3 &camera_pos,
+	const glm::vec3 &light_pos,
 	const glm::mat4 &projection_matrix,
 	const glm::mat4 &view_matrix
 	) {
@@ -97,7 +97,6 @@ void player_t::draw(
 	glUniformMatrix4fv(shader.projection_matrix_uniform,
 			1, GL_FALSE, &projection_matrix[0][0]);
 
-	const glm::vec3 light_pos = glm::vec3(0, 0, 0) + camera_pos;
 	const glm::vec3 light_color = color_hex_to_vec3(LIGHT_COLOR);
 	glUniform3f(shader.light_pos_worldspace_uniform,
 			light_pos.x, light_pos.y, light_pos.z);
@@ -140,6 +139,15 @@ void player_t::jump(float delta_time) {
 }
 #undef SPEED
 
+// void player_t::on_x_axis_move_by(float offset) {
+// 	if (offset == 0)
+// 		return;
+// }
+//
+// void player_t::on_y_axis_move_by(float offset) {
+//
+// }
+
 // TODO: When the vector is too long the player cuts through many blocks
 // TODO: It's impossible to enter a gap with player's own dimensions
 glm::vec2 player_t::move_by(glm::vec2 offset) {
@@ -151,8 +159,7 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 #endif
 
 	const glm::vec2 lbc_pos
-		= glm::vec2(position.x, position.y)
-		+ glm::vec2(0.5f, 0.0f); // Left-bottom corner position
+		(position.x+1.0f, position.y); // Left-bottom corner position
 
 	glm::vec2 output(0.0f, 0.0f);
 
@@ -166,12 +173,12 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 			vec_constrained_x.x
 				= std::ceil(lbc_pos.x) - lbc_pos.x;
 			position_constrained_single_component_x
-				= std::ceil(lbc_pos.x) - 0.5;
+				= std::ceil(lbc_pos.x)-1.0f;
 		} else {
 			vec_constrained_x.x
 				= std::floor(lbc_pos.x) - lbc_pos.x;
 			position_constrained_single_component_x
-				= std::floor(lbc_pos.x) - 0.5;
+				= std::floor(lbc_pos.x)-1.0f;
 		}
 		if (offset.y > 0) {
 			vec_constrained_y.y

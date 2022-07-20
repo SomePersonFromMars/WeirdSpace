@@ -123,7 +123,7 @@ int main( void )
 	// player.debug_position = {15.5002546, 9, 0.5};
 	// player.debug_position = {2, 1, 0.5};
 	// player.debug_position = {-1.5, 0, 0.5};
-	player.debug_position = {24.5, 5, 0.5};
+	player.debug_position = {24, 5, 0.5};
 	// player.debug_position = {5.703284, 0.296304, 0.5};
 	player.set_position(player.debug_position);
 	// player.set_position({2, 1, 0.5});

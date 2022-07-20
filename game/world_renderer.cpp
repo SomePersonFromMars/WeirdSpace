@@ -102,7 +102,7 @@ void world_renderer_t::finish_preprocessing() {
 }
 
 void world_renderer_t::draw(
-	const glm::vec3 &camera_pos,
+	const glm::vec3 &light_pos,
 	const glm::mat4 &projection_matrix,
 	const glm::mat4 &view_matrix,
 	const glm::mat4 &model_matrix
@@ -116,7 +116,6 @@ void world_renderer_t::draw(
 	glUniformMatrix4fv(shader.projection_matrix_uniform,
 			1, GL_FALSE, &projection_matrix[0][0]);
 
-	const glm::vec3 light_pos = glm::vec3(0, 0, 0) + camera_pos;
 	const glm::vec3 light_color = color_hex_to_vec3(LIGHT_COLOR);
 
 	glUniform3f(shader.light_pos_worldspace_uniform,
