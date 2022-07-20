@@ -18,8 +18,8 @@ private:
 inline block_type& world_buffer_t::get(glm::ivec3 pos) {
 	return 0 <= pos.y && pos.y <= static_cast<int>(chunk_t::height) ?
 		chunks[glm::ivec2(
-			pos.x/chunk_t::width,
-			pos.z/chunk_t::depth
+			floor_div(pos.x, static_cast<int>(chunk_t::width)),
+			floor_div(pos.z, static_cast<int>(chunk_t::depth))
 		)].content AT3_M(
 				pos.x, pos.y, pos.z,
 				chunk_t::width, chunk_t::height, chunk_t::depth

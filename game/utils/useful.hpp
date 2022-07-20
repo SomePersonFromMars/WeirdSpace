@@ -35,6 +35,8 @@ constexpr double PI = 3.14159265358979323846;
 	[static_cast<size_t>((y%My+My)%My)] \
 	[static_cast<size_t>((z%Mz+Mz)%Mz)]
 
+int floor_div(int num, int den);
+
 struct ivec2_cmp_t {
 	inline bool operator()(const glm::ivec2 &a, const glm::ivec2 &b) const {
 		return a.x < b.x || (a.x == b.x && a.y < b.y);

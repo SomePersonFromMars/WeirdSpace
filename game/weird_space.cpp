@@ -92,11 +92,18 @@ int main( void )
 	world_buffer.get({0, 1, 0}) = block_type::sand;
 	world_buffer.get({1, 0, 0}) = block_type::sand;
 	world_buffer.get({2, 0, 0}) = block_type::sand;
+	world_buffer.get({2, 1, 0}) = block_type::sand;
 	world_buffer.get({3, 0, 0}) = block_type::sand;
 	world_buffer.get({3, 1, 0}) = block_type::sand;
 	world_buffer.get({4, 0, 0}) = block_type::sand;
 	world_buffer.get({4, 1, 0}) = block_type::sand;
 	world_buffer.get({4, 2, 0}) = block_type::sand;
+	printf("block: %d\n",
+			static_cast<int>(world_buffer.get({1, -1, 0})));
+	printf("block: %d\n",
+			static_cast<int>(world_buffer.get({-1, 0, 0})));
+	printf("block: %d\n",
+			static_cast<int>(world_buffer.get({1, 0, 0})));
 
 	world_generator_t world_generator(world_buffer);
 	for (int x = 0; x < 20; ++x) {
@@ -113,12 +120,11 @@ int main( void )
 
 	player_t player(shader, world_buffer);
 	// player.debug_position = {9+7, 9, 0.5};
-	player.debug_position = {15.5002546, 9, 0.5};	// Float collision
-													// checking counterexample
+	// player.debug_position = {15.5002546, 9, 0.5};
 	// player.debug_position = {2, 1, 0.5};
-	// player.debug_position = {5.703284, 0.296304, 0.5};	// Double collision
-															// checking
-															// counterexample
+	// player.debug_position = {-1.5, 0, 0.5};
+	player.debug_position = {24.5, 5, 0.5};
+	// player.debug_position = {5.703284, 0.296304, 0.5};
 	player.set_position(player.debug_position);
 	// player.set_position({2, 1, 0.5});
 	// player.set_position({2.189584, 1.923374, 0.500000});
@@ -139,8 +145,11 @@ int main( void )
 	// player.move_by(glm::vec2(-1.0f, -1.0f));
 	// player.move_by(glm::vec2(-3.0f, -3.0f));
 	// player.move_by(glm::vec2(-0.1f, 0.0f));
-	player.move_by(glm::vec2(-1, 0.0f));
-	// return 0;
+	// player.move_by(glm::vec2(-1, 0.0f));
+	// player.move_by(glm::vec2(0.5, 0));
+	// player.move_by(glm::vec2(10, 0));
+	// player.move_by(glm::vec2(0, 10));
+	// return EXIT_SUCCESS;
 
 	callbacks_strct_t callbacks_strct(
 			window,
@@ -220,5 +229,5 @@ int main( void )
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
 
-	return 0;
+	return EXIT_SUCCESS;
 }

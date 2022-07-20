@@ -120,7 +120,6 @@ void player_t::draw(
 }
 
 #define SPEED 3
-
 void player_t::move_up(float delta_time) {
 	move_by({0, SPEED * delta_time});
 }
@@ -139,9 +138,10 @@ void player_t::move_left(float delta_time) {
 
 void player_t::jump(float delta_time) {
 }
+#undef SPEED
 
-// TODO: Fix hitbox bug when colliding from the bottom
-// TODO: Fix the world_buffer.get probably modulo caused bug in the void
+// TODO: When the vector is too long the player cuts through many blocks
+// TODO: It's impossible to enter a gap with player's own dimensions
 glm::vec2 player_t::move_by(glm::vec2 offset) {
 	if (offset == glm::vec2(0, 0))
 		return offset;
@@ -205,7 +205,6 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 				if (vec.x <= vec_constrained.x) {
 					output += offset;
 					position += vec2_to_vec3(offset);
-					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			} else {
@@ -214,7 +213,6 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 				if (vec.x >= vec_constrained.x) {
 					output += offset;
 					position += vec2_to_vec3(offset);
-					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			}
@@ -233,7 +231,6 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 				if (vec.y <= vec_constrained.y) {
 					output += offset;
 					position += vec2_to_vec3(offset);
-					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			} else {
@@ -242,7 +239,6 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 				if (vec.y >= vec_constrained.y) {
 					output += offset;
 					position += vec2_to_vec3(offset);
-					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			}
@@ -251,9 +247,9 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 
 		const glm::vec2 new_lbc_pos = lbc_pos + vec;
 		glm::ivec3 block_pos(
-				static_cast<int>(new_lbc_pos.x)-1,
-				static_cast<int>(new_lbc_pos.y),
-				static_cast<int>(position.z)
+				static_cast<int>(std::floor(new_lbc_pos.x))-1,
+				static_cast<int>(std::floor(new_lbc_pos.y)),
+				static_cast<int>(std::floor(position.z))
 				);
 
 		for (int dx = 0; dx < 2; ++dx) {
@@ -269,7 +265,6 @@ glm::vec2 player_t::move_by(glm::vec2 offset) {
 							) != block_type::none) {
 					output += vec_constrained;
 					position = position_constrained;
-					BREAKPOINT_IF(position.x < 5.5);
 					return output;
 				}
 			}
