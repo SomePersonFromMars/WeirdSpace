@@ -91,7 +91,7 @@ int main( void )
 	world_buffer.get({0, 0, 0}) = block_type::sand;
 	world_buffer.get({0, 1, 0}) = block_type::sand;
 	world_buffer.get({1, 0, 0}) = block_type::sand;
-	world_buffer.get({2, 0, 0}) = block_type::sand;
+	// world_buffer.get({2, 0, 0}) = block_type::sand;
 	world_buffer.get({2, 1, 0}) = block_type::sand;
 	world_buffer.get({3, 0, 0}) = block_type::sand;
 	world_buffer.get({3, 1, 0}) = block_type::sand;
@@ -120,7 +120,8 @@ int main( void )
 
 	player_t player(shader, world_buffer);
 	// player.debug_position = {9+6, 9, 0.5};
-	player.debug_position = {0, 6, 0.5};
+	// player.debug_position = {0, 6, 0.5};
+	player.debug_position = {0, 9, 0.5};
 	// player.debug_position = {2, 2, 0.5};
 	// player.debug_position = {2, -2, 0.5};
 	// player.debug_position = {15.5002546, 9, 0.5};
@@ -143,8 +144,9 @@ int main( void )
 	camera_t camera(glm::vec3(2, 1, 0.5)+glm::vec3(0, 1, -1.5),
 			2*PI, 6.0f, 90.0f);
 
+	// player.move_by(glm::vec2(3, 0));
 	// player.on_axis_move_by(-0.5, &glm::vec3::x);
-	player.on_axis_move_by(0.9, &glm::vec3::y);
+	// player.on_axis_move_by(0.9, &glm::vec3::y);
 	// player.move_by(glm::vec2(3.0f, 0.0f));
 	// player.move_by(glm::vec2(0.5f, 0.0f));
 	// player.move_by(glm::vec2(-1.0f, -1.0f));
