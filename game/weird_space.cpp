@@ -223,6 +223,7 @@ int main( void )
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 		callbacks_strct.handle_input();
+		player.update_physics(delta_time);
 		if (camera.get_following_mode())
 			camera.follow(delta_time,
 					player.get_position() + glm::vec3(0.5, 1, 0));

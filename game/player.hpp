@@ -31,11 +31,6 @@ struct player_t {
 	// Movement
 	inline void set_position(glm::vec3 new_pos);
 	inline const glm::vec3& get_position() const;
-	// Move player down axis with collisions checking
-	void on_axis_move_by(float offset, float glm::vec3::* axis_ptr);
-	// Move player down any XY vector with collisions checking
-	// and probabilistic gap entering
-	void move_by(glm::vec2 offset);
 
 	void move_up        (float delta_time);
 	void move_down      (float delta_time);
@@ -43,6 +38,7 @@ struct player_t {
 	void move_left      (float delta_time);
 	void jump           (float delta_time);
 	void update_physics (float delta_time);
+	inline void switch_fly_mode();
 
 private:
 	shader_A_t &shader;
@@ -50,6 +46,17 @@ private:
 
 	// Right-bottom-front corner of the player's hitbox
 	glm::vec3 position;
+	bool fly_mode = true;
+	glm::vec2 speed;
+	glm::vec2 frame_offset = glm::vec2(0, 0);
+
+	// Move player down axis with collisions checking
+	bool on_axis_move_by(float offset, float glm::vec3::* axis_ptr);
+	// Move player down any XY vector with collisions checking
+	// and probabilistic gap entering
+	glm::bvec2 move_by(glm::vec2 offset);
+	inline void move_by_queued(glm::vec2 offset);	// Cumulates offset
+													// to flush it every frame
 
 	GLuint texture_id;
 	GLuint vao_id;
@@ -114,6 +121,14 @@ inline void player_t::set_position(glm::vec3 new_pos) {
 
 inline const glm::vec3& player_t::get_position() const {
 	return position;
+}
+
+inline void player_t::switch_fly_mode() {
+	fly_mode = !fly_mode;
+}
+
+inline void player_t::move_by_queued(glm::vec2 offset) {
+	frame_offset += offset;
 }
 
 #endif

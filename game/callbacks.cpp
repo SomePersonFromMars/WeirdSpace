@@ -74,27 +74,27 @@ void callbacks_strct_t::handle_input() {
 
 	const float off = 3.0 * delta_time;
 	if (key_holded[GLFW_KEY_KP_7]) {
-		player.move_by({off, off});
-		// player.move_up(delta_time);
-		// player.move_left(delta_time);
+		// player.move_by({off, off});
+		player.move_up(delta_time);
+		player.move_left(delta_time);
 	}
 
 	if (key_holded[GLFW_KEY_KP_1]) {
-		player.move_by({off, -off});
-		// player.move_down(delta_time);
-		// player.move_left(delta_time);
+		// player.move_by({off, -off});
+		player.move_down(delta_time);
+		player.move_left(delta_time);
 	}
 
 	if (key_holded[GLFW_KEY_KP_9]) {
-		player.move_by({-off, off});
-		// player.move_up(delta_time);
-		// player.move_right(delta_time);
+		// player.move_by({-off, off});
+		player.move_up(delta_time);
+		player.move_right(delta_time);
 	}
 
 	if (key_holded[GLFW_KEY_KP_3]) {
-		player.move_by({-off, -off});
-		// player.move_down(delta_time);
-		// player.move_right(delta_time);
+		// player.move_by({-off, -off});
+		player.move_down(delta_time);
+		player.move_right(delta_time);
 	}
 }
 
@@ -129,6 +129,9 @@ void key_callback(GLFWwindow *window,
 				break;
 			case GLFW_KEY_F:
 				camera.switch_following_mode();
+				break;
+			case GLFW_KEY_G:
+				player.switch_fly_mode();
 				break;
 			case GLFW_KEY_R:
 				player.set_position(player.debug_position);

@@ -129,32 +129,39 @@ void player_t::draw(
 
 #define SPEED 3
 void player_t::move_up(float delta_time) {
-	move_by({0, SPEED * delta_time});
+	move_by_queued({0, SPEED * delta_time});
 	// on_axis_move_by(SPEED * delta_time, &glm::vec3::y);
 }
 
 void player_t::move_down(float delta_time) {
-	move_by({0, -SPEED * delta_time});
+	move_by_queued({0, -SPEED * delta_time});
 	// on_axis_move_by(-SPEED * delta_time, &glm::vec3::y);
 }
 
 void player_t::move_right(float delta_time) {
-	move_by({-SPEED * delta_time, 0});
+	move_by_queued({-SPEED * delta_time, 0});
 	// on_axis_move_by(-SPEED * delta_time, &glm::vec3::x);
 }
 
 void player_t::move_left(float delta_time) {
-	move_by({SPEED * delta_time, 0});
+	move_by_queued({SPEED * delta_time, 0});
 	// on_axis_move_by(SPEED * delta_time, &glm::vec3::x);
 }
 
 void player_t::jump(float delta_time) {
+	if (position.y == std::floor(position.y)
+			&& world_buffer.get(glm::ivec3(
+					std::floor(position.x),
+					std::floor(position.y)-1,
+					std::floor(position.z)
+				)) != block_type::none)
+	speed.y = 10.0f;
 }
 #undef SPEED
 
-void player_t::on_axis_move_by(float offset, float glm::vec3::* axis_ptr) {
+bool player_t::on_axis_move_by(float offset, float glm::vec3::* axis_ptr) {
 	if (offset == 0)
-		return;
+		return false;
 
 	// PRINT_F(offset);
 
@@ -189,21 +196,23 @@ void player_t::on_axis_move_by(float offset, float glm::vec3::* axis_ptr) {
 		free_offset = offset;
 	if (std::abs(free_offset) <= std::abs(constrained_offset)) {
 		position.*axis_ptr += free_offset;
-		return;
+		return false;
 	}
 
 	glm::vec3 free_pos = position;
 	free_pos.*axis_ptr += free_offset;
 	if (world_buffer.collision_check_XY_rect(free_pos, hitbox_dimensions)) {
 		position.*axis_ptr = constrained_pos_comp;
+		return true;
 	} else {
 		position.*axis_ptr += free_offset;
+		return false;
 	}
 }
 
-void player_t::move_by(glm::vec2 offset) {
+glm::bvec2 player_t::move_by(glm::vec2 offset) {
 	if (offset == glm::vec2(0, 0))
-		return;
+		return {false, false};
 
 	// PRINT_F(offset.x);
 
@@ -213,17 +222,31 @@ void player_t::move_by(glm::vec2 offset) {
 	const glm::vec2 atomic_offset(offset.x * ratio, offset.y * ratio);
 	const int loops_cnt = std::ceil(1.0f / ratio);
 
+	glm::bvec2 has_collided(false, false);
 	for (int i = 0; i < loops_cnt; ++i) {
 		glm::vec2 cur_off = atomic_offset;
 		if (len_sq(offset) < max_offset_len*max_offset_len)
 			cur_off = offset;
 
-		on_axis_move_by(cur_off.x, &glm::vec3::x);
-		on_axis_move_by(cur_off.y, &glm::vec3::y);
+		has_collided.x = has_collided.x
+			|| on_axis_move_by(cur_off.x, &glm::vec3::x);
+		has_collided.y = has_collided.y
+			|| on_axis_move_by(cur_off.y, &glm::vec3::y);
 
 		offset -= cur_off;
 	}
+
+	return has_collided;
 }
 
 void player_t::update_physics(float delta_time) {
+	if (!fly_mode)
+		// Gravity
+		speed.y -= delta_time * 30.0f;
+	move_by_queued(glm::vec2(0, speed.y * delta_time));
+
+	glm::bvec2 has_collided = move_by(frame_offset);
+	if (has_collided.y)
+		speed.y = 0.0f;
+	frame_offset = glm::vec2(0, 0);
 }
