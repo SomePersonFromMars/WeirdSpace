@@ -4,13 +4,13 @@
 
 // Minimal frame duration in ms
 // #define FRAME_MIN_DURATION 16 // 60fps
-// #define FRAME_MIN_DURATION 33 // 30fps
-#define FRAME_MIN_DURATION 80
+#define FRAME_MIN_DURATION 33 // 30fps
+// #define FRAME_MIN_DURATION 120
 
 #define SHADER_A_VERTEX_PATH "runtime/shader_A_vertex.glsl"
 #define SHADER_A_FRAGMENT_PATH "runtime/shader_A_fragment.glsl"
 
-#define ATMOSPHERE 5
+#define ATMOSPHERE 4
 #if ATMOSPHERE == 1
 	// Soft-blue, soft-yellow
 	#define SKY_COLOR 0xd7e6e8

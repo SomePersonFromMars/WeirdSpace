@@ -4,25 +4,17 @@ bool world_buffer_t::collision_check_XY_rect(
 		glm::vec3 pos, glm::vec2 dimensions) {
 	const glm::vec2 pos_end(pos.x+dimensions.x, pos.y+dimensions.y);
 
-	glm::vec2 last_d;
-	auto calc_last_d_on_axis
-		= [&dimensions, &pos_end, &last_d] (float glm::vec2::* paxis) {
+	glm::vec2 iterations_cnt(
+			std::ceil(dimensions.x)+1,
+			std::ceil(dimensions.y)+1
+		);
+	if (pos_end.x == std::floor(pos_end.x))
+		iterations_cnt.x -= 1;
+	if (pos_end.y == std::floor(pos_end.y))
+		iterations_cnt.y -= 1;
 
-		if (dimensions.*paxis == std::floor(dimensions.*paxis)) {
-			last_d.*paxis = dimensions.*paxis;
-			if (pos_end.*paxis == std::floor(pos_end.*paxis))
-				last_d.*paxis -= 1;
-		} else {
-			last_d.*paxis = dimensions.*paxis;
-			if (pos_end.*paxis == std::floor(pos_end.*paxis))
-				last_d.*paxis = std::floor(last_d.*paxis);
-		}
-	};
-	calc_last_d_on_axis(&glm::vec2::x);
-	calc_last_d_on_axis(&glm::vec2::y);
-
-	for (float dx = 0; dx <= last_d.x;) {
-		for (float dy = 0; dy <= last_d.y;) {
+	for (float dx = 0, j = 0; j < iterations_cnt.x; j += 1) {
+		for (float dy = 0, i = 0; i < iterations_cnt.y; i += 1) {
 			const glm::ivec3 wanted_block_pos(
 					std::floor(pos.x+dx),
 					std::floor(pos.y+dy),
@@ -32,12 +24,14 @@ bool world_buffer_t::collision_check_XY_rect(
 				return true;
 
 			dy += 1;
-			if (dy > dimensions.y && dy - dimensions.y < 1)
+			// if (dy > dimensions.y && dy - dimensions.y < 1)
+			if (dy > dimensions.y)
 				dy = dimensions.y;
 		}
 
 		dx += 1;
-		if (dx > dimensions.x && dx - dimensions.x < 1)
+		// if (dx > dimensions.x && dx - dimensions.x < 1)
+		if (dx > dimensions.x)
 			dx = dimensions.x;
 	}
 	return false;

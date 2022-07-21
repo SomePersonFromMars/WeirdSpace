@@ -4,7 +4,7 @@
 #include "utils/shader.hpp"
 #include "utils/texture.hpp"
 
-const glm::vec2 player_t::hitbox_dimensions(1, 2);
+const glm::vec2 player_t::hitbox_dimensions(0.8, 1.7);
 
 player_t::player_t(shader_A_t &shader, world_buffer_t &world_buffer)
 	:shader{shader}
@@ -90,7 +90,10 @@ void player_t::draw(
 
 	// Set uniforms
 	glm::mat4 model_matrix(1);
-	model_matrix = glm::translate(model_matrix, position);
+	model_matrix = glm::translate(
+			model_matrix,
+			position + glm::vec3((1.0f-hitbox_dimensions.x)/-2.0f, 0, 0)
+		);
 
 	glUniformMatrix4fv(shader.model_matrix_uniform,
 			1, GL_FALSE, &model_matrix[0][0]);
@@ -152,17 +155,28 @@ void player_t::on_axis_move_by(float offset, float glm::vec3::* axis_ptr) {
 	float constrained_offset;
 	float free_offset;
 	float constrained_pos_comp; // Constrained position's component
+
+	float colliding_point_pos_comp = position.*axis_ptr;
+	float hitbox_dim_comp =
+		glm::vec3(hitbox_dimensions.x, hitbox_dimensions.y, 0).*axis_ptr;
 	if (offset > 0) {
+		colliding_point_pos_comp += hitbox_dim_comp;
+
+		// TODO: Distract an epsilon from this value?
 		constrained_pos_comp
-			= std::ceil(position.*axis_ptr);
+			= std::ceil(colliding_point_pos_comp) - hitbox_dim_comp;
+		constrained_offset
+			= std::ceil(colliding_point_pos_comp) - colliding_point_pos_comp;
+
 		free_offset = 1;
 	} else {
 		constrained_pos_comp
-			= std::floor(position.*axis_ptr);
+			= std::floor(colliding_point_pos_comp);
+		constrained_offset
+			= constrained_pos_comp - colliding_point_pos_comp;
+
 		free_offset = -1;
 	}
-	constrained_offset
-		= constrained_pos_comp - position.*axis_ptr;
 	free_offset += constrained_offset;
 
 	if (std::abs(offset) < std::abs(free_offset))
@@ -181,8 +195,12 @@ void player_t::on_axis_move_by(float offset, float glm::vec3::* axis_ptr) {
 	}
 }
 
-// TODO: When the vector is too long the player cuts through many blocks
-// TODO: It's impossible to enter a gap with player's own dimensions
+// TODO: Rewrite this function so it breaks input vector into many short ones
+// so it is possible to enter small gaps even with low framerate
+// TODO: Break each XY vector into X and Y vectors and handle them with
+// on_axis_move_by() function one after another
+// Both changes won't give deterministic results, but will hopefully be good
+// enough
 glm::vec2 player_t::move_by(glm::vec2 offset) {
 	if (offset == glm::vec2(0, 0))
 		return offset;

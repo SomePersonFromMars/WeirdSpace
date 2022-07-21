@@ -120,8 +120,9 @@ int main( void )
 
 	player_t player(shader, world_buffer);
 	// player.debug_position = {9+6, 9, 0.5};
+	player.debug_position = {0, 6, 0.5};
 	// player.debug_position = {2, 2, 0.5};
-	player.debug_position = {2, -2, 0.5};
+	// player.debug_position = {2, -2, 0.5};
 	// player.debug_position = {15.5002546, 9, 0.5};
 	// player.debug_position = {2, 1, 0.5};
 	// player.debug_position = {-1.5, 0, 0.5};
@@ -143,7 +144,7 @@ int main( void )
 			2*PI, 6.0f, 90.0f);
 
 	// player.on_axis_move_by(-0.5, &glm::vec3::x);
-	player.on_axis_move_by(0.5, &glm::vec3::y);
+	player.on_axis_move_by(0.9, &glm::vec3::y);
 	// player.move_by(glm::vec2(3.0f, 0.0f));
 	// player.move_by(glm::vec2(0.5f, 0.0f));
 	// player.move_by(glm::vec2(-1.0f, -1.0f));

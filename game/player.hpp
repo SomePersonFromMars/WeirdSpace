@@ -45,7 +45,7 @@ private:
 	shader_A_t &shader;
 	world_buffer_t &world_buffer;
 
-	// Right-bottom-front player's position
+	// Right-bottom-front corner of the player's hitbox
 	glm::vec3 position;
 
 	GLuint texture_id;

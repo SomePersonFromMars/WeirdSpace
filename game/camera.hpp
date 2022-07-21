@@ -45,7 +45,7 @@ private:
 	float vertical_angle;
 	float fov;
 	bool following_mode = true;
-	float target_dist = 3.0f;
+	float target_dist = 5.0f;
 
 	// Kinematic state
 	float moving_speed = moving_speed_normal;
