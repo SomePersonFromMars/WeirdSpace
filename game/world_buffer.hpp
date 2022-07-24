@@ -3,7 +3,7 @@
 #define WORLD_BUFFER_HPP
 
 #include <map>
-#include "utils/useful.hpp"
+#include "useful.hpp"
 #include "chunk.hpp"
 
 struct world_buffer_t {

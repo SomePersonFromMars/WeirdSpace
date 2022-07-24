@@ -1,11 +1,18 @@
 #include "shader_A.hpp"
 
+#include "shader_loader.hpp"
+#include "settings.hpp"
+
 void shader_A_t::init() {
-	// Load and compile shaders
-	program_id = LoadShaders(
-		SHADER_A_VERTEX_PATH,
-		SHADER_A_FRAGMENT_PATH
-	);
+	GLuint vertex_shader_id = compile_shader(
+			SHADER_A_VERTEX_PATH, GL_VERTEX_SHADER);
+	GLuint fragment_shader_id = compile_shader(
+			SHADER_A_FRAGMENT_PATH, GL_FRAGMENT_SHADER);
+
+	program_id = link_program(2, vertex_shader_id, fragment_shader_id);
+
+	delete_shader(vertex_shader_id);
+	delete_shader(fragment_shader_id);
 
 	// Get uniform locations
 	view_matrix_uniform = glGetUniformLocation(program_id, "V");
@@ -20,5 +27,5 @@ void shader_A_t::init() {
 }
 
 void shader_A_t::deinit() {
-	glDeleteProgram(program_id);
+	delete_program(program_id);
 }

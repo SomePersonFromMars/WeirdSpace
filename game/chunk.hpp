@@ -7,8 +7,6 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "utils/objloader.hpp"
-
 enum class block_type : uint8_t {
 	none = 0,
 	sand = 1,

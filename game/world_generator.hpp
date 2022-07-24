@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include "world_buffer.hpp"
 #include "chunk.hpp"
-#include "utils/useful.hpp"
+#include "useful.hpp"
 #include "noise.hpp"
 
 struct world_generator_t {

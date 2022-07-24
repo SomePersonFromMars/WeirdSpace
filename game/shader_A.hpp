@@ -5,10 +5,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "utils/shader.hpp"
-
-#include "settings.hpp"
-
 /*
 	* Usage:
 
@@ -22,6 +18,9 @@
 		glUniform*(shader.*_uniform, new_value);
 		glDraw*(*);
 		glBindVertexArray(0); // Unbinding not necessary
+
+	* Deinitialization:
+		shader.deinit();
 */
 
 struct shader_A_t {

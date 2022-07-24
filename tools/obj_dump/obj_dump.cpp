@@ -3,7 +3,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include <objloader.hpp>
+#include "objloader.hpp"
 
 int main(int argc, char **argv) {
 	if (argc != 2) {

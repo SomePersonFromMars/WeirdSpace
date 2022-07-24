@@ -1,6 +1,6 @@
 #include "callbacks.hpp"
 
-#include "utils/useful.hpp"
+#include "useful.hpp"
 
 callbacks_strct_t::callbacks_strct_t(
 		GLFWwindow *window,

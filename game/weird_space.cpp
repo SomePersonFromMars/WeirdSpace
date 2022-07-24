@@ -14,8 +14,6 @@ using std::vector;
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 
-#include "utils/shader.hpp"
-
 #include "callbacks.hpp"
 #include "camera.hpp"
 #include "shader_A.hpp"

@@ -8,7 +8,7 @@
 #include "objloader.hpp"
 
 // Very, VERY simple OBJ loader.
-// Here is a short list of features a real function would provide : 
+// Here is a short list of features a real function would provide :
 // - Binary files. Reading a model should be just a few memcpy's away, not parsing a file at runtime. In short : OBJ is not very great.
 // - Animations & bones (includes bones weights)
 // - Multiple UVs
@@ -18,15 +18,15 @@
 // - Loading from memory, stream, etc
 
 bool loadOBJ(
-	const char * path, 
-	std::vector<glm::vec3> & out_vertices, 
+	const char * path,
+	std::vector<glm::vec3> & out_vertices,
 	std::vector<glm::vec2> & out_uvs,
 	std::vector<glm::vec3> & out_normals
 ){
 	printf("Loading OBJ file %s...\n", path);
 
 	std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
-	std::vector<glm::vec3> temp_vertices; 
+	std::vector<glm::vec3> temp_vertices;
 	std::vector<glm::vec2> temp_uvs;
 	std::vector<glm::vec3> temp_normals;
 
@@ -47,7 +47,7 @@ bool loadOBJ(
 			break; // EOF = End Of File. Quit the loop.
 
 		// else : parse lineHeader
-		
+
 		if ( strcmp( lineHeader, "v" ) == 0 ){
 			glm::vec3 vertex;
 			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z );
@@ -94,17 +94,17 @@ bool loadOBJ(
 		unsigned int vertexIndex = vertexIndices[i];
 		unsigned int uvIndex = uvIndices[i];
 		unsigned int normalIndex = normalIndices[i];
-		
+
 		// Get the attributes thanks to the index
 		glm::vec3 vertex = temp_vertices[ vertexIndex-1 ];
 		glm::vec2 uv = temp_uvs[ uvIndex-1 ];
 		glm::vec3 normal = temp_normals[ normalIndex-1 ];
-		
+
 		// Put the attributes in buffers
 		out_vertices.push_back(vertex);
 		out_uvs     .push_back(uv);
 		out_normals .push_back(normal);
-	
+
 	}
 	fclose(file);
 	return true;

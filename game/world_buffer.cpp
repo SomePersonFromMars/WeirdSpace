@@ -24,13 +24,11 @@ bool world_buffer_t::collision_check_XY_rect(
 				return true;
 
 			dy += 1;
-			// if (dy > dimensions.y && dy - dimensions.y < 1)
 			if (dy > dimensions.y)
 				dy = dimensions.y;
 		}
 
 		dx += 1;
-		// if (dx > dimensions.x && dx - dimensions.x < 1)
 		if (dx > dimensions.x)
 			dx = dimensions.x;
 	}

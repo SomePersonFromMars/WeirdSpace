@@ -16,8 +16,6 @@ void main()
 	if (objectColor.a < 0.5)
 		discard;
 
-	// light_color = vec3(1, 1, 1);
-
 	// ambient
 	float ambientStrength = 0.3;
 	vec3 ambient = ambientStrength * light_color;

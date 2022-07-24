@@ -1,8 +1,7 @@
 #include "player.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include "utils/shader.hpp"
-#include "utils/texture.hpp"
+#include "texture_loader.hpp"
 
 #ifdef DEBUG
 	#include <cstdio>

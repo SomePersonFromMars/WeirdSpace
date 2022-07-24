@@ -1,14 +1,9 @@
 
 # Weird Space
-include_directories(
-	.
-	)
-
-file(GLOB UTILS_SRC utils/*.cpp)
-
 add_executable(weird_space
 	weird_space.cpp
-	utils/useful.cpp
+	useful.cpp
+	texture_loader.cpp
 	callbacks.cpp
 	camera.cpp
 	chunk.cpp
@@ -17,8 +12,8 @@ add_executable(weird_space
 	world_renderer.cpp
 	world_generator.cpp
 	player.cpp
+	shader_loader.cpp
 	shader_A.cpp
-	${UTILS_SRC}
 	)
 target_link_libraries(weird_space
 	${ALL_LIBS}

@@ -3,8 +3,7 @@
 #include <cstdio>
 
 #include <glm/gtc/matrix_transform.hpp>
-#include "utils/shader.hpp"
-#include "utils/texture.hpp"
+#include "texture_loader.hpp"
 
 world_renderer_t::world_renderer_t(
 		shader_A_t &shader,
