@@ -1,40 +1,29 @@
 #pragma once
-#ifndef SHADER_A_HPP
-#define SHADER_A_HPP
+#ifndef SHADER_WORLD_HPP
+#define SHADER_WORLD_HPP
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-/*
-	* Usage:
-
-	* Initialization:
-		shader_A_t shader;
-
-	* Drawing single VAO:
-		glUseProgram(shader.program_id);
-		glBindVertexArray(vao_id);
-		glUniform*(shader.*_uniform, new_value);
-		glDraw*(*);
-		glBindVertexArray(0); // Unbinding not necessary
-
-	* Deinitialization:
-		// Destructor is called
-*/
-
-struct shader_A_t {
+// Usage is the same as shader_A_t
+struct shader_world_t {
 
 	// * Loads and compiles the A shaders
 	// * Gets the uniforms' locations
-	shader_A_t();
+	shader_world_t();
 
 	// * Deletes the program
-	~shader_A_t();
+	~shader_world_t();
 
 	// Program
 	GLuint program_id;
 
+	// Uniform buffer objects
+	GLuint block_model_uniform_block_index;
+	GLuint block_model_uniform_binding_point;
+
 	// Uniforms
+	GLuint chunk_dim_uniform;
 	GLuint view_matrix_uniform;
 	GLuint model_matrix_uniform;
 	GLuint projection_matrix_uniform;

@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstring>
 #include <vector>
 
 #include <GLFW/glfw3.h>
@@ -6,9 +7,10 @@
 #include "objloader.hpp"
 
 int main(int argc, char **argv) {
-	if (argc != 2) {
+	bool format_as_vec4 = argc == 3 && strcmp(argv[2], "vec4") == 0;
+	if (!(argc == 2 || format_as_vec4)) {
 		fprintf(stderr, "Error: Wrong command syntax.\n");
-		printf("usage: obj_dump <obj file path>\n");
+		printf("usage: obj_dump <obj file path> [vec4]\n");
 		return 1;
 	}
 
@@ -24,21 +26,36 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	printf("float positions[%zu] = {\n", positions.size()*3);
+	printf("float positions[%zu] = {\n",
+			format_as_vec4 ? positions.size()*4 : positions.size()*3);
 	for (const glm::vec3 &vec : positions) {
-		printf("\t%9.6f, %9.6f, %9.6f,\n", vec.x, vec.y, vec.z);
+		if (!format_as_vec4)
+			printf("\t%9.6f, %9.6f, %9.6f,\n", vec.x, vec.y, vec.z);
+		else
+			printf("\t%9.6f, %9.6f, %9.6f, %9.6f,\n",
+					vec.x, vec.y, vec.z, 0.0f);
 	}
 	printf("};\n");
 
-	printf("float uvs[%zu] = {\n", uvs.size()*2);
+	printf("float uvs[%zu] = {\n",
+			format_as_vec4 ? uvs.size()*4 : uvs.size()*2);
 	for (const glm::vec2 &vec : uvs) {
-		printf("\t%9.6f, %9.6f,\n", vec.x, vec.y);
+		if (!format_as_vec4)
+			printf("\t%9.6f, %9.6f,\n", vec.x, vec.y);
+		else
+			printf("\t%9.6f, %9.6f, %9.6f, %9.6f,\n",
+					vec.x, vec.y, 0.0f, 0.0f);
 	}
 	printf("};\n");
 
-	printf("float normals[%zu] = {\n", normals.size()*3);
+	printf("float normals[%zu] = {\n",
+			format_as_vec4 ? normals.size()*4 : normals.size()*3);
 	for (const glm::vec3 &vec : normals) {
-		printf("\t%9.6f, %9.6f, %9.6f,\n", vec.x, vec.y, vec.z);
+		if (!format_as_vec4)
+			printf("\t%9.6f, %9.6f, %9.6f,\n", vec.x, vec.y, vec.z);
+		else
+			printf("\t%9.6f, %9.6f, %9.6f, %9.6f,\n",
+					vec.x, vec.y, vec.z, 0.0f);
 	}
 	printf("};\n");
 }

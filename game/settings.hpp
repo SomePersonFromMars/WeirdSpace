@@ -4,12 +4,16 @@
 
 // Minimal frame duration in ms
 // #define FRAME_MIN_DURATION 1
-// #define FRAME_MIN_DURATION 16 // 60fps
-#define FRAME_MIN_DURATION 33 // 30fps
+#define FRAME_MIN_DURATION 16 // 60fps
+// #define FRAME_MIN_DURATION 33 // 30fps
 // #define FRAME_MIN_DURATION 120
 
 #define SHADER_A_VERTEX_PATH "runtime/shader_A_vertex.glsl"
 #define SHADER_A_FRAGMENT_PATH "runtime/shader_A_fragment.glsl"
+#define SHADER_WORLD_VERTEX_PATH "runtime/shader_world_vertex.glsl"
+#define SHADER_WORLD_GEOMETRY_PATH "runtime/shader_world_geometry.glsl"
+#define TEXTURE_BLOCKS_COMBINED_PATH "runtime/blocks_combined.png"
+#define TEXTURE_PLAYER_PATH "runtime/player.png"
 
 #define ATMOSPHERE 4
 #if ATMOSPHERE == 1

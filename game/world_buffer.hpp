@@ -22,13 +22,13 @@ private:
 };
 
 inline block_type& world_buffer_t::get(glm::ivec3 pos) {
-	return 0 <= pos.y && pos.y <= static_cast<int>(chunk_t::height) ?
+	return 0 <= pos.y && pos.y <= static_cast<int>(chunk_t::HEIGHT) ?
 		chunks[glm::ivec2(
-			floor_div(pos.x, static_cast<int>(chunk_t::width)),
-			floor_div(pos.z, static_cast<int>(chunk_t::depth))
+			floor_div(pos.x, static_cast<int>(chunk_t::WIDTH)),
+			floor_div(pos.z, static_cast<int>(chunk_t::DEPTH))
 		)].content AT3_M(
 				pos.x, pos.y, pos.z,
-				chunk_t::width, chunk_t::height, chunk_t::depth
+				chunk_t::WIDTH, chunk_t::HEIGHT, chunk_t::DEPTH
 			)
 		: void_block;
 }

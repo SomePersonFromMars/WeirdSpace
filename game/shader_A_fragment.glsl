@@ -13,6 +13,7 @@ uniform sampler2D texture_sampler;
 void main()
 {
 	vec4 objectColor = texture( texture_sampler, fragment_UV ).rgba;
+	// vec4 objectColor = vec4(1, 1, 1, 1);
 	if (objectColor.a < 0.5)
 		discard;
 

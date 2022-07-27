@@ -14,6 +14,7 @@ add_executable(weird_space
 	player.cpp
 	shader_loader.cpp
 	shader_A.cpp
+	shader_world.cpp
 	)
 target_link_libraries(weird_space
 	${ALL_LIBS}

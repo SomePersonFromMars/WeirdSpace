@@ -15,7 +15,7 @@ world_renderer_t::world_renderer_t(
 
 void world_renderer_t::init() {
 	// Generate OpenGL ids
-	texture_id = load_texture("runtime/blocks_combined.png");
+	texture_id = load_texture(TEXTURE_BLOCKS_COMBINED_PATH);
 
 	glGenVertexArrays(1, &vao_id);
 	glBindVertexArray(vao_id);
@@ -69,15 +69,16 @@ void world_renderer_t::clear_preprocessing_data() {
 }
 
 void world_renderer_t::preprocess_chunk(const glm::ivec2 &chunk_pos) {
-	const auto &content = buffer.chunks[chunk_pos].content;
+	const auto &chunk = buffer.chunks[chunk_pos];
+	const auto &content = chunk.content;
 	const glm::vec2 offset(
-		chunk_pos.x * static_cast<float>(chunk_t::width),
-		chunk_pos.y * static_cast<float>(chunk_t::depth)
+		chunk_pos.x * static_cast<float>(chunk_t::WIDTH),
+		chunk_pos.y * static_cast<float>(chunk_t::DEPTH)
 	);
 
-	for (size_t x = 0; x < content.size(); ++x) {
-		for (size_t y = 0; y < content[x].size(); ++y) {
-			for (size_t z = 0; z < content[x][y].size(); ++z) {
+	for (size_t x = 0; x < chunk.WIDTH; ++x) {
+		for (size_t y = 0; y < chunk.HEIGHT; ++y) {
+			for (size_t z = 0; z < chunk.DEPTH; ++z) {
 				if (content[x][y][z] == block_type::none) continue;
 
 				const glm::vec3 block_pos(

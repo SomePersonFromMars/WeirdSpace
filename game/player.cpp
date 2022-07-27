@@ -16,7 +16,7 @@ player_t::player_t(shader_A_t &shader, world_buffer_t &world_buffer)
 
 void player_t::init() {
 	// Generate OpenGL ids
-	texture_id = load_texture("runtime/player.png");
+	texture_id = load_texture(TEXTURE_PLAYER_PATH);
 
 	glGenVertexArrays(1, &vao_id);
 	glBindVertexArray(vao_id);

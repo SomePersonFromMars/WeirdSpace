@@ -17,6 +17,7 @@ using namespace glm;
 #include "callbacks.hpp"
 #include "camera.hpp"
 #include "shader_A.hpp"
+#include "shader_world.hpp"
 
 #include "world_buffer.hpp"
 #include "world_renderer.hpp"
@@ -79,11 +80,13 @@ int main( void )
 
 	double delta_time = 0.0;
 
-	shader_A_t shader;
-	shader.init();
+	shader_A_t shader_A;
+	shader_world_t shader_world;
+	// return 0;
 
+	chunk_t::init_static(&shader_world);
 	world_buffer_t world_buffer;
-	world_renderer_t world_renderer(shader, world_buffer);
+	world_renderer_t world_renderer(shader_A, world_buffer);
 	world_renderer.init();
 
 	world_buffer.get({0, 0, 0}) = block_type::sand;
@@ -108,6 +111,9 @@ int main( void )
 		for (int y = 0; y < 20; ++y) {
 			world_generator.gen_chunk({x, y});
 			world_renderer.preprocess_chunk({x, y});
+
+			chunk_t &sample_chunk = world_buffer.chunks[glm::ivec2(x, y)];
+			sample_chunk.flush_content_for_drawing();
 		}
 	}
 	// world_generator.gen_chunk({0, 0});
@@ -116,7 +122,7 @@ int main( void )
 	// world_renderer.preprocess_chunk({1, 0});
 	world_renderer.finish_preprocessing();
 
-	player_t player(shader, world_buffer);
+	player_t player(shader_A, world_buffer);
 	// player.debug_position = {9+6, 9, 0.5};
 	// player.debug_position = {0, 6, 0.5};
 	player.debug_position = {0, 9, 0.5};
@@ -181,15 +187,33 @@ int main( void )
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glm::mat4 Projection = camera.get_projection_matrix(
+		glm::mat4 projection_matrix = camera.get_projection_matrix(
 				window_width, window_height);
-		glm::mat4 View = camera.get_view_matrix();
-		glm::mat4 Model = glm::mat4(1.0f);
+		glm::mat4 view_matrix = camera.get_view_matrix();
+		// glm::mat4 model_matrix = glm::mat4(1);
+		glm::mat4 model_matrix = glm::mat4(1);
+		// model_matrix = glm::translate(model_matrix, glm::vec3(10, 0, 0));
 
 		const glm::vec3 light_pos
 			= camera.get_position() + glm::vec3(0, 5, 0);
-		world_renderer.draw(light_pos, Projection, View, Model);
-		player.draw(light_pos, Projection, View);
+
+		for (int x = 0; x < 5; ++x) {
+			for (int y = 0; y < 5; ++y) {
+				// world_generator.gen_chunk({x, y});
+				// world_renderer.preprocess_chunk({x, y});
+				chunk_t &sample_chunk = world_buffer.chunks[glm::ivec2(x, y)];
+				// sample_chunk.flush_content_for_drawing();
+
+				model_matrix[3][0] = x * chunk_t::WIDTH;
+				model_matrix[3][2] = y * chunk_t::HEIGHT;
+				sample_chunk.draw(
+					projection_matrix, view_matrix, model_matrix, light_pos);
+			}
+		}
+
+		// world_renderer.draw(light_pos,
+		// 	projection_matrix, view_matrix, model_matrix);
+		player.draw(light_pos, projection_matrix, view_matrix);
 
 		double fps_cnt;
 		{ // FPS cnter
@@ -230,7 +254,7 @@ int main( void )
 
 	// Cleanup VBO
 	world_renderer.deinit();
-	shader.deinit();
+	chunk_t::deinit_static();
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();

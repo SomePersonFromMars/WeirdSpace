@@ -8,6 +8,10 @@
 #ifdef DEBUG
 	#define PRINT_ZU(var) printf(#var " = %zu\n", var)
 	#define PRINT_F(var) printf(#var " = %f\n", var)
+	#define PRINT_VEC3(vec) \
+		printf(#vec " = (%f, %f, %f)\n", vec.x, vec.y, vec.z)
+	#define PRINT_VEC4(vec) \
+		printf(#vec " = (%f, %f, %f, %f)\n", vec.x, vec.y, vec.z, vec.w)
 	#define WHERE printf("%s:%d\n", __func__, __LINE__)
 	#include <csignal>
 	extern bool enable_breakpoints;
