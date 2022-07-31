@@ -15,11 +15,11 @@ void main()
 	int id = gl_VertexID;
 	ivec3 ipos;
 	ipos.z = id % chunk_dim.z;
-	id -= ipos.z;
+	// id -= ipos.z;
 	id /= chunk_dim.z;
 
 	ipos.y = id % chunk_dim.y;
-	id -= ipos.y;
+	// id -= ipos.y;
 	id /= chunk_dim.y;
 
 	ipos.x = id;

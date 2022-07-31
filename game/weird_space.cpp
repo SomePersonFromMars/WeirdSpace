@@ -1,13 +1,9 @@
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
-#include <vector>
 #include <thread>
 #include <chrono>
-using std::vector;
 
 #include <GL/glew.h>
-
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -17,7 +13,8 @@ using namespace glm;
 #include "callbacks.hpp"
 #include "camera.hpp"
 #include "shader_A.hpp"
-#include "shader_world.hpp"
+#include "shader_world_A.hpp"
+#include "shader_world_B.hpp"
 
 #include "world_buffer.hpp"
 #include "world_renderer.hpp"
@@ -29,9 +26,9 @@ using namespace glm;
 int main( void )
 {
 	GLFWwindow* window;
-	GLint window_width = 1536, window_height = 768;
+	// GLint window_width = 1536, window_height = 768;
+	GLint window_width = 1920, window_height = 1080;
 
-	// Initialise GLFW
 	if( !glfwInit() )
 	{
 		fprintf( stderr, "Failed to initialize GLFW\n" );
@@ -44,17 +41,18 @@ int main( void )
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( window_width, window_height, "Playground", NULL, NULL);
-	if( window == NULL ){
-		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
+	window = glfwCreateWindow( window_width, window_height, "Playground",
+			nullptr, nullptr);
+	if( window == nullptr ){
+		fprintf(stderr,
+			"Failed to open GLFW window. If you have an Intel GPU, they"
+			"are not 3.3 compatible.\n");
 		getchar();
 		glfwTerminate();
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
 
-	// Initialize GLEW
 	glewExperimental = true; // Needed for core profile
 	if (glewInit() != GLEW_OK) {
 		fprintf(stderr, "Failed to initialize GLEW\n");
@@ -63,104 +61,63 @@ int main( void )
 		return -1;
 	}
 
-	// Set the mouse at the center of the screen
-	glfwPollEvents();
-
-	// Background color
 	const auto background_color = color_hex_to_vec3(SKY_COLOR);
 	glClearColor(background_color.x, background_color.y, background_color.z,
 			0.0f);
 
-	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
 	// Accept fragment if it closer to the camera than the former one
 	glDepthFunc(GL_LESS);
 
+#if WORLD_RENDER_METHOD == 1
 	glEnable(GL_CULL_FACE);
+#endif
 
 	double delta_time = 0.0;
 
 	shader_A_t shader_A;
 	shader_world_t shader_world;
-	// return 0;
+	shader_world_B_t shader_world_B;
 
 	chunk_t::init_static(&shader_world);
 	world_buffer_t world_buffer;
-	world_renderer_t world_renderer(shader_A, world_buffer);
+	world_renderer_t world_renderer(shader_world_B, world_buffer);
 	world_renderer.init();
 
-	world_buffer.get({0, 0, 0}) = block_type::sand;
-	world_buffer.get({0, 1, 0}) = block_type::sand;
-	world_buffer.get({1, 0, 0}) = block_type::sand;
-	// world_buffer.get({2, 0, 0}) = block_type::sand;
-	world_buffer.get({2, 1, 0}) = block_type::sand;
-	world_buffer.get({3, 0, 0}) = block_type::sand;
-	world_buffer.get({3, 1, 0}) = block_type::sand;
-	world_buffer.get({4, 0, 0}) = block_type::sand;
-	world_buffer.get({4, 1, 0}) = block_type::sand;
-	world_buffer.get({4, 2, 0}) = block_type::sand;
-	printf("block: %d\n",
-			static_cast<int>(world_buffer.get({1, -1, 0})));
-	printf("block: %d\n",
-			static_cast<int>(world_buffer.get({-1, 0, 0})));
-	printf("block: %d\n",
-			static_cast<int>(world_buffer.get({1, 0, 0})));
+	std::chrono::time_point<std::chrono::high_resolution_clock>
+		timer, now;
+	long int elapsed;
 
 	world_generator_t world_generator(world_buffer);
-	for (int x = 0; x < 20; ++x) {
-		for (int y = 0; y < 20; ++y) {
+	for (int x = 0; x < 1; ++x) {
+		for (int y = 0; y < 1; ++y) {
 			world_generator.gen_chunk({x, y});
+
+			timer = std::chrono::high_resolution_clock::now();
 			world_renderer.preprocess_chunk({x, y});
+			now = std::chrono::high_resolution_clock::now();
+			elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+				now-timer).count();
+			printf("%ldms\n", elapsed);
 
 			chunk_t &sample_chunk = world_buffer.chunks[glm::ivec2(x, y)];
 			sample_chunk.flush_content_for_drawing();
 		}
 	}
-	// world_generator.gen_chunk({0, 0});
-	// world_generator.gen_chunk({1, 0});
-	// world_renderer.preprocess_chunk({0, 0});
-	// world_renderer.preprocess_chunk({1, 0});
+	timer = std::chrono::high_resolution_clock::now();
 	world_renderer.finish_preprocessing();
+	now = std::chrono::high_resolution_clock::now();
+	elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+			now-timer).count();
+	printf("%ldus\n", elapsed);
 
 	player_t player(shader_A, world_buffer);
-	// player.debug_position = {9+6, 9, 0.5};
-	// player.debug_position = {0, 6, 0.5};
-	player.debug_position = {0, 9, 0.5};
-	// player.debug_position = {2, 2, 0.5};
-	// player.debug_position = {2, -2, 0.5};
-	// player.debug_position = {15.5002546, 9, 0.5};
-	// player.debug_position = {2, 1, 0.5};
-	// player.debug_position = {-1.5, 0, 0.5};
-	// player.debug_position = {24, 5, 0.5};
-	// player.debug_position = {5.703284, 0.296304, 0.5};
+	player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT, 0.5};
 	player.set_position(player.debug_position);
-	// player.set_position({2, 1, 0.5});
-	// player.set_position({2.189584, 1.923374, 0.500000});
-	// player.set_position({1.7, 1.5, 0.5});
-	// player.set_position(glm::vec3(1.5, 1.0, 0.500000)
-	// 		+ glm::vec3(0.2, 0.2, 0.0));
-	// player.set_position({4.148619, 3.648619, 0.500000});
 	player.init();
 
-	// camera_t camera({9, 12, -3}, 2*PI, 6.0f, 120.0f);
-	// camera_t camera(player.get_position()+glm::vec3(0, 1, -1.5),
-	// 		2*PI, 6.0f, 120.0f);
-	camera_t camera(glm::vec3(2, 1, 0.5)+glm::vec3(0, 1, -1.5),
+	camera_t camera(glm::vec3(256, 120, -80)+glm::vec3(0, 1, -1.5),
 			2*PI, 6.0f, 90.0f);
-
-	// player.move_by(glm::vec2(3, 0));
-	// player.on_axis_move_by(-0.5, &glm::vec3::x);
-	// player.on_axis_move_by(0.9, &glm::vec3::y);
-	// player.move_by(glm::vec2(3.0f, 0.0f));
-	// player.move_by(glm::vec2(0.5f, 0.0f));
-	// player.move_by(glm::vec2(-1.0f, -1.0f));
-	// player.move_by(glm::vec2(-3.0f, -3.0f));
-	// player.move_by(glm::vec2(-0.1f, 0.0f));
-	// player.move_by(glm::vec2(-1, 0.0f));
-	// player.move_by(glm::vec2(0.5, 0));
-	// player.move_by(glm::vec2(10, 0));
-	// player.move_by(glm::vec2(0, 10));
-	// return EXIT_SUCCESS;
 
 	callbacks_strct_t callbacks_strct(
 			window,
@@ -172,7 +129,7 @@ int main( void )
 		);
 
 	std::chrono::time_point<std::chrono::high_resolution_clock>
-		timer_debugging= std::chrono::high_resolution_clock::now();
+		timer_logging= std::chrono::high_resolution_clock::now();
 	double timer_fps_cnter = glfwGetTime();
 
 	while (glfwWindowShouldClose(window) == GLFW_FALSE) {
@@ -184,35 +141,29 @@ int main( void )
 		const auto frame_end_time
 			= frame_beg_time + frame_min_duration;
 
-		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glm::mat4 projection_matrix = camera.get_projection_matrix(
 				window_width, window_height);
 		glm::mat4 view_matrix = camera.get_view_matrix();
-		// glm::mat4 model_matrix = glm::mat4(1);
 		glm::mat4 model_matrix = glm::mat4(1);
-		// model_matrix = glm::translate(model_matrix, glm::vec3(10, 0, 0));
 
 		const glm::vec3 light_pos
 			= camera.get_position() + glm::vec3(0, 5, 0);
 
-		for (int x = 0; x < 5; ++x) {
-			for (int y = 0; y < 5; ++y) {
-				// world_generator.gen_chunk({x, y});
-				// world_renderer.preprocess_chunk({x, y});
-				chunk_t &sample_chunk = world_buffer.chunks[glm::ivec2(x, y)];
-				// sample_chunk.flush_content_for_drawing();
-
-				model_matrix[3][0] = x * chunk_t::WIDTH;
-				model_matrix[3][2] = y * chunk_t::HEIGHT;
-				sample_chunk.draw(
-					projection_matrix, view_matrix, model_matrix, light_pos);
-			}
+#if WORLD_RENDER_METHOD == 1
+		world_renderer.draw(light_pos,
+			projection_matrix, view_matrix, model_matrix);
+#elif WORLD_RENDER_METHOD == 2
+		for (auto &p : world_buffer.chunks) {
+			chunk_t &chunk = p.second;
+			model_matrix[3][0] = p.first.x * chunk_t::WIDTH;
+			model_matrix[3][2] = p.first.y * chunk_t::HEIGHT;
+			chunk.draw(
+				projection_matrix, view_matrix, model_matrix, light_pos);
 		}
+#endif
 
-		// world_renderer.draw(light_pos,
-		// 	projection_matrix, view_matrix, model_matrix);
 		player.draw(light_pos, projection_matrix, view_matrix);
 
 		double fps_cnt;
@@ -224,10 +175,10 @@ int main( void )
 		}
 		{ // Debug output
 			const auto now = std::chrono::high_resolution_clock::now();
-			const auto delta_time = now - timer_debugging;
+			const auto delta_time = now - timer_logging;
 			using namespace std::chrono_literals;
 			if (delta_time >= 500ms) {
-				timer_debugging = now;
+				timer_logging = now;
 
 				fprintf(stderr, "pos=(%f, %f, %f)",
 						player.get_position().x,
@@ -252,12 +203,8 @@ int main( void )
 		std::this_thread::sleep_until(frame_end_time);
 	}
 
-	// Cleanup VBO
 	world_renderer.deinit();
 	chunk_t::deinit_static();
-
-	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
-
 	return EXIT_SUCCESS;
 }

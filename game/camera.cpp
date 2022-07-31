@@ -81,7 +81,7 @@ glm::mat4 camera_t::get_projection_matrix(
 		GLint window_width, GLint window_height) const {
 	return glm::perspective(
 			glm::radians(fov),
-			(float)window_width / (float)window_height, 0.1f, 400.0f
+			(float)window_width / (float)window_height, 0.1f, 800.0f
 		);
 }
 

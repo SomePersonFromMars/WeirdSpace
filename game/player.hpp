@@ -46,7 +46,7 @@ private:
 
 	// Right-bottom-front corner of the player's hitbox
 	glm::vec3 position;
-	bool fly_mode = true;
+	bool fly_mode = false;
 	glm::vec2 speed;
 	glm::vec2 frame_offset = glm::vec2(0, 0);
 

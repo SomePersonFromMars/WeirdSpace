@@ -11,13 +11,15 @@ void world_generator_t::gen_chunk(const glm::ivec2 &chunk_pos) {
 		for (int z = 0; z < static_cast<int>(chunk.DEPTH); ++z) {
 			const float p =
 				(1.0f+perlin(
-				(float)(x + chunk_pos.x*chunk.WIDTH)/(float)chunk.WIDTH*2.0f,
-				(float)(z + chunk_pos.y*chunk.DEPTH)/(float)chunk.DEPTH*2.0f
+				(float)(x + chunk_pos.x*chunk.WIDTH)/(float)chunk.WIDTH*8.0f,
+				(float)(z + chunk_pos.y*chunk.DEPTH)/(float)chunk.DEPTH*8.0f
 				))/2.0f ;
 			// printf("%f\n", p);
-			const int y = ( p * static_cast<float>(chunk.HEIGHT) );
+			int y = ( (p*3.0-1.0) * static_cast<float>(chunk.HEIGHT) );
 			// const int y = (x/2+z)%chunk.height;
-			chunk.content AT3(x, y, z) = block_type::sand;
+			y = std::min(y, chunk.HEIGHT-1);
+			while (y > 0)
+				chunk.content AT3(x, y, z) = block_type::sand, --y;
 		}
 	}
 }

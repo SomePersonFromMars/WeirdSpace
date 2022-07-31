@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "shader_world.hpp"
+#include "shader_world_A.hpp"
 
 enum class block_type : uint8_t {
 	none = 0,
@@ -19,9 +19,12 @@ enum class block_type : uint8_t {
 };
 
 struct chunk_t {
-	static constexpr int8_t WIDTH = 32;
-	static constexpr int8_t HEIGHT = 32;
-	static constexpr int8_t DEPTH = 32;
+	static constexpr int WIDTH = 256;
+	static constexpr int HEIGHT = 64;
+	static constexpr int DEPTH = 256;
+	// static constexpr int WIDTH = 32;
+	// static constexpr int HEIGHT = 32;
+	// static constexpr int DEPTH = 32;
 
 	block_type content[WIDTH][HEIGHT][DEPTH];
 
