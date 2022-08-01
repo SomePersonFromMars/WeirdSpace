@@ -18,9 +18,9 @@ struct shader_world_B_t {
 	// Program
 	GLuint program_id;
 
-	// // Uniform buffer objects
-	// GLuint block_model_uniform_block_index;
-	// GLuint block_model_uniform_binding_point;
+	// Uniform buffer objects
+	GLuint block_model_uniform_block_index;
+	GLuint block_model_uniform_binding_point;
 
 	// Uniforms
 	// GLuint chunk_dim_uniform;

@@ -6,19 +6,26 @@
 shader_world_B_t::shader_world_B_t() {
 	GLuint vertex_shader_id = compile_shader(
 			SHADER_WORLD_B_VERTEX_PATH, GL_VERTEX_SHADER);
-	GLuint geometry_shader_id = compile_shader(
-			SHADER_WORLD_B_GEOMETRY_PATH, GL_GEOMETRY_SHADER);
+	// GLuint geometry_shader_id = compile_shader(
+	// 		SHADER_WORLD_B_GEOMETRY_PATH, GL_GEOMETRY_SHADER);
 	GLuint fragment_shader_id = compile_shader(
 			SHADER_A_FRAGMENT_PATH, GL_FRAGMENT_SHADER);
 
-	program_id = link_program(3,
-			vertex_shader_id, geometry_shader_id, fragment_shader_id);
-	// program_id = link_program(2,
-	// 		vertex_shader_id, fragment_shader_id);
+	// program_id = link_program(3,
+	// 		vertex_shader_id, geometry_shader_id, fragment_shader_id);
+	program_id = link_program(2,
+			vertex_shader_id, fragment_shader_id);
 
 	delete_shader(vertex_shader_id);
-	delete_shader(geometry_shader_id);
+	// delete_shader(geometry_shader_id);
 	delete_shader(fragment_shader_id);
+
+	// Get uniform buffer objects' blocks indices
+	block_model_uniform_block_index= glGetUniformBlockIndex(program_id,
+			"block_model");
+	block_model_uniform_binding_point = 0;
+	glUniformBlockBinding(program_id,
+		block_model_uniform_block_index, block_model_uniform_binding_point);
 
 	// Get uniform locations
 	view_matrix_uniform = glGetUniformLocation(program_id, "V");

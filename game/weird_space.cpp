@@ -26,7 +26,6 @@ using namespace glm;
 int main( void )
 {
 	GLFWwindow* window;
-	// GLint window_width = 1536, window_height = 768;
 	GLint window_width = 1920, window_height = 1080;
 
 	if( !glfwInit() )
