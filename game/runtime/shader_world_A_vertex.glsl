@@ -1,1 +1,0 @@
-../shader_world_A_vertex.glsl

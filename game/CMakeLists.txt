@@ -9,13 +9,11 @@ add_executable(weird_space
 	chunk.cpp
 	noise.cpp
 	world_buffer.cpp
-	world_renderer.cpp
 	world_generator.cpp
 	player.cpp
 	shader_loader.cpp
 	shader_A.cpp
-	shader_world_A.cpp
-	shader_world_B.cpp
+	shader_world.cpp
 	)
 target_link_libraries(weird_space
 	${ALL_LIBS}

@@ -6,14 +6,14 @@
 #include <GLFW/glfw3.h>
 
 // Usage is the same as shader_A_t
-struct shader_world_B_t {
+struct shader_world_t {
 
 	// * Loads and compiles the A shaders
 	// * Gets the uniforms' locations
-	shader_world_B_t();
+	shader_world_t();
 
 	// * Deletes the program
-	~shader_world_B_t();
+	~shader_world_t();
 
 	// Program
 	GLuint program_id;

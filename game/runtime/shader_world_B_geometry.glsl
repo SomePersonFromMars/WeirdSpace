@@ -1,1 +1,0 @@
-../shader_world_B_geometry.glsl

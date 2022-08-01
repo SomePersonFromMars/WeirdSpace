@@ -13,11 +13,9 @@ using namespace glm;
 #include "callbacks.hpp"
 #include "camera.hpp"
 #include "shader_A.hpp"
-#include "shader_world_A.hpp"
-#include "shader_world_B.hpp"
+#include "shader_world.hpp"
 
 #include "world_buffer.hpp"
-#include "world_renderer.hpp"
 #include "world_generator.hpp"
 #include "player.hpp"
 
@@ -68,47 +66,45 @@ int main( void )
 	// Accept fragment if it closer to the camera than the former one
 	glDepthFunc(GL_LESS);
 
-#if WORLD_RENDER_METHOD == 1
 	glEnable(GL_CULL_FACE);
-#endif
 
 	double delta_time = 0.0;
 
 	shader_A_t shader_A;
 	shader_world_t shader_world;
-	shader_world_B_t shader_world_B;
 
 	chunk_t::init_static(&shader_world);
 	world_buffer_t world_buffer;
-	world_renderer_t world_renderer(shader_world_B, world_buffer);
-	world_renderer.init();
 
 	std::chrono::time_point<std::chrono::high_resolution_clock>
 		timer, now;
 	long int elapsed;
 
+	constexpr int CHUNKS_X_CNT = 2;
+	constexpr int CHUNKS_Z_CNT = 2;
 	world_generator_t world_generator(world_buffer);
-	for (int x = 0; x < 1; ++x) {
-		for (int y = 0; y < 1; ++y) {
-			world_generator.gen_chunk({x, y});
-
-			timer = std::chrono::high_resolution_clock::now();
-			world_renderer.preprocess_chunk({x, y});
-			now = std::chrono::high_resolution_clock::now();
-			elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-				now-timer).count();
-			printf("%ldms\n", elapsed);
-
-			chunk_t &sample_chunk = world_buffer.chunks[glm::ivec2(x, y)];
-			sample_chunk.flush_content_for_drawing();
+	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
+		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
+			world_generator.gen_chunk({x, z});
 		}
 	}
-	timer = std::chrono::high_resolution_clock::now();
-	world_renderer.finish_preprocessing();
-	now = std::chrono::high_resolution_clock::now();
-	elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-			now-timer).count();
-	printf("%ldus\n", elapsed);
+
+	for (int x = 0; x < 2; ++x) {
+		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
+			chunk_t &chunk = world_buffer.chunks[glm::ivec2(x, z)];
+			if (x > 0)
+				chunk.neighbors[0] = &world_buffer.chunks[glm::ivec2(x-1, z)];
+			if (x < CHUNKS_X_CNT-1)
+				chunk.neighbors[1] = &world_buffer.chunks[glm::ivec2(x+1, z)];
+			if (z > 0)
+				chunk.neighbors[4] = &world_buffer.chunks[glm::ivec2(x, z-1)];
+			if (z < CHUNKS_Z_CNT-1)
+				chunk.neighbors[5] = &world_buffer.chunks[glm::ivec2(x, z+1)];
+
+			chunk.preprocess();
+			chunk.send_preprocessed_to_gpu();
+		}
+	}
 
 	player_t player(shader_A, world_buffer);
 	player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT, 0.5};
@@ -150,18 +146,13 @@ int main( void )
 		const glm::vec3 light_pos
 			= camera.get_position() + glm::vec3(0, 5, 0);
 
-#if WORLD_RENDER_METHOD == 1
-		world_renderer.draw(light_pos,
-			projection_matrix, view_matrix, model_matrix);
-#elif WORLD_RENDER_METHOD == 2
 		for (auto &p : world_buffer.chunks) {
 			chunk_t &chunk = p.second;
 			model_matrix[3][0] = p.first.x * chunk_t::WIDTH;
-			model_matrix[3][2] = p.first.y * chunk_t::HEIGHT;
+			model_matrix[3][2] = p.first.y * chunk_t::DEPTH;
 			chunk.draw(
 				projection_matrix, view_matrix, model_matrix, light_pos);
 		}
-#endif
 
 		player.draw(light_pos, projection_matrix, view_matrix);
 
@@ -202,7 +193,6 @@ int main( void )
 		std::this_thread::sleep_until(frame_end_time);
 	}
 
-	world_renderer.deinit();
 	chunk_t::deinit_static();
 	glfwTerminate();
 	return EXIT_SUCCESS;
