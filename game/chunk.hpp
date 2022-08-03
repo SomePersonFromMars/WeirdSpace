@@ -13,7 +13,7 @@
 enum class block_type : uint8_t {
 	none = 0,
 	sand = 1,
-	// brick,
+	brick,
 
 	cnt
 };
@@ -22,9 +22,6 @@ struct chunk_t {
 	static constexpr int WIDTH = 256;
 	static constexpr int HEIGHT = 64;
 	static constexpr int DEPTH = 256;
-	// static constexpr int WIDTH = 32;
-	// static constexpr int HEIGHT = 32;
-	// static constexpr int DEPTH = 32;
 
 	block_type content[WIDTH][HEIGHT][DEPTH];
 	// Neighbors order:
@@ -112,45 +109,43 @@ private:
 		0, 1, 1,  0,
 	};
 
-	// For now only the sand texture is supported
+#define VERTEX_UV(off_x, off_y, mult_x, mult_y, x, y) \
+	(off_x) + (mult_x)*static_cast<double>(x), \
+	(off_y) + (mult_y)*static_cast<double>(y), \
+	0, 0,
+#define FACE_UVS(off_x, off_y, mult_x, mult_y) \
+	VERTEX_UV(off_x, off_y, mult_x, mult_y, 1, 1) \
+	VERTEX_UV(off_x, off_y, mult_x, mult_y, 1, 0) \
+	VERTEX_UV(off_x, off_y, mult_x, mult_y, 0, 1) \
+	VERTEX_UV(off_x, off_y, mult_x, mult_y, 0, 1) \
+	VERTEX_UV(off_x, off_y, mult_x, mult_y, 1, 0) \
+	VERTEX_UV(off_x, off_y, mult_x, mult_y, 0, 0)
+
+#define SAND_FACE_UVS \
+	FACE_UVS(0.0, 0, 0.125, 1.0)
+
+#define BRICK_FACE_UVS \
+	FACE_UVS(0.375, 0, 0.125, 1.0)
+
 	static constexpr GLfloat BLOCK_UVS[] = {
-		1, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 0,  0, 0,
-		0, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 1,  0, 0,
-		1, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 0,  0, 0,
-		0, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 1,  0, 0,
-		1, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 0,  0, 0,
-		0, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 1,  0, 0,
-		1, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 0,  0, 0,
-		0, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 1,  0, 0,
-		1, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 0,  0, 0,
-		0, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 1,  0, 0,
-		1, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 0,  0, 0,
-		0, 0,  0, 0,
-		1, 1,  0, 0,
-		0, 1,  0, 0,
+		SAND_FACE_UVS
+		SAND_FACE_UVS
+		SAND_FACE_UVS
+		SAND_FACE_UVS
+		SAND_FACE_UVS
+		SAND_FACE_UVS
+		BRICK_FACE_UVS
+		BRICK_FACE_UVS
+		BRICK_FACE_UVS
+		BRICK_FACE_UVS
+		BRICK_FACE_UVS
+		BRICK_FACE_UVS
 	};
+
+#undef SAND_FACE_UVS
+#undef BRICK_FACE_UVS
+#undef FACES_UVS
+#undef VERTEX_UV
 
 	static constexpr GLfloat BLOCK_NORMALS[] = {
 		0, 0, -1,  0,

@@ -11,7 +11,10 @@
 #define SHADER_A_VERTEX_PATH "runtime/shader_A_vertex.glsl"
 #define SHADER_A_FRAGMENT_PATH "runtime/shader_A_fragment.glsl"
 #define SHADER_WORLD_VERTEX_PATH "runtime/shader_world_vertex.glsl"
-#define TEXTURE_BLOCKS_COMBINED_PATH "runtime/blocks_combined.png"
+// #define TEXTURE_BLOCKS_COMBINED_PATH "runtime/blocks_combined.png"
+#define TEXTURE_BLOCKS_COMBINED_PATH "runtime/blocks_combined-packed.png"
+// #define TEXTURE_BLOCKS_COMBINED_PATH "runtime/debug.png"
+// #define TEXTURE_BLOCKS_COMBINED_PATH "runtime/sand.png"
 #define TEXTURE_PLAYER_PATH "runtime/player.png"
 
 #define ATMOSPHERE 4

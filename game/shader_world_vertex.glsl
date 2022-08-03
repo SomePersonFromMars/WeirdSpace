@@ -20,7 +20,7 @@ out vec3 fragment_normal_worldspace;
 #define BLOCK_VERTICES_CNT (6u*2u*3u)
 layout (std140) uniform block_model {
 	vec4 vertices_positions    [BLOCK_VERTICES_CNT];
-	vec4 vertices_uvs_combined [BLOCK_VERTICES_CNT*1u];	// Where 1 is
+	vec4 vertices_uvs_combined [BLOCK_VERTICES_CNT*2u];	// Where 1 is
 														// block_type::cnt-1
 	vec4 vertices_normals      [BLOCK_VERTICES_CNT];
 };

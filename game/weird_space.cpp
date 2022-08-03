@@ -80,16 +80,23 @@ int main( void )
 		timer, now;
 	long int elapsed;
 
-	constexpr int CHUNKS_X_CNT = 2;
-	constexpr int CHUNKS_Z_CNT = 2;
+	constexpr int CHUNKS_X_CNT = 1;
+	constexpr int CHUNKS_Z_CNT = 1;
 	world_generator_t world_generator(world_buffer);
 	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
 		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
 			world_generator.gen_chunk({x, z});
 		}
 	}
+	for (int z = 1; z <= 2; ++z)
+		for (int x = 142; x >= 140; --x)
+			for (int y = 19; y <= 30; ++y)
+				world_buffer.get(glm::ivec3(x, y, z)) = block_type::brick;
+	for (int x = 142; x >= 140; --x)
+		for (int y = 19; y <= 22; ++y)
+			world_buffer.get(glm::ivec3(x, y, 0)) = block_type::brick;
 
-	for (int x = 0; x < 2; ++x) {
+	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
 		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
 			chunk_t &chunk = world_buffer.chunks[glm::ivec2(x, z)];
 			if (x > 0)
