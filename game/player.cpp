@@ -235,6 +235,8 @@ glm::bvec2 player_t::move_by(glm::vec2 offset) {
 		offset -= cur_off;
 	}
 
+	position.x = mod_f(position.x,
+			static_cast<float>(world_buffer.width*chunk_t::WIDTH));
 	return has_collided;
 }
 

@@ -80,13 +80,30 @@ int main( void )
 		timer, now;
 	long int elapsed;
 
-	constexpr int CHUNKS_X_CNT = 1;
+	const int CHUNKS_X_CNT = world_buffer.width;
 	constexpr int CHUNKS_Z_CNT = 1;
 	world_generator_t world_generator(world_buffer);
 	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
 		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
 			world_generator.gen_chunk({x, z});
 		}
+	}
+	// World end border
+	{
+		chunk_t &first_chunk = world_buffer.chunks[glm::ivec2(0, 0)];
+		chunk_t &last_chunk = world_buffer.chunks[glm::ivec2(
+				world_buffer.width-1, 0)];
+		for (int x = 0; x < 1; ++x)
+			for (int y = 60; y < chunk_t::HEIGHT; ++y)
+				for (int z = 3; z < chunk_t::DEPTH; ++z) {
+					int _x = x;
+					if (first_chunk.content[_x][y][z] == block_type::none)
+						first_chunk.content[_x][y][z] = block_type::brick;
+
+					_x = chunk_t::WIDTH-1-x;
+					if (last_chunk.content[_x][y][z] == block_type::none)
+						last_chunk.content[_x][y][z] = block_type::brick;
+				}
 	}
 	for (int z = 1; z <= 2; ++z)
 		for (int x = 142; x >= 140; --x)
@@ -101,8 +118,14 @@ int main( void )
 			chunk_t &chunk = world_buffer.chunks[glm::ivec2(x, z)];
 			if (x > 0)
 				chunk.neighbors[0] = &world_buffer.chunks[glm::ivec2(x-1, z)];
+			else if (x == 0)
+				chunk.neighbors[0] = &world_buffer.chunks[glm::ivec2(
+						world_buffer.width-1, z)];
 			if (x < CHUNKS_X_CNT-1)
 				chunk.neighbors[1] = &world_buffer.chunks[glm::ivec2(x+1, z)];
+			else if (x == CHUNKS_X_CNT-1)
+				chunk.neighbors[1] = &world_buffer.chunks[glm::ivec2(0, z)];
+
 			if (z > 0)
 				chunk.neighbors[4] = &world_buffer.chunks[glm::ivec2(x, z-1)];
 			if (z < CHUNKS_Z_CNT-1)
@@ -115,11 +138,15 @@ int main( void )
 
 	player_t player(shader_A, world_buffer);
 	player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT, 0.5};
+	// player.debug_position = {0, chunk_t::HEIGHT, 0.5};
 	player.set_position(player.debug_position);
 	player.init();
 
-	camera_t camera(glm::vec3(256, 120, -80)+glm::vec3(0, 1, -1.5),
-			2*PI, 6.0f, 90.0f);
+	camera_t camera(glm::vec3(34.878933, 79.936882, -19.364670),
+			// 2*PI, 6.0f,
+			5.851774, 5.900709,
+			90.0f);
+	camera.switch_following_mode();
 
 	callbacks_strct_t callbacks_strct(
 			window,
@@ -159,6 +186,17 @@ int main( void )
 			model_matrix[3][2] = p.first.y * chunk_t::DEPTH;
 			chunk.draw(
 				projection_matrix, view_matrix, model_matrix, light_pos);
+
+			if (p.first.x == 0) {
+				model_matrix[3][0] = world_buffer.width * chunk_t::WIDTH;
+				chunk.draw(
+					projection_matrix, view_matrix, model_matrix, light_pos);
+			}
+			if (p.first.x == world_buffer.width-1) {
+				model_matrix[3][0] = -1 * chunk_t::WIDTH;
+				chunk.draw(
+					projection_matrix, view_matrix, model_matrix, light_pos);
+			}
 		}
 
 		player.draw(light_pos, projection_matrix, view_matrix);
@@ -178,9 +216,9 @@ int main( void )
 				timer_logging = now;
 
 				fprintf(stderr, "pos=(%f, %f, %f)",
-						player.get_position().x,
-						player.get_position().y,
-						player.get_position().z);
+						camera.get_position().x,
+						camera.get_position().y,
+						camera.get_position().z);
 				fprintf(stderr, ", angle=(%f, %f)",
 						camera.get_horizontal_angle(),
 						camera.get_vertical_angle());

@@ -7,6 +7,7 @@
 #include "chunk.hpp"
 
 struct world_buffer_t {
+	const int width = 2; // World width in chunks
 	std::map<glm::ivec2, chunk_t, ivec2_cmp_t> chunks;
 
 	inline block_type& get(glm::ivec3 pos);
@@ -24,7 +25,7 @@ private:
 inline block_type& world_buffer_t::get(glm::ivec3 pos) {
 	return 0 <= pos.y && pos.y <= static_cast<int>(chunk_t::HEIGHT) ?
 		chunks[glm::ivec2(
-			floor_div(pos.x, static_cast<int>(chunk_t::WIDTH)),
+			floor_div(pos.x, static_cast<int>(chunk_t::WIDTH)) % width,
 			floor_div(pos.z, static_cast<int>(chunk_t::DEPTH))
 		)].content AT3_M(
 				pos.x, pos.y, pos.z,

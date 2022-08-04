@@ -161,7 +161,7 @@ void chunk_t::preprocess() {
 						!= block_type::none)
 						faces_mask &= ~(1<<4);
 				}
-				if (y < WIDTH-1) {
+				if (y < HEIGHT-1) {
 					if (content[x][y+1][z] != block_type::none)
 						faces_mask &= ~(1<<1);
 				} else {
@@ -180,7 +180,7 @@ void chunk_t::preprocess() {
 						!= block_type::none)
 						faces_mask &= ~(1<<0);
 				}
-				if (z < WIDTH-1) {
+				if (z < DEPTH-1) {
 					if (content[x][y][z+1] != block_type::none)
 						faces_mask &= ~(1<<5);
 				} else {

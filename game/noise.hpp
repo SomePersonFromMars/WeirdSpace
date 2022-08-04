@@ -2,6 +2,7 @@
 #ifndef NOISE_HPP
 #define NOISE_HPP
 
+#include <perlin_noise.hpp>
 #include <cmath>
 
 // Source: https://en.wikipedia.org/wiki/Perlin_noise

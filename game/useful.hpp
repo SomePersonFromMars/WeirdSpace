@@ -39,6 +39,16 @@ constexpr double PI = 3.14159265358979323846;
 	[static_cast<size_t>((y%My+My)%My)] \
 	[static_cast<size_t>((z%Mz+Mz)%Mz)]
 
+template<class F>
+inline F mod_f(F a, F m) {
+	static_assert(std::is_floating_point_v<F>);
+	assert(m > F(0));
+
+	return a > F(0) ?
+		a - std::floor(a/m)*m :
+		a + std::ceil(-a/m)*m;
+}
+
 int floor_div(int num, int den);
 
 struct ivec2_cmp_t {
