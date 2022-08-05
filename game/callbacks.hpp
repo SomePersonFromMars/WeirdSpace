@@ -43,11 +43,12 @@ private:
 	friend void key_callback(GLFWwindow *window,
 			int key, int scancode, int action, int mods);
 };
+
 inline callbacks_strct_t* callbacks_strct_t::get_strct(
 		GLFWwindow *window) {
 	return reinterpret_cast<callbacks_strct_t*>(
-			glfwGetWindowUserPointer(window)
-		);
+		glfwGetWindowUserPointer(window)
+	);
 }
 
 #endif

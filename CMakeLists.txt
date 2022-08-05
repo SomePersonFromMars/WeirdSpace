@@ -32,3 +32,4 @@ add_definitions(
 
 add_subdirectory(game)
 add_subdirectory(tools/obj_dump)
+add_subdirectory(tools/generator_playground)

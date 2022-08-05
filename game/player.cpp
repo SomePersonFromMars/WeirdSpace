@@ -126,25 +126,20 @@ void player_t::draw(
 	);
 }
 
-#define SPEED 3
 void player_t::move_up(float delta_time) {
-	move_by_queued({0, SPEED * delta_time});
-	// on_axis_move_by(SPEED * delta_time, &glm::vec3::y);
+	move_by_queued({0, move_speed * delta_time});
 }
 
 void player_t::move_down(float delta_time) {
-	move_by_queued({0, -SPEED * delta_time});
-	// on_axis_move_by(-SPEED * delta_time, &glm::vec3::y);
+	move_by_queued({0, -move_speed * delta_time});
 }
 
 void player_t::move_right(float delta_time) {
-	move_by_queued({-SPEED * delta_time, 0});
-	// on_axis_move_by(-SPEED * delta_time, &glm::vec3::x);
+	move_by_queued({-move_speed * delta_time, 0});
 }
 
 void player_t::move_left(float delta_time) {
-	move_by_queued({SPEED * delta_time, 0});
-	// on_axis_move_by(SPEED * delta_time, &glm::vec3::x);
+	move_by_queued({move_speed * delta_time, 0});
 }
 
 void player_t::jump(float delta_time) {
@@ -156,7 +151,7 @@ void player_t::jump(float delta_time) {
 				)) != block_type::none)
 	speed.y = 10.0f;
 }
-#undef SPEED
+#undef move_speed
 
 bool player_t::on_axis_move_by(float offset, float glm::vec3::* axis_ptr) {
 	if (offset == 0)

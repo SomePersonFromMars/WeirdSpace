@@ -31,6 +31,7 @@ struct player_t {
 	// Movement
 	inline void set_position(glm::vec3 new_pos);
 	inline const glm::vec3& get_position() const;
+	inline void enable_moving_acceleration(bool enable);
 
 	void move_up        (float delta_time);
 	void move_down      (float delta_time);
@@ -43,6 +44,10 @@ struct player_t {
 private:
 	shader_A_t &shader;
 	world_buffer_t &world_buffer;
+
+	const float move_speed_normal = 3.0f;
+	const float move_speed_accelerated = 30.0f;
+	float move_speed = move_speed_normal;
 
 	// Right-bottom-front corner of the player's hitbox
 	glm::vec3 position;
@@ -121,6 +126,13 @@ inline void player_t::set_position(glm::vec3 new_pos) {
 
 inline const glm::vec3& player_t::get_position() const {
 	return position;
+}
+
+inline void player_t::enable_moving_acceleration(bool enable) {
+	if (enable)
+		move_speed = move_speed_accelerated;
+	else
+		move_speed = move_speed_normal;
 }
 
 inline void player_t::switch_fly_mode() {

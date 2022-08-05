@@ -1,14 +1,13 @@
 #include <cstdio>
 #include <cstdlib>
-#include <thread>
 #include <chrono>
+#include <thread>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-using namespace glm;
 
 #include "callbacks.hpp"
 #include "camera.hpp"
@@ -21,8 +20,7 @@ using namespace glm;
 
 #include "settings.hpp"
 
-int main( void )
-{
+int32_t main(void) {
 	GLFWwindow* window;
 	GLint window_width = 1920, window_height = 1080;
 
@@ -88,30 +86,30 @@ int main( void )
 			world_generator.gen_chunk({x, z});
 		}
 	}
-	// World end border
-	{
-		chunk_t &first_chunk = world_buffer.chunks[glm::ivec2(0, 0)];
-		chunk_t &last_chunk = world_buffer.chunks[glm::ivec2(
-				world_buffer.width-1, 0)];
-		for (int x = 0; x < 1; ++x)
-			for (int y = 60; y < chunk_t::HEIGHT; ++y)
-				for (int z = 3; z < chunk_t::DEPTH; ++z) {
-					int _x = x;
-					if (first_chunk.content[_x][y][z] == block_type::none)
-						first_chunk.content[_x][y][z] = block_type::brick;
+	// // World end border
+	// {
+	// 	chunk_t &first_chunk = world_buffer.chunks[glm::ivec2(0, 0)];
+	// 	chunk_t &last_chunk = world_buffer.chunks[glm::ivec2(
+	// 			world_buffer.width-1, 0)];
+	// 	for (int x = 0; x < 1; ++x)
+	// 		for (int y = 60; y < chunk_t::HEIGHT; ++y)
+	// 			for (int z = 3; z < chunk_t::DEPTH; ++z) {
+	// 				int _x = x;
+	// 				if (first_chunk.content[_x][y][z] == block_type::none)
+	// 					first_chunk.content[_x][y][z] = block_type::brick;
 
-					_x = chunk_t::WIDTH-1-x;
-					if (last_chunk.content[_x][y][z] == block_type::none)
-						last_chunk.content[_x][y][z] = block_type::brick;
-				}
-	}
-	for (int z = 1; z <= 2; ++z)
-		for (int x = 142; x >= 140; --x)
-			for (int y = 19; y <= 30; ++y)
-				world_buffer.get(glm::ivec3(x, y, z)) = block_type::brick;
-	for (int x = 142; x >= 140; --x)
-		for (int y = 19; y <= 22; ++y)
-			world_buffer.get(glm::ivec3(x, y, 0)) = block_type::brick;
+	// 				_x = chunk_t::WIDTH-1-x;
+	// 				if (last_chunk.content[_x][y][z] == block_type::none)
+	// 					last_chunk.content[_x][y][z] = block_type::brick;
+	// 			}
+	// }
+	// for (int z = 1; z <= 2; ++z)
+	// 	for (int x = 142; x >= 140; --x)
+	// 		for (int y = 19; y <= 30; ++y)
+	// 			world_buffer.get(glm::ivec3(x, y, z)) = block_type::brick;
+	// for (int x = 142; x >= 140; --x)
+	// 	for (int y = 19; y <= 22; ++y)
+	// 		world_buffer.get(glm::ivec3(x, y, 0)) = block_type::brick;
 
 	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
 		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
@@ -158,7 +156,7 @@ int main( void )
 		);
 
 	std::chrono::time_point<std::chrono::high_resolution_clock>
-		timer_logging= std::chrono::high_resolution_clock::now();
+		timer_logging = std::chrono::high_resolution_clock::now();
 	double timer_fps_cnter = glfwGetTime();
 
 	while (glfwWindowShouldClose(window) == GLFW_FALSE) {
