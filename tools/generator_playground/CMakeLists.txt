@@ -6,7 +6,7 @@ add_executable(generator_playground
 	shader_loader.cpp
 	bitmap.cpp
 
-	bitmap_generator.cpp
+	generator.cpp
 	noise.cpp
 	)
 target_link_libraries(generator_playground

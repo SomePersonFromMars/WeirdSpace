@@ -5,6 +5,9 @@
 #include "shader_loader.hpp"
 
 bitmap_t::bitmap_t() {
+	// Allocate content buffer
+	content = new uint8_t[WIDTH*HEIGHT*3];
+
 	// Load shaders and generate shader program
 	GLuint vertex_shader_id = compile_shader(
 			SHADER_VERTEX_PATH, GL_VERTEX_SHADER);
@@ -74,6 +77,8 @@ bitmap_t::~bitmap_t() {
 	glDeleteVertexArrays(1, &vao_id);
 	glDeleteTextures(1, &texture_id);
 	delete_program(program_id);
+
+	delete[] content;
 }
 
 void bitmap_t::load_to_texture() {

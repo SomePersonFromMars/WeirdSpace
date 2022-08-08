@@ -15,8 +15,7 @@ using namespace glm;
 #include "settings.hpp"
 
 #include "bitmap.hpp"
-
-void generate_bitmap(bitmap_t &bitmap);
+#include "generator.hpp"
 
 struct callbacks_strct_t {
 	GLint window_width, window_height;
@@ -39,6 +38,8 @@ void window_size_callback(GLFWwindow* window, int width, int height) {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
+
+void fun_bitmap(bitmap_t &bitmap);
 
 int32_t main(void) {
 	GLFWwindow* window;
@@ -94,8 +95,12 @@ int32_t main(void) {
 			0.0f);
 
 	bitmap_t bitmapA;
-	generate_bitmap(bitmapA);
+	generator_t generator;
+	int resolution_div = 8;
+	generator.generate_bitmap(bitmapA, resolution_div);
 	bitmapA.load_to_texture();
+	// fun_bitmap(bitmapA);
+	// bitmapA.load_to_texture();
 
 	vec3 camera_pos(0, 0, 0);
 	float camera_zoom(1);
@@ -115,12 +120,27 @@ int32_t main(void) {
 			= frame_beg_time + frame_min_duration;
 
 		if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-			generate_bitmap(bitmapA);
+			generator.new_seed();
+			generator.generate_bitmap(bitmapA, resolution_div);
+			// generate_bitmap(bitmapA);
 			bitmapA.load_to_texture();
 		}
 		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
 			camera_pos = vec3(0);
 			camera_zoom = 1;
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
+			// resolution_div /= 2;
+			resolution_div -= 1;
+			if (resolution_div <= 0) resolution_div = 1;
+			generator.generate_bitmap(bitmapA, resolution_div);
+			bitmapA.load_to_texture();
+		}
+		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
+			resolution_div += 1;
+			generator.generate_bitmap(bitmapA, resolution_div);
+			bitmapA.load_to_texture();
 		}
 
 		const float move_off = delta_time * 1.0;
@@ -148,6 +168,10 @@ int32_t main(void) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		mat4 M(1);
 
+		M = translate(M, -camera_pos *
+				vec3(1, float(window_width)/float(window_height), 1)
+			);
+		M = scale(M, vec3(camera_zoom));
 		bool enable_dualbitmap = false;
 		M = scale(M, vec3(1, float(bitmapA.HEIGHT)/float(bitmapA.WIDTH), 1));
 		M = scale(M, vec3(1, float(window_width)/float(window_height), 1));
@@ -155,8 +179,6 @@ int32_t main(void) {
 			M = scale(M, vec3(0.5, 0.5, 1));
 		}
 
-		M = translate(M, -camera_pos);
-		M = scale(M, vec3(camera_zoom));
 		if (!enable_dualbitmap) {
 			bitmapA.draw(M);
 		} else {
@@ -193,4 +215,57 @@ int32_t main(void) {
 
 	glfwTerminate();
 	return EXIT_SUCCESS;
+}
+
+void fun_bitmap(bitmap_t &bitmap) {
+	for (int x = 0; x < bitmap.WIDTH; ++x)
+		for (int y = 0; y < bitmap.HEIGHT; ++y) {
+			bitmap.get(y, x, 0) = 0;
+			bitmap.get(y, x, 1) = 0;
+			bitmap.get(y, x, 2) = 0;
+		}
+
+	auto seed = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()
+		).count() / 1000;
+
+	std::srand(seed);
+	constexpr int PIX_DIM = 3;
+
+	ivec2 pos(bitmap.WIDTH/2/PIX_DIM, bitmap.HEIGHT/2/PIX_DIM);
+	for (int step = 0; step < 500; ++step) {
+
+		for (int x = 0; x < PIX_DIM; ++x)
+			for (int y = 0; y < PIX_DIM; ++y) {
+				ivec2 tpos = pos;
+				tpos.x *= PIX_DIM;
+				tpos.y *= PIX_DIM;
+
+				tpos.x += x;
+				tpos.y += y;
+
+				tpos.x = std::min(tpos.x, bitmap.WIDTH-1);
+				tpos.y = std::min(tpos.y, bitmap.HEIGHT-1);
+
+				uint32_t color = rand() & 0xff'ff'ff;
+				// uint32_t color = 0xffffff;
+				bitmap.get(tpos.y, tpos.x, 0) = (color & 0x0000ff) >> 0;
+				bitmap.get(tpos.y, tpos.x, 1) = (color & 0x00ff00) >> 8;
+				bitmap.get(tpos.y, tpos.x, 2) = (color & 0xff0000) >> 16;
+			}
+
+		pos.x += rand()%3-1;
+		pos.y += rand()%3-1;
+		pos.x = clamp(pos.x, 0, bitmap.WIDTH/PIX_DIM);
+		pos.y = clamp(pos.y, 0, bitmap.HEIGHT/PIX_DIM);
+	}
+
+	for (int x = 0; x < bitmap.WIDTH; ++x) {
+		bitmap.get(0, x, 2) = 0xff;
+		bitmap.get(bitmap.HEIGHT-1, x, 2) = 0xff;
+	}
+	for (int y = 0; y < bitmap.HEIGHT; ++y) {
+		bitmap.get(y, 0, 2) = 0xff;
+		bitmap.get(y, bitmap.WIDTH-1, 2) = 0xff;
+	}
 }

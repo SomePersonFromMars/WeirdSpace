@@ -65,6 +65,14 @@ inline glm::vec3 color_hex_to_vec3(uint32_t hex) {
 	);
 }
 
+inline glm::u8vec3 color_hex_to_u8vec3(uint32_t hex) {
+	return glm::u8vec3(
+		(hex & 0xff0000u) >> 16,
+		(hex & 0x00ff00u) >> 8,
+		(hex & 0x0000ffu) >> 0
+	);
+}
+
 inline glm::vec3 vec2_to_vec3(const glm::vec2& vec) {
 	return glm::vec3(vec.x, vec.y, 0.0f);
 }
@@ -76,7 +84,7 @@ inline float len_sq(const glm::vec2& vec) {
 template<class T, class S>
 T lerp(T a, T b, S x) {
 	x = glm::clamp<S>(x, 0, 1);
-	return a*(static_cast<S>(1)-x) + b*x;
+	return a*(S(1)-x) + b*x;
 }
 
 #endif

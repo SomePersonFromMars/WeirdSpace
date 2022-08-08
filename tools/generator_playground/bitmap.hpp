@@ -6,12 +6,16 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include "settings.hpp"
+
 struct bitmap_t {
 	// static constexpr int WIDTH = 256;
 	// static constexpr int HEIGHT = 32*5;
-	static constexpr int WIDTH = 512*3;
-	static constexpr int HEIGHT = 512;
-	uint8_t content[HEIGHT][WIDTH][3] { };
+	static constexpr int WIDTH = CHUNK_DIM*12;
+	static constexpr int HEIGHT = CHUNK_DIM*3;
+	// uint8_t content[HEIGHT][WIDTH][3] { };
+	uint8_t *content = nullptr;
+	inline uint8_t& get(int y, int x, int component);
 
 	bitmap_t();
 	~bitmap_t();
@@ -44,5 +48,9 @@ private:
 		1, 1,
 	};
 };
+
+inline uint8_t& bitmap_t::get(int y, int x, int component) {
+	return content[y*WIDTH*3 + x*3 + component];
+}
 
 #endif
