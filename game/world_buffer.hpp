@@ -8,7 +8,7 @@
 
 struct world_buffer_t {
 	const int width = 2; // World width in chunks
-	std::map<glm::ivec2, chunk_t, ivec2_cmp_t> chunks;
+	std::map<glm::ivec2, chunk_t, vec2_cmp_t<int>> chunks;
 
 	inline block_type& get(glm::ivec3 pos);
 

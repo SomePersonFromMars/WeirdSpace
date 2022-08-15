@@ -3,24 +3,37 @@
 #define GENERATOR_HPP
 
 #include "bitmap.hpp"
-#include "noise.hpp"
 
-struct generator_t {
-	generator_t();
+#include "noise.hpp"
+#include <MyGAL/FortuneAlgorithm.h>
+
+struct generator_A_t {
+	generator_A_t();
 
 	void new_seed();
-	glm::u8vec3 get(glm::ivec2 ipos);
 	void generate_bitmap(bitmap_t &bitmap, int resolution_div);
 
 private:
 	const int &width, height;
 
-	// const double noise_pos_mult = 0.04;
 	const double noise_pos_mult = 1.0/double(CHUNK_DIM)*3.0;
-
-	// siv::PerlinNoise noise;
+	glm::u8vec3 get(glm::ivec2 ipos);
 	cyclic_noise_t noise;
-	cyclic_noise_t::seed_type seed;
+};
+
+struct generator_B_t {
+	generator_B_t();
+
+	void new_seed();
+	void generate_bitmap(bitmap_t &bitmap);
+
+private:
+	const int &width, height;
+
+	mygal::Diagram<float> generate_diagram(size_t points_cnt);
+	void draw_edge(bitmap_t &bitmap,
+			mygal::Diagram<float>::HalfEdge half_edge);
+	mygal::Diagram<float> diagram;
 };
 
 #endif

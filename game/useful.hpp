@@ -51,8 +51,11 @@ inline F mod_f(F a, F m) {
 
 int floor_div(int num, int den);
 
-struct ivec2_cmp_t {
-	inline bool operator()(const glm::ivec2 &a, const glm::ivec2 &b) const {
+template<class T>
+struct vec2_cmp_t {
+	inline bool operator()(
+			const glm::tvec2<T, glm::highp> &a,
+			const glm::tvec2<T, glm::highp> &b) const {
 		return a.x < b.x || (a.x == b.x && a.y < b.y);
 	}
 };

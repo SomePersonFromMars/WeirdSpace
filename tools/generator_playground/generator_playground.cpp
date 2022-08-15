@@ -51,6 +51,9 @@ int32_t main(void) {
 	window_width = 1080*2;
 	window_height = 1080;
 
+	// window_width = 1080;
+	// window_height = 1080+10;
+
 	if( !glfwInit() )
 	{
 		fprintf( stderr, "Failed to initialize GLFW\n" );
@@ -89,18 +92,17 @@ int32_t main(void) {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetWindowSizeCallback(window, window_size_callback);
 
-	// const auto background_color = color_hex_to_vec3(0xd6eefc);
 	const auto background_color = color_hex_to_vec3(0);
 	glClearColor(background_color.x, background_color.y, background_color.z,
 			0.0f);
 
 	bitmap_t bitmapA;
-	generator_t generator;
+	generator_A_t generator_A;
+	generator_B_t generator_B;
 	int resolution_div = 8;
-	generator.generate_bitmap(bitmapA, resolution_div);
+	// generator_A.generate_bitmap(bitmapA, resolution_div);
+	generator_B.generate_bitmap(bitmapA);
 	bitmapA.load_to_texture();
-	// fun_bitmap(bitmapA);
-	// bitmapA.load_to_texture();
 
 	vec3 camera_pos(0, 0, 0);
 	float camera_zoom(1);
@@ -119,10 +121,14 @@ int32_t main(void) {
 		const auto frame_end_time
 			= frame_beg_time + frame_min_duration;
 
-		if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-			generator.new_seed();
-			generator.generate_bitmap(bitmapA, resolution_div);
-			// generate_bitmap(bitmapA);
+		if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
+			glfwSetWindowShouldClose(window, GLFW_TRUE);
+		}
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+			// generator_A.new_seed();
+			// generator_A.generate_bitmap(bitmapA, resolution_div);
+			generator_B.new_seed();
+			generator_B.generate_bitmap(bitmapA);
 			bitmapA.load_to_texture();
 		}
 		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
@@ -131,15 +137,14 @@ int32_t main(void) {
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
-			// resolution_div /= 2;
 			resolution_div -= 1;
 			if (resolution_div <= 0) resolution_div = 1;
-			generator.generate_bitmap(bitmapA, resolution_div);
+			generator_A.generate_bitmap(bitmapA, resolution_div);
 			bitmapA.load_to_texture();
 		}
 		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
 			resolution_div += 1;
-			generator.generate_bitmap(bitmapA, resolution_div);
+			generator_A.generate_bitmap(bitmapA, resolution_div);
 			bitmapA.load_to_texture();
 		}
 
@@ -172,7 +177,7 @@ int32_t main(void) {
 				vec3(1, float(window_width)/float(window_height), 1)
 			);
 		M = scale(M, vec3(camera_zoom));
-		bool enable_dualbitmap = false;
+		bool enable_dualbitmap = true;
 		M = scale(M, vec3(1, float(bitmapA.HEIGHT)/float(bitmapA.WIDTH), 1));
 		M = scale(M, vec3(1, float(window_width)/float(window_height), 1));
 		if (enable_dualbitmap) {
@@ -215,57 +220,4 @@ int32_t main(void) {
 
 	glfwTerminate();
 	return EXIT_SUCCESS;
-}
-
-void fun_bitmap(bitmap_t &bitmap) {
-	for (int x = 0; x < bitmap.WIDTH; ++x)
-		for (int y = 0; y < bitmap.HEIGHT; ++y) {
-			bitmap.get(y, x, 0) = 0;
-			bitmap.get(y, x, 1) = 0;
-			bitmap.get(y, x, 2) = 0;
-		}
-
-	auto seed = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::system_clock::now().time_since_epoch()
-		).count() / 1000;
-
-	std::srand(seed);
-	constexpr int PIX_DIM = 3;
-
-	ivec2 pos(bitmap.WIDTH/2/PIX_DIM, bitmap.HEIGHT/2/PIX_DIM);
-	for (int step = 0; step < 500; ++step) {
-
-		for (int x = 0; x < PIX_DIM; ++x)
-			for (int y = 0; y < PIX_DIM; ++y) {
-				ivec2 tpos = pos;
-				tpos.x *= PIX_DIM;
-				tpos.y *= PIX_DIM;
-
-				tpos.x += x;
-				tpos.y += y;
-
-				tpos.x = std::min(tpos.x, bitmap.WIDTH-1);
-				tpos.y = std::min(tpos.y, bitmap.HEIGHT-1);
-
-				uint32_t color = rand() & 0xff'ff'ff;
-				// uint32_t color = 0xffffff;
-				bitmap.get(tpos.y, tpos.x, 0) = (color & 0x0000ff) >> 0;
-				bitmap.get(tpos.y, tpos.x, 1) = (color & 0x00ff00) >> 8;
-				bitmap.get(tpos.y, tpos.x, 2) = (color & 0xff0000) >> 16;
-			}
-
-		pos.x += rand()%3-1;
-		pos.y += rand()%3-1;
-		pos.x = clamp(pos.x, 0, bitmap.WIDTH/PIX_DIM);
-		pos.y = clamp(pos.y, 0, bitmap.HEIGHT/PIX_DIM);
-	}
-
-	for (int x = 0; x < bitmap.WIDTH; ++x) {
-		bitmap.get(0, x, 2) = 0xff;
-		bitmap.get(bitmap.HEIGHT-1, x, 2) = 0xff;
-	}
-	for (int y = 0; y < bitmap.HEIGHT; ++y) {
-		bitmap.get(y, 0, 2) = 0xff;
-		bitmap.get(y, bitmap.WIDTH-1, 2) = 0xff;
-	}
 }
