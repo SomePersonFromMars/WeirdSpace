@@ -29,7 +29,7 @@ callbacks_strct_t::callbacks_strct_t(
 void callbacks_strct_t::handle_input() {
 	camera.enable_moving_acceleration(key_holded[GLFW_KEY_K]);
 	camera.enable_rotation_acceleration(key_holded[GLFW_KEY_LEFT_SHIFT]);
-	player.enable_moving_acceleration(key_holded[GLFW_KEY_K]);
+	player.enable_moving_acceleration(key_holded[GLFW_KEY_Z]);
 
 	if (key_holded[GLFW_KEY_UP])
 		camera.rotate_up(delta_time);

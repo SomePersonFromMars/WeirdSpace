@@ -135,7 +135,9 @@ int32_t main(void) {
 	}
 
 	player_t player(shader_A, world_buffer);
-	player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT, 0.5};
+	// player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT, 0.5};
+	player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT,
+		float(chunk_t::DEPTH/2)+0.5};
 	// player.debug_position = {0, chunk_t::HEIGHT, 0.5};
 	player.set_position(player.debug_position);
 	player.init();

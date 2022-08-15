@@ -73,8 +73,11 @@ u8vec3 generator_t::get(ivec2 ipos) {
 	);
 }
 
+
 void generator_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 
+#define SCENE 1
+#if SCENE == 1
 	for (int x = 0; x < bitmap.WIDTH; x += resolution_div)
 		for (int y = 0; y < bitmap.HEIGHT; y += resolution_div) {
 			const u8vec3 val = get({x, y});
@@ -108,4 +111,9 @@ void generator_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 			bitmap.get(y, x, 0) = 0xff;
 		}
 	}
+
+#elif SCENE == 2
+
+#endif
+#undef SCENE
 }
