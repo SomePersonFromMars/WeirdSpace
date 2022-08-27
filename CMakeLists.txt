@@ -14,7 +14,6 @@ include_directories(
 	external/glew-1.13.0/include/
 	external/stb/include/
 	external/perlin_noise/include
-	external/MyGAL/include
 	)
 
 set(ALL_LIBS
