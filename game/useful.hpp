@@ -76,6 +76,8 @@ inline glm::u8vec3 color_hex_to_u8vec3(uint32_t hex) {
 	);
 }
 
+uint32_t hsv_to_rgb(float h, float s, float v);
+
 inline glm::vec3 vec2_to_vec3(const glm::vec2& vec) {
 	return glm::vec3(vec.x, vec.y, 0.0f);
 }

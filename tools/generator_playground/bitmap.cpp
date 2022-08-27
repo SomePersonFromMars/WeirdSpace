@@ -81,6 +81,18 @@ bitmap_t::~bitmap_t() {
 	delete[] content;
 }
 
+void bitmap_t::set(int y, int x, uint32_t color) {
+	get(y, x, 2) = (color & 0x0000ff) >> 0;
+	get(y, x, 1) = (color & 0x00ff00) >> 8;
+	get(y, x, 0) = (color & 0xff0000) >> 16;
+}
+
+void bitmap_t::set(int y, int x, glm::u8vec3 color) {
+	get(y, x, 2) = color.r;
+	get(y, x, 1) = color.g;
+	get(y, x, 0) = color.b;
+}
+
 void bitmap_t::load_to_texture() {
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 

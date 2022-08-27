@@ -5,7 +5,6 @@
 #include "bitmap.hpp"
 
 #include "noise.hpp"
-#include <MyGAL/FortuneAlgorithm.h>
 
 struct generator_A_t {
 	generator_A_t();
@@ -29,11 +28,40 @@ struct generator_B_t {
 
 private:
 	const int &width, height;
+	const float ratio_wh, ratio_hw;
 
-	mygal::Diagram<float> generate_diagram(size_t points_cnt);
-	void draw_edge(bitmap_t &bitmap,
-			mygal::Diagram<float>::HalfEdge half_edge);
-	mygal::Diagram<float> diagram;
+	void draw_edge(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 end01,
+			uint32_t color);
+	void draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
+			uint32_t color);
+
+	// edge_color is a border color
+	void fill(bitmap_t &bitmap, glm::vec2 origin,
+			uint32_t edge_color, uint32_t fill_color);
+	void draw_hexagon(bitmap_t &bitmap, glm::ivec2 grid_pos,
+			uint32_t edge_color, uint32_t fill_color);
+
+	glm::ivec2 get_hex_neighbor(glm::ivec2 v, int id);
+	std::vector<std::vector<uint32_t>> plates; // Hexagons' values
+	inline glm::ivec2 grid_size();
+
+	void generate_grid(glm::ivec2 size);
+
+	static constexpr float tri_edge = 0.01;
+	static constexpr float tri_h = 0.866025404f; // Ratio of the triangle's
+												// height to its edge
+	static constexpr float hex_points[] {
+		-1, 0,
+		-0.5, tri_h,
+		0.5, tri_h,
+		1, 0,
+		0.5, -tri_h,
+		-0.5, -tri_h,
+	};
 };
+
+inline glm::ivec2 generator_B_t::grid_size() {
+	return glm::ivec2(plates.size() ? plates[0].size() : 0, plates.size());
+}
 
 #endif

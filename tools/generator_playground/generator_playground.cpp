@@ -177,7 +177,7 @@ int32_t main(void) {
 				vec3(1, float(window_width)/float(window_height), 1)
 			);
 		M = scale(M, vec3(camera_zoom));
-		bool enable_dualbitmap = true;
+		bool enable_dualbitmap = false;
 		M = scale(M, vec3(1, float(bitmapA.HEIGHT)/float(bitmapA.WIDTH), 1));
 		M = scale(M, vec3(1, float(window_width)/float(window_height), 1));
 		if (enable_dualbitmap) {

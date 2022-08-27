@@ -53,8 +53,8 @@ void camera_t::follow(float delta_time, glm::vec3 target) {
 	update_rotation_vectors();
 
 	const glm::vec3 new_pos = target - direction_vec * target_dist;
-	position = new_pos; // Instant motion
-	// position = lerp(position, new_pos, delta_time*2.0f); // Smooth motion
+	// position = new_pos; // Instant motion
+	position = lerp(position, new_pos, delta_time*2.0f); // Smooth motion
 }
 
 void camera_t::switch_following_mode() {
