@@ -17,6 +17,6 @@
 // and not its scale compared to objects dimensions.
 // For example noise features remain the same
 // size compared to the chunk dimensions.
-#define CHUNK_DIM 128
+#define CHUNK_DIM 512
 
 #endif

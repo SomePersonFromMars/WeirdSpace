@@ -15,3 +15,9 @@ double cyclic_noise_t::octave2D_01(double x, double y, int octaves,
 	}
 	return a;
 }
+
+double noise_t::octave2D_01(double x, double y, int octaves,
+	double persistence) {
+	const double a = base.octave2D_01(x, y, octaves, persistence);
+	return a;
+}

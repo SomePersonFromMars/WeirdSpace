@@ -89,10 +89,6 @@ void generator_A_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 				for (int dy = 0; dy < resolution_div; ++dy) {
 					if (x+dx >= width) continue;
 					if (y+dy >= height) continue;
-
-					// bitmap.get(y+dy, x+dx, 0) = val.r;
-					// bitmap.get(y+dy, x+dx, 1) = val.g;
-					// bitmap.get(y+dy, x+dx, 2) = val.b;
 					bitmap.set(y+dy, x+dx, val);
 				}
 		}
@@ -132,9 +128,19 @@ generator_B_t::generator_B_t()
 	,ratio_wh{float(width)/float(height)}
 	,ratio_hw{float(height)/float(width)}
 {
+	new_seed();
 }
 
 void generator_B_t::new_seed() {
+	seed_voronoi = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()
+		).count() / 1;
+
+	cyclic_noise_t::seed_type seed_noise;
+	seed_noise = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()
+		).count() / 1;
+	coast_noise.reseed(seed_noise);
 }
 
 void generator_B_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
@@ -166,15 +172,6 @@ void generator_B_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
 		if (pos.x < 0 || pos.x >= float(width)
 				|| pos.y < 0 || pos.y >= float(height))
 			continue;
-
-		// bitmap.get(int(pos.y), int(pos.x), 0) = 0xff;
-		// bitmap.get(int(pos.y), int(pos.x), 1) = 0xff;
-		// bitmap.get(int(pos.y), int(pos.x), 2) = 0xff;
-
-		// bitmap.get(int(pos.y), int(pos.x), 0) = (color & 0x0000ff) >> 0;
-		// bitmap.get(int(pos.y), int(pos.x), 1) = (color & 0x00ff00) >> 8;
-		// bitmap.get(int(pos.y), int(pos.x), 2) = (color & 0xff0000) >> 16;
-
 		bitmap.set(pos.y, pos.x, color);
 	}
 }
@@ -193,11 +190,6 @@ void generator_B_t::draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
 
 		for (int y = beg.y; y <= end.y; ++y) {
 			if (y < 0 || y >= height) continue;
-
-			// bitmap.get(y, x, 0) = 0xff;
-			// bitmap.get(y, x, 1) = 0;
-			// bitmap.get(y, x, 2) = 0;
-
 			bitmap.set(y, x, color);
 		}
 	}
@@ -246,148 +238,112 @@ void generator_B_t::fill(bitmap_t &bitmap, glm::vec2 origin,
 	}
 }
 
-void generator_B_t::draw_hexagon(bitmap_t &bitmap, glm::ivec2 grid_pos,
-		uint32_t edge_color, uint32_t fill_color) {
-
-	grid_pos.x = (grid_pos.y&1) + grid_pos.x*3;
-
-	const vec2 origin =
-		vec2(float(grid_pos.x)*tri_edge + (grid_pos.y%2? tri_edge/2.0f : 0.0f),
-		float(grid_pos.y)*tri_h*tri_edge) + vec2(tri_edge, tri_edge*tri_h);
-
-	// Draw outline
-	for (int k = 0; k < 6; ++k) {
-		const int l = (k+1)%6;
-
-		const vec2 A = vec2(hex_points[2*k],
-				hex_points[2*k+1])*tri_edge+origin;
-		const vec2 B = vec2(hex_points[2*l],
-				hex_points[2*l+1])*tri_edge+origin;
-
-		draw_edge(bitmap,
-			A,
-			B,
-			edge_color
-			);
-
-		draw_point(bitmap, A, 2.0f/float(height-1), edge_color);
-		draw_point(bitmap, B, 2.0f/float(height-1), edge_color);
-	}
-
-	// Fill the hexagon
-	fill(bitmap, origin, edge_color, fill_color);
-
-	// draw_point(bitmap,
-	// 	origin+vec2(0, 0), 0.01, 0x0000ff);
-}
-
 void generator_B_t::generate_bitmap(bitmap_t &bitmap) {
+	// Clear bitmap
 	for (int x = 0; x < width; ++x) {
 		for (int y = 0; y < height; ++y) {
 			bitmap.set(y, x, 0);
 		}
 	}
 
-	// for (int i = 0; i < int(floor(3.0f/tri_edge)); ++i) {
-	// 	for (int j = 0; j < int(floor(3.0f/tri_edge*ratio_wh)); ++j) {
-	// 		draw_hexagon(bitmap, ivec2(j, i), 0xffffff, 0x000000);
-	// 	}
-	// }
+	// Generate and draw the grid
+	grids[0] = { ivec2(-1), 64,  0.40f };
+	// grids[1] = { ivec2(-1), 512,  0.00f };
+	// grids[2] = { ivec2(-1), 2048, 0.00f };
+	// grids[3] = { ivec2(-1), 2048, 0.00f };
+	// grids[4] = { ivec2(-1), 4096, 0.00f };
 
-	generate_grid({
-			int(floor(1.0f/tri_edge*ratio_wh/3.0f)) - 0,
-			int(floor(1.0f/tri_edge/tri_h/1.0f))    - 1,
-			});
-	for (int y = 0; y < plates.size(); ++y) {
-		for (int x = 0; x < plates[y].size(); ++x) {
-			draw_hexagon(bitmap, ivec2(x, y),
-					(plates[y][x]+1)&0xffffff, plates[y][x]);
-
-			// draw_hexagon(bitmap, ivec2(x, y), 0, plates[y][x]);
-			// draw_hexagon(bitmap, ivec2(x, y), 0x123456, 0x111111);
-		}
+	for (auto &grid : grids) {
+		grid.size.x = 512;
+		grid.size.y = grid.size.x * ratio_hw;
+		grid.generate_grid(seed_voronoi, coast_noise);
 	}
 
-	// const float triangle_width = 0.05f;
-	// const float triangle_height = 0.866025404f * triangle_width;
-	// for (int i = 0; i < int(ceil(1.0f/triangle_height)); ++i) {
-	// 	for (int j = 0; j < int(ceil(1.0f/triangle_width*ratio_wh)); ++j) {
-	// 		const vec2 origin
-	// 			(float(j)*triangle_width + (i%2? triangle_width/2.0f : 0.0f),
-	// 			float(i)*triangle_height);
-	// 		const vec2 A(origin);
-	// 		const vec2 B = origin + vec2(triangle_width, 0);
-	// 		const vec2 C = origin + vec2(triangle_width/2.0f, triangle_height);
-	// 		draw_edge(bitmap, A, B, 0xffffff);
-	// 		draw_edge(bitmap, A, C, 0xffffff);
-	// 		draw_edge(bitmap, B, C, 0xffffff);
-	// 		if (j % 3 == (i & 1)) {
-	// 			// draw_point(bitmap,
-	// 			// 		origin+vec2(0, 0), 0.01);
-	// 			// draw_hexagon(bitmap, ivec2(j, i), 0xffffff, 0xff2222);
-	// 		}
-	// 	}
-	// }
+	static constexpr uint32_t WATER_COLOR = 0x77c4dd;
+	static constexpr uint32_t COAST_COLOR = 0xfcf04b;
+	static constexpr uint32_t LAND_COLOR = 0x3a9648;
 
-	// const ivec2 v(2, 3);
-	// draw_hexagon(bitmap, v, 0xdddddd, 0x777777);
-	// // draw_hexagon(bitmap, v, 0xdddddd, hsv_to_rgb(1.0f, 0.6f, 0.8f));
-	// for (int i = 0; i < 6; ++i) {
-	// 	// draw_hexagon(bitmap, get_hex_neighbor(v, i), 0xdddddd, 0x555555);
-	// 	draw_hexagon(bitmap, get_hex_neighbor(v, i), 0xdddddd,
-	// 			hsv_to_rgb(float(i)/6.0f, 0.6f, 0.8f));
-	// }
+	for (int y = 0; y < height; ++y) {
+		for (int x = 0; x < width; ++x) {
+			const tile_t &tile = grids[0].grid
+					[y * grids[0].size.y / height]
+					[x * grids[0].size.x / width];
+			const uint32_t type = tile.type;
 
-	// // World border
-	// for (int x = 0; x < bitmap.WIDTH; ++x) {
-	// 	bitmap.get(0, x, 0) = 0;
-	// 	bitmap.get(0, x, 1) = 0;
-	// 	bitmap.get(0, x, 2) = 0xff;
+			// dvec3 pos;
+			// pos.y = y / double(height-1);
+			// pos.x = x / double(height-1);
+			// pos *= 5.0;
+			// const double noise_val = coast_noise.octave2D_01(pos.x, pos.y, 8);
 
-	// 	bitmap.get(bitmap.HEIGHT-1, x, 0) = 0;
-	// 	bitmap.get(bitmap.HEIGHT-1, x, 1) = 0;
-	// 	bitmap.get(bitmap.HEIGHT-1, x, 2) = 0xff;
-	// }
-	// for (int y = 0; y < bitmap.HEIGHT; ++y) {
-	// 	bitmap.get(y, 0, 0) = 0;
-	// 	bitmap.get(y, 0, 1) = 0;
-	// 	bitmap.get(y, 0, 2) = 0xff;
+			// u8vec3 color;
+			// color.r = noise_val * 255.0;
+			// color.g = color.b = color.r;
+			// bitmap.set(y, x, color);
+			// continue;
 
-	// 	bitmap.get(y, bitmap.WIDTH-1, 0) = 0;
-	// 	bitmap.get(y, bitmap.WIDTH-1, 1) = 0;
-	// 	bitmap.get(y, bitmap.WIDTH-1, 2) = 0xff;
-	// }
+			// const double tmp = grids[0].grid
+			// 		[y * grids[0].size.y / height]
+			// 		[x * grids[0].size.x / width].tmp;
+			// bitmap.set(y, x, u8vec3(tmp*255.0, tmp*255.0, tmp*255.0));
+			// continue;
+
+			// uint32_t type = 0;
+			// for (auto &grid : grids) {
+			// 	type |= grid.grid
+			// 			[y * grid.size.y / height]
+			// 			[x * grid.size.x / width].type;
+			// }
+
+			if (type & tile_t::COAST_BIT) {
+				const float depth = 1.0f -
+					float(tile.coast_dist) / float(tile_t::COAST_DEPTH);
+				u8vec3 color(depth*255.0f);
+				// const u8vec3 color(tile.tmp*255.0f);
+
+				if (tile.perturbtion <= tile_t::COAST_DEPTH)
+					bitmap.set(y, x, WATER_COLOR);
+					// bitmap.set(y, x, COAST_COLOR);
+					// ;
+				else
+					// ;
+					// color.g = 0xffu/2u;
+					bitmap.set(y, x, LAND_COLOR);
+				// bitmap.set(y, x, color);
+
+				// const u8vec3 a = color_hex_to_u8vec3(LAND_COLOR);
+				// const u8vec3 b = color_hex_to_u8vec3(WATER_COLOR);
+				// u8vec3 color;
+				// color.r = lerp(a.r, b.r, noise_val);
+				// color.g = lerp(a.g, b.g, noise_val);
+				// color.b = lerp(a.b, b.b, noise_val);
+				// bitmap.set(y, x, color);
+
+				// if (noise_val < 0.5)
+				// 	bitmap.set(y, x, LAND_COLOR);
+				// else
+				// 	bitmap.set(y, x, WATER_COLOR);
+			} else if (type & tile_t::LAND_BIT) {
+				bitmap.set(y, x, LAND_COLOR);
+			} else {
+				bitmap.set(y, x, WATER_COLOR);
+			}
+		}
+	}
 }
 
-glm::ivec2 generator_B_t::get_hex_neighbor(glm::ivec2 v, int id) {
-	static const ivec2 dir[] {
-		{0, 1}, // #
-		{0, 2},
-		{1, 1}, // #
-		{1, -1}, // #
-		{0, -2},
-		{0, -1}, // #
-	};
-	return v + dir[id%6] + ( id%3!=1 && (v.y&1)==0
-			? ivec2(-1, 0) : ivec2(0, 0));
-}
-
-void generator_B_t::generate_grid(glm::ivec2 size) {
-	const std::mt19937::result_type seed
-		= std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::system_clock::now().time_since_epoch()
-		).count() / 1;
-	std::mt19937 gen(seed);
+void generator_B_t::fractal_grid_t::generate_grid(
+		std::mt19937::result_type seed_voronoi, noise_t &noise) {
+	std::mt19937 gen(seed_voronoi);
 	std::uniform_int_distribution<> distrib_x(0, size.x-1);
 	std::uniform_int_distribution<> distrib_y(0, size.y-1);
-	std::uniform_int_distribution<> distrib_land(1, 100);
+	std::uniform_real_distribution<float> distrib_land(0.0f, 1.0f);
 
-	plates.assign(size.y, std::vector<uint32_t>(size.x, 0));
+	grid.assign(size.y, std::vector<tile_t>(size.x, {0}));
 
-	const int tectonic_plates_cnt = 80;
-	std::queue<ivec2> next_v;
+	std::queue<ivec2> next_v_A, next_v_B;
 	std::set<ivec2, vec2_cmp_t<int>> points;
-	for (int i = 0; i < tectonic_plates_cnt; ++i) {
+	for (int i = 0; i < voronoi_cnt; ++i) {
 		ivec2 p;
 		while (
 			points.find(
@@ -397,58 +353,80 @@ void generator_B_t::generate_grid(glm::ivec2 size) {
 			;
 		points.insert(p);
 
-		next_v.push(p);
-		plates[p.y][p.x] = hsv_to_rgb(
-				float(i)/float(tectonic_plates_cnt), 0.9f, 0.8f);
+		next_v_A.push(p);
+		// grid[p.y][p.x] = hsv_to_rgb(
+		// 		float(i)/float(voronoi_cnt), 0.9f, 0.8f);
 
-		if (distrib_land(gen) <= 40)
-			plates[p.y][p.x] = 0x3a9648;
+		if (distrib_land(gen) <= land_probability)
+			grid[p.y][p.x].type = tile_t::LAND_BIT;
 		else
-			plates[p.y][p.x] = 0x77c4dd;
+			grid[p.y][p.x].type = tile_t::WATER_BIT;
 	}
 
-	// static const std::vector<ivec2> points {
-	// 	ivec2
-	// 	// (0, 0),
-	// 	// {0, 1},
-	// 	// {0, 2},
-	// 	// {0, 3},
-	// 	(1, 3),
-	// 	{3, 4},
-	// 	{4, 5},
-	// 	{6, 6},
-	// 	{7, 7},
-	// 	{9, 8},
-	// };
-	// for (int i = 0; i < points.size(); ++i) {
-	// 	const ivec2 &p = points[i];
-	// 	plates[p.y][p.x] = hsv_to_rgb(
-	// 			float(i)/float(points.size()), 0.6f, 1.0f);
-	// 	next_v.push(p);
-	// }
+	static const std::array<ivec2, 4> dir {
+		ivec2(-1, 0),
+		ivec2(1, 0),
+		ivec2(0, -1),
+		ivec2(0, 1),
+	};
 
-	while (!next_v.empty()) {
-		const ivec2 v = next_v.front();
-		next_v.pop();
+	while (!next_v_A.empty()) {
+		const ivec2 v = next_v_A.front();
+		auto &grid_v = grid[v.y][v.x];
+		next_v_A.pop();
 
-		for (int i = 0; i < 6; ++i) {
-			const ivec2 w = get_hex_neighbor(v, i);
+		for (const ivec2 &d : dir) {
+			const ivec2 w = v + d;
 			if (w.x < 0 || w.x >= size.x)
 				continue;
 			if (w.y < 0 || w.y >= size.y)
 				continue;
-			if (plates[w.y][w.x] != 0)
+			auto &grid_w = grid[w.y][w.x];
+
+			if (grid_v.type == tile_t::LAND_BIT &&
+					grid_w.type == tile_t::WATER_BIT) {
+				next_v_B.push(v);
+				grid_v.type = tile_t::COAST_BIT;
+
+				dvec2 pos;
+				pos.x = w.x / double(size.y-1);
+				pos.y = w.y / double(size.y-1);
+				pos *= 10.0;
+				const double val = noise.octave2D_01(pos.x, pos.y, 4);
+				// grid_w.tmp = val;
+				grid_v.perturbtion = val * tile_t::COAST_DEPTH;
+			}
+			if (grid_w.type != 0)
 				continue;
 
-			plates[w.y][w.x] = plates[v.y][v.x];
-			next_v.push(w);
-			// plates[w.y][w.x] = 0x555555;
+			if (grid_v.type != tile_t::COAST_BIT)
+				grid_w.type = grid_v.type;
+			else
+				grid_w.type = tile_t::LAND_BIT;
+			next_v_A.push(w);
 		}
 	}
 
-	// for (int y = 0; y < plates.size(); ++y) {
-	// 	for (int x = 0; x < plates[y].size(); ++x) {
-	// 		plates[y][x] = 0x555555;
-	// 	}
-	// }
+	while (!next_v_B.empty()) {
+		const ivec2 v = next_v_B.front();
+		const auto &grid_v = grid[v.y][v.x];
+		next_v_B.pop();
+
+		for (const ivec2 &d : dir) {
+			const ivec2 w = v + d;
+			if (w.x < 0 || w.x >= size.x)
+				continue;
+			if (w.y < 0 || w.y >= size.y)
+				continue;
+			auto &grid_w = grid[w.y][w.x];
+			if (grid_w.type != tile_t::LAND_BIT)
+				continue;
+
+			grid_w.type = tile_t::COAST_BIT;
+			grid_w.coast_dist = grid_v.coast_dist + 1;
+			grid_w.perturbtion = grid_v.perturbtion + 1;
+			if (grid_w.coast_dist < tile_t::COAST_DEPTH)
+				next_v_B.push(w);
+		}
+	}
 }

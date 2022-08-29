@@ -70,9 +70,9 @@ inline glm::vec3 color_hex_to_vec3(uint32_t hex) {
 
 inline glm::u8vec3 color_hex_to_u8vec3(uint32_t hex) {
 	return glm::u8vec3(
-		(hex & 0xff0000u) >> 16,
+		(hex & 0x0000ffu) >> 0,
 		(hex & 0x00ff00u) >> 8,
-		(hex & 0x0000ffu) >> 0
+		(hex & 0xff0000u) >> 16
 	);
 }
 

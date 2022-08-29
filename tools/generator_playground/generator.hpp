@@ -3,8 +3,9 @@
 #define GENERATOR_HPP
 
 #include "bitmap.hpp"
-
 #include "noise.hpp"
+
+#include <random>
 
 struct generator_A_t {
 	generator_A_t();
@@ -30,6 +31,9 @@ private:
 	const int &width, height;
 	const float ratio_wh, ratio_hw;
 
+	std::mt19937::result_type seed_voronoi;
+	noise_t coast_noise;
+
 	void draw_edge(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 end01,
 			uint32_t color);
 	void draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
@@ -38,30 +42,50 @@ private:
 	// edge_color is a border color
 	void fill(bitmap_t &bitmap, glm::vec2 origin,
 			uint32_t edge_color, uint32_t fill_color);
-	void draw_hexagon(bitmap_t &bitmap, glm::ivec2 grid_pos,
-			uint32_t edge_color, uint32_t fill_color);
 
-	glm::ivec2 get_hex_neighbor(glm::ivec2 v, int id);
-	std::vector<std::vector<uint32_t>> plates; // Hexagons' values
-	inline glm::ivec2 grid_size();
+	struct tile_t {
+		uint32_t type = 0;
+		int coast_dist = 0;
+		int perturbtion = 0;
+		double tmp;
 
-	void generate_grid(glm::ivec2 size);
+		static constexpr uint32_t WATER_BIT = 1;
+		static constexpr uint32_t COAST_BIT = 4;
+		static constexpr uint32_t LAND_BIT = 2;
 
-	static constexpr float tri_edge = 0.01;
-	static constexpr float tri_h = 0.866025404f; // Ratio of the triangle's
-												// height to its edge
-	static constexpr float hex_points[] {
-		-1, 0,
-		-0.5, tri_h,
-		0.5, tri_h,
-		1, 0,
-		0.5, -tri_h,
-		-0.5, -tri_h,
+		static constexpr int COAST_DEPTH = 32;
 	};
-};
 
-inline glm::ivec2 generator_B_t::grid_size() {
-	return glm::ivec2(plates.size() ? plates[0].size() : 0, plates.size());
-}
+	struct fractal_grid_t {
+		glm::ivec2 size;
+		int voronoi_cnt;
+		float land_probability;
+		std::vector<std::vector<tile_t>> grid;
+		void generate_grid(std::mt19937::result_type seed_voronoi,
+				noise_t &noise);
+	};
+
+	std::array<fractal_grid_t, 1> grids; // Fractal grids
+
+	// void draw_hexagon(bitmap_t &bitmap, glm::ivec2 grid_pos,
+	// 		uint32_t edge_color, uint32_t fill_color);
+
+	// glm::ivec2 get_hex_neighbor(glm::ivec2 v, int id);
+	// std::vector<std::vector<uint32_t>> plates; // Hexagons' values
+
+	// void generate_grid(glm::ivec2 size);
+
+	// static constexpr float tri_edge = 0.005;
+	// static constexpr float tri_h = 0.866025404f; // Ratio of the triangle's
+	// 											// height to its edge
+	// static constexpr float hex_points[] {
+	// 	-1, 0,
+	// 	-0.5, tri_h,
+	// 	0.5, tri_h,
+	// 	1, 0,
+	// 	0.5, -tri_h,
+	// 	-0.5, -tri_h,
+	// };
+};
 
 #endif
