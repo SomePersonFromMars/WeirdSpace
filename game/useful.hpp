@@ -86,6 +86,13 @@ inline float len_sq(const glm::vec2& vec) {
 	return vec.x*vec.x + vec.y*vec.y;
 }
 
+inline long long len_sq(const glm::ivec3& vec) {
+	using ll = long long;
+	return
+		static_cast<ll>(vec.x)*static_cast<ll>(vec.x) +
+		static_cast<ll>(vec.y)*static_cast<ll>(vec.y);
+}
+
 template<class T, class S>
 T lerp(T a, T b, S x) {
 	x = glm::clamp<S>(x, 0, 1);

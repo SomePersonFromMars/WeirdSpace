@@ -45,15 +45,19 @@ private:
 
 	struct tile_t {
 		uint32_t type = 0;
-		int coast_dist = 0;
+		// int coast_dist = 0;
 		int perturbtion = 0;
+		glm::ivec2 coast_origin;
 		double tmp;
 
 		static constexpr uint32_t WATER_BIT = 1;
 		static constexpr uint32_t COAST_BIT = 4;
 		static constexpr uint32_t LAND_BIT = 2;
 
-		static constexpr int COAST_DEPTH = 32;
+		static constexpr int COAST_DEPTH = 16;
+		static constexpr long long COAST_DEPTH_SQ =
+			static_cast<long long>(COAST_DEPTH) *
+			static_cast<long long>(COAST_DEPTH);
 	};
 
 	struct fractal_grid_t {

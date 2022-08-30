@@ -265,9 +265,11 @@ void generator_B_t::generate_bitmap(bitmap_t &bitmap) {
 
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
-			const tile_t &tile = grids[0].grid
-					[y * grids[0].size.y / height]
-					[x * grids[0].size.x / width];
+			const ivec2 v(
+					x * grids[0].size.x / width,
+					y * grids[0].size.y / height
+					);
+			const tile_t &tile = grids[0].grid[v.y][v.x];
 			const uint32_t type = tile.type;
 
 			// dvec3 pos;
@@ -296,8 +298,11 @@ void generator_B_t::generate_bitmap(bitmap_t &bitmap) {
 			// }
 
 			if (type & tile_t::COAST_BIT) {
-				const float depth = 1.0f -
-					float(tile.coast_dist) / float(tile_t::COAST_DEPTH);
+				const float depth = std::sqrt(
+						float(len_sq(v - tile.coast_origin))) /
+					float(tile_t::COAST_DEPTH+1);
+				// const float depth = 1.0f -
+				// 	float(tile.coast_dist) / float(tile_t::COAST_DEPTH);
 				u8vec3 color(depth*255.0f);
 				// const u8vec3 color(tile.tmp*255.0f);
 
@@ -310,6 +315,7 @@ void generator_B_t::generate_bitmap(bitmap_t &bitmap) {
 					// color.g = 0xffu/2u;
 					bitmap.set(y, x, LAND_COLOR);
 				// bitmap.set(y, x, color);
+				// bitmap.set(y, x, COAST_COLOR);
 
 				// const u8vec3 a = color_hex_to_u8vec3(LAND_COLOR);
 				// const u8vec3 b = color_hex_to_u8vec3(WATER_COLOR);
@@ -387,12 +393,13 @@ void generator_B_t::fractal_grid_t::generate_grid(
 					grid_w.type == tile_t::WATER_BIT) {
 				next_v_B.push(v);
 				grid_v.type = tile_t::COAST_BIT;
+				grid_v.coast_origin = v;
 
 				dvec2 pos;
 				pos.x = w.x / double(size.y-1);
 				pos.y = w.y / double(size.y-1);
-				pos *= 10.0;
-				const double val = noise.octave2D_01(pos.x, pos.y, 4);
+				pos *= 20.0;
+				const double val = noise.octave2D_01(pos.x, pos.y, 6);
 				// grid_w.tmp = val;
 				grid_v.perturbtion = val * tile_t::COAST_DEPTH;
 			}
@@ -419,13 +426,25 @@ void generator_B_t::fractal_grid_t::generate_grid(
 			if (w.y < 0 || w.y >= size.y)
 				continue;
 			auto &grid_w = grid[w.y][w.x];
-			if (grid_w.type != tile_t::LAND_BIT)
+			// if (grid_w.type != tile_t::LAND_BIT)
+			// 	continue;
+			if (grid_w.type == tile_t::WATER_BIT)
 				continue;
 
+			const long long cur_dist_sq = len_sq(w - grid_w.coast_origin);
+			const long long new_dist_sq = len_sq(w - grid_v.coast_origin);
+			if (grid_w.type == tile_t::COAST_BIT) {
+				if (cur_dist_sq <= new_dist_sq)
+					continue;
+			}
+
 			grid_w.type = tile_t::COAST_BIT;
-			grid_w.coast_dist = grid_v.coast_dist + 1;
+			// grid_w.coast_dist = grid_v.coast_dist + 1;
+			grid_w.coast_origin = grid_v.coast_origin;
 			grid_w.perturbtion = grid_v.perturbtion + 1;
-			if (grid_w.coast_dist < tile_t::COAST_DEPTH)
+			// if (grid_w.coast_dist < tile_t::COAST_DEPTH)
+			// 	next_v_B.push(w);
+			if (new_dist_sq < tile_t::COAST_DEPTH_SQ)
 				next_v_B.push(w);
 		}
 	}
