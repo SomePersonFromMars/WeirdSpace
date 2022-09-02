@@ -1,0 +1,4 @@
+CREDITS:
+https://github.com/nothings/stb
+https://github.com/Reputeless/PerlinNoise
+https://github.com/delfrrr/delaunator-cpp
