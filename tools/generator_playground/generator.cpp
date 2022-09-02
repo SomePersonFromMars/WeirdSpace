@@ -17,10 +17,19 @@ using namespace glm;
 #include "settings.hpp"
 
 #include "noise.hpp"
+#include <delaunator.hpp>
 
-generator_A_t::generator_A_t()
+generator_t::generator_t()
 	:width{bitmap_t::WIDTH}
 	,height{bitmap_t::HEIGHT}
+	,ratio_wh{float(width)/float(height)}
+	,ratio_hw{float(height)/float(width)}
+{
+	// new_seed();
+}
+
+generator_A_t::generator_A_t()
+	:generator_t()
 {
 	noise.border_end = double(width)*noise_pos_mult;
 	noise.border_beg = noise.border_end;
@@ -80,7 +89,6 @@ u8vec3 generator_A_t::get(ivec2 ipos) {
 
 
 void generator_A_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
-
 	for (int x = 0; x < bitmap.WIDTH; x += resolution_div)
 		for (int y = 0; y < bitmap.HEIGHT; y += resolution_div) {
 			const u8vec3 val = get({x, y});
@@ -123,10 +131,7 @@ void generator_A_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 }
 
 generator_B_t::generator_B_t()
-	:width{bitmap_t::WIDTH}
-	,height{bitmap_t::HEIGHT}
-	,ratio_wh{float(width)/float(height)}
-	,ratio_hw{float(height)/float(width)}
+	:generator_t()
 {
 	new_seed();
 }
@@ -143,7 +148,7 @@ void generator_B_t::new_seed() {
 	coast_noise.reseed(seed_noise);
 }
 
-void generator_B_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
+void generator_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
 		uint32_t color) {
 	vec2 beg, end;
 
@@ -176,7 +181,7 @@ void generator_B_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
 	}
 }
 
-void generator_B_t::draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
+void generator_t::draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
 		uint32_t color) {
 
 	ivec2 beg, end;
@@ -238,13 +243,8 @@ void generator_B_t::fill(bitmap_t &bitmap, glm::vec2 origin,
 	}
 }
 
-void generator_B_t::generate_bitmap(bitmap_t &bitmap) {
-	// Clear bitmap
-	for (int x = 0; x < width; ++x) {
-		for (int y = 0; y < height; ++y) {
-			bitmap.set(y, x, 0);
-		}
-	}
+void generator_B_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
+	bitmap.clear();
 
 	// Generate and draw the grid
 	grids[0] = { ivec2(-1), 64,  0.40f };
@@ -276,7 +276,8 @@ void generator_B_t::generate_bitmap(bitmap_t &bitmap) {
 			// pos.y = y / double(height-1);
 			// pos.x = x / double(height-1);
 			// pos *= 5.0;
-			// const double noise_val = coast_noise.octave2D_01(pos.x, pos.y, 8);
+			// const double noise_val =
+			// 	coast_noise.octave2D_01(pos.x, pos.y, 8);
 
 			// u8vec3 color;
 			// color.r = noise_val * 255.0;
@@ -398,8 +399,8 @@ void generator_B_t::fractal_grid_t::generate_grid(
 				dvec2 pos;
 				pos.x = w.x / double(size.y-1);
 				pos.y = w.y / double(size.y-1);
-				pos *= 20.0;
-				const double val = noise.octave2D_01(pos.x, pos.y, 6);
+				pos *= 10.0;
+				const double val = noise.octave2D_01(pos.x, pos.y, 8);
 				// grid_w.tmp = val;
 				grid_v.perturbtion = val * tile_t::COAST_DEPTH;
 			}
@@ -446,6 +447,175 @@ void generator_B_t::fractal_grid_t::generate_grid(
 			// 	next_v_B.push(w);
 			if (new_dist_sq < tile_t::COAST_DEPTH_SQ)
 				next_v_B.push(w);
+		}
+	}
+}
+
+generator_C_t::generator_C_t()
+	:generator_t()
+{
+	new_seed();
+}
+
+void generator_C_t::new_seed() {
+	seed_voronoi = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()
+		).count() / 1;
+}
+
+glm::vec2 generator_C_t::triangle_circumcenter(
+		glm::vec2 A, glm::vec2 B, glm::vec2 C) const {
+
+	// const vec2 ac = C - A;
+	// const vec2 ab = B - A;
+	// Vector3f abXac = ab.cross( ac ) ;
+
+	// // this is the vector from a TO the circumsphere center
+	// Vector3f toCircumsphereCenter
+	// 	= (abXac.cross( ab )*ac.len2() + ac.cross( abXac )*ab.len2()) / (2.f*abXac.len2()) ;
+	// float circumsphereRadius = toCircumsphereCenter.len() ;
+
+	// // The 3 space coords of the circumsphere center then:
+	// Vector3f ccs = a  +  toCircumsphereCenter ; // now this is the actual 3space location
+
+	// x0 = -bx/2a =
+	// ((x1^2 + y1^2) (y2 - y3) + (x2^2 + y2^2) (y3 - y1) + (x3^2 + y3^2) (y1 - y2))
+	// / (2 (x1 (y2 - y3) + x2 (y3 - y1) + x3 (y1 - y2)))
+	// y0 = -by/2a =
+	// (-1/2 ((x1^2 + y1^2) (x2 - x3) + (x2^2 + y2^2) (x3 - x1) + (x3^2 + y3^2) (x1 - x2)))
+	// / (x1 (y2 - y3) + x2 (y3 - y1) + x3 (y1 - y2))
+
+	const double A_len_sq = len_sq(A);
+	const double B_len_sq = len_sq(B);
+	const double C_len_sq = len_sq(C);
+
+	const double denominator
+		= A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y);
+
+	vec2 O(0, 0);
+	O.x += A_len_sq * (B.y - C.y);
+	O.x += B_len_sq * (C.y - A.y);
+	O.x += C_len_sq * (A.y - B.y);
+	O.x /= 2.0;
+	O.x /= denominator;
+
+	O.y += A_len_sq * (B.x - C.x);
+	O.y += B_len_sq * (C.x - A.x);
+	O.y += C_len_sq * (A.x - B.x);
+	O.y /= -2.0;
+	O.y /= denominator;
+
+	return O;
+}
+
+void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
+	bitmap.clear();
+
+	std::mt19937 gen(seed_voronoi);
+	std::uniform_real_distribution<double> distrib_x(0,
+			double(width-1)/double(width) * ratio_wh);
+	std::uniform_real_distribution<double> distrib_y(0,
+			double(height-1)/double(height));
+
+	constexpr std::size_t voronoi_cnt = 120;
+	std::vector<double> coords(voronoi_cnt*2);
+	printf("\n");
+	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
+		coords[2*i+0] = distrib_x(gen);
+		coords[2*i+1] = distrib_y(gen);
+		printf("vec2(%f, %f),\n", coords[2*i+0], coords[2*i+1]);
+	}
+
+	delaunator::Delaunator d(coords);
+	std::vector<std::vector<std::size_t>> triangles_of_voronoi(voronoi_cnt);
+	std::vector<bool> voronoi_complete(voronoi_cnt, false);
+	std::vector<vec2> tri_centroid(d.triangles.size() / 3);
+	std::vector<vec2> tri_circumcenter(d.triangles.size() / 3);
+	for (std::size_t i = 0; i < d.triangles.size() / 3; ++i) {
+		// d.triangles[i]
+		// d.triangles[i+1]
+		// d.triangles[i+2]
+
+		// triangles_of_voronoi[d.triangles[3*i]].push_back(i);
+		// triangles_of_voronoi[d.triangles[3*i+1]].push_back(i);
+		// triangles_of_voronoi[d.triangles[3*i+2]].push_back(i);
+
+		vec2 A, B, C;
+		A.x = d.coords[2 * d.triangles[3*i]];
+		A.y = d.coords[2 * d.triangles[3*i] + 1];
+		B.x = d.coords[2 * d.triangles[3*i + 1]];
+		B.y = d.coords[2 * d.triangles[3*i + 1] + 1];
+		C.x = d.coords[2 * d.triangles[3*i + 2]];
+		C.y = d.coords[2 * d.triangles[3*i + 2] + 1];
+
+		tri_centroid[i].x = (A.x + B.x + C.x) / 3.0;
+		tri_centroid[i].y = (A.y + B.y + C.y) / 3.0;
+		tri_circumcenter[i] = triangle_circumcenter(A, B, C);
+
+		draw_edge(bitmap, A, B, 0x0000ff);
+		draw_edge(bitmap, A, C, 0x0000ff);
+		draw_edge(bitmap, B, C, 0x0000ff);
+
+		// printf(
+		// 		"Triangle points: [[%f, %f], [%f, %f], [%f, %f]]\n",
+		// 		d.coords[2 * d.triangles[i]],        //tx0
+		// 		d.coords[2 * d.triangles[i] + 1],    //ty0
+		// 		d.coords[2 * d.triangles[i + 1]],    //tx1
+		// 		d.coords[2 * d.triangles[i + 1] + 1],//ty1
+		// 		d.coords[2 * d.triangles[i + 2]],    //tx2
+		// 		d.coords[2 * d.triangles[i + 2] + 1] //ty2
+		// 	  );
+	}
+
+	for (std::size_t i = 0; i < d.triangles.size(); ++i) {
+		const std::size_t voronoi_id = d.triangles[i];
+		if (voronoi_complete[voronoi_id])
+			continue;
+		voronoi_complete[voronoi_id] = true;
+
+		// const std::size_t beg_triangle = i / 3;
+		// triangles_of_voronoi[voronoi_id].push_back(beg_triangle);
+
+		std::size_t beg_half_edge = voronoi_id;
+		do {
+			const std::size_t next_triangle_half_edge
+				= beg_half_edge - beg_half_edge%3 + (beg_half_edge+2)%3;;
+			const std::size_t prev_voronoi_half_edge
+				= d.halfedges[next_triangle_half_edge];
+			if (prev_voronoi_half_edge == delaunator::INVALID_INDEX)
+				break;
+
+			beg_half_edge = prev_voronoi_half_edge;
+		} while (beg_half_edge != voronoi_id);
+
+		std::size_t cur_half_edge = beg_half_edge;
+		do {
+			const std::size_t cur_triangle = cur_half_edge/3;
+			triangles_of_voronoi[voronoi_id].push_back(cur_triangle);
+
+			const std::size_t twin_half_edge
+				= d.halfedges[cur_half_edge];
+			if (twin_half_edge == delaunator::INVALID_INDEX)
+				break;
+			cur_half_edge
+				= twin_half_edge - twin_half_edge%3 + (twin_half_edge+1)%3;
+		} while (cur_half_edge != voronoi_id);
+	}
+
+	printf("\n");
+	// for (std::size_t i = 0; i < 1; ++i)
+	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
+		draw_point(bitmap, vec2(coords[2*i], coords[2*i+1]), 0.01f, 0xff0000);
+		PRINT_ZU(triangles_of_voronoi[i].size());
+		for (std::size_t j = 0; j < triangles_of_voronoi[i].size(); ++j) {
+			const std::size_t a = triangles_of_voronoi[i][j];
+			const std::size_t b = triangles_of_voronoi[i]
+				[(j+1)%triangles_of_voronoi[i].size()];
+			const vec2 A = tri_circumcenter[a];
+			const vec2 B = tri_circumcenter[b];
+			// const vec2 A = tri_centroid[a];
+			// const vec2 B = tri_centroid[b];
+			draw_edge(bitmap, A, B, 0xffffff);
 		}
 	}
 }

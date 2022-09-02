@@ -99,9 +99,10 @@ int32_t main(void) {
 	bitmap_t bitmapA;
 	generator_A_t generator_A;
 	generator_B_t generator_B;
+	generator_C_t generator_C;
+	generator_t * const generator = &generator_C;
 	int resolution_div = 8;
-	// generator_A.generate_bitmap(bitmapA, resolution_div);
-	generator_B.generate_bitmap(bitmapA);
+	generator->generate_bitmap(bitmapA, resolution_div);
 	bitmapA.load_to_texture();
 
 	vec3 camera_pos(0, 0, 0);
@@ -125,10 +126,8 @@ int32_t main(void) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		}
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-			// generator_A.new_seed();
-			// generator_A.generate_bitmap(bitmapA, resolution_div);
-			generator_B.new_seed();
-			generator_B.generate_bitmap(bitmapA);
+			generator->new_seed();
+			generator->generate_bitmap(bitmapA, resolution_div);
 			bitmapA.load_to_texture();
 		}
 		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {

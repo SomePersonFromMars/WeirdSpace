@@ -7,30 +7,43 @@
 
 #include <random>
 
-struct generator_A_t {
+struct generator_t {
+	generator_t();
+	virtual void new_seed() = 0;
+	virtual void generate_bitmap(bitmap_t &bitmap, int resolution_div) = 0;
+
+protected:
+	const int &width, height;
+	const float ratio_wh, ratio_hw;
+
+	void draw_edge(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 end01,
+			uint32_t color);
+	void draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
+			uint32_t color);
+};
+
+struct generator_A_t : generator_t {
 	generator_A_t();
 
-	void new_seed();
-	void generate_bitmap(bitmap_t &bitmap, int resolution_div);
+	virtual void new_seed() override;
+	virtual void generate_bitmap(bitmap_t &bitmap,
+			int resolution_div) override;
 
 private:
-	const int &width, height;
 
 	const double noise_pos_mult = 1.0/double(CHUNK_DIM)*3.0;
 	glm::u8vec3 get(glm::ivec2 ipos);
 	cyclic_noise_t noise;
 };
 
-struct generator_B_t {
+struct generator_B_t : generator_t {
 	generator_B_t();
 
-	void new_seed();
-	void generate_bitmap(bitmap_t &bitmap);
+	virtual void new_seed() override;
+	virtual void generate_bitmap(bitmap_t &bitmap,
+			int resolution_div) override;
 
 private:
-	const int &width, height;
-	const float ratio_wh, ratio_hw;
-
 	std::mt19937::result_type seed_voronoi;
 	noise_t coast_noise;
 
@@ -70,26 +83,20 @@ private:
 	};
 
 	std::array<fractal_grid_t, 1> grids; // Fractal grids
+};
 
-	// void draw_hexagon(bitmap_t &bitmap, glm::ivec2 grid_pos,
-	// 		uint32_t edge_color, uint32_t fill_color);
+struct generator_C_t : generator_t {
+	generator_C_t();
 
-	// glm::ivec2 get_hex_neighbor(glm::ivec2 v, int id);
-	// std::vector<std::vector<uint32_t>> plates; // Hexagons' values
+	virtual void new_seed() override;
+	virtual void generate_bitmap(bitmap_t &bitmap,
+			int resolution_div) override;
 
-	// void generate_grid(glm::ivec2 size);
+private:
+	std::mt19937::result_type seed_voronoi;
 
-	// static constexpr float tri_edge = 0.005;
-	// static constexpr float tri_h = 0.866025404f; // Ratio of the triangle's
-	// 											// height to its edge
-	// static constexpr float hex_points[] {
-	// 	-1, 0,
-	// 	-0.5, tri_h,
-	// 	0.5, tri_h,
-	// 	1, 0,
-	// 	0.5, -tri_h,
-	// 	-0.5, -tri_h,
-	// };
+	glm::vec2 triangle_circumcenter(
+			glm::vec2 A, glm::vec2 B, glm::vec2 C) const;
 };
 
 #endif

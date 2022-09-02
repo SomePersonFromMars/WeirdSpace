@@ -93,6 +93,15 @@ void bitmap_t::set(int y, int x, glm::u8vec3 color) {
 	get(y, x, 0) = color.b;
 }
 
+void bitmap_t::clear() {
+	// Clear bitmap
+	for (int x = 0; x < WIDTH; ++x) {
+		for (int y = 0; y < HEIGHT; ++y) {
+			set(y, x, 0);
+		}
+	}
+}
+
 void bitmap_t::load_to_texture() {
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 

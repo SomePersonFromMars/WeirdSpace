@@ -17,6 +17,7 @@ struct bitmap_t {
 	inline uint32_t get(int y, int x);
 	void set(int y, int x, uint32_t color);
 	void set(int y, int x, glm::u8vec3 color);
+	void clear();
 
 	bitmap_t();
 	~bitmap_t();
