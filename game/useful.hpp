@@ -6,6 +6,9 @@
 
 #define DEBUG
 #ifdef DEBUG
+	#define PRINT_D(var) printf(#var " = %d\n", var)
+	#define PRINT_U(var) printf(#var " = %u\n", var)
+	#define PRINT_LU(var) printf(#var " = %lu\n", var)
 	#define PRINT_ZU(var) printf(#var " = %zu\n", var)
 	#define PRINT_F(var) printf(#var " = %f\n", var)
 	#define PRINT_VEC3(vec) \
@@ -18,6 +21,9 @@
 	#define BREAKPOINT (enable_breakpoints) ? std::raise(SIGINT) : 0
 	#define BREAKPOINT_IF(expr) (expr) ? (BREAKPOINT) : 0
 #else
+	#define PRINT_D(var)
+	#define PRINT_U(var)
+	#define PRINT_LU(var)
 	#define PRINT_ZU(var)
 	#define PRINT_F(var)
 	#define WHERE
@@ -84,6 +90,13 @@ inline glm::vec3 vec2_to_vec3(const glm::vec2& vec) {
 
 inline float len_sq(const glm::vec2& vec) {
 	return vec.x*vec.x + vec.y*vec.y;
+}
+
+template<class T>
+inline T determinant(
+		const glm::tvec2<T, glm::highp> &a,
+		const glm::tvec2<T, glm::highp> &b) {
+	return a.x*b.y - a.y*b.x;
 }
 
 inline long long len_sq(const glm::ivec3& vec) {

@@ -193,11 +193,11 @@ int32_t main(void) {
 			bitmapA.draw(M);
 		}
 
-		double fps_cnt;
+		// double fps_cnt;
 		{ // FPS cnter
 			const double now = glfwGetTime();
 			delta_time = now - timer_fps_cnter;
-			fps_cnt = 1.0 / delta_time;
+			// fps_cnt = 1.0 / delta_time;
 			timer_fps_cnter = now;
 		}
 		{ // Debug output

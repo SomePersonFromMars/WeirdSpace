@@ -18,6 +18,8 @@ protected:
 
 	void draw_edge(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 end01,
 			uint32_t color);
+	void draw_ray(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 mid01,
+			uint32_t color);
 	void draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
 			uint32_t color);
 };
