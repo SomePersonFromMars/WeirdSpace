@@ -11,6 +11,8 @@
 	#define PRINT_LU(var) printf(#var " = %lu\n", var)
 	#define PRINT_ZU(var) printf(#var " = %zu\n", var)
 	#define PRINT_F(var) printf(#var " = %f\n", var)
+	#define PRINT_VEC2(vec) \
+		printf(#vec " = (%f, %f)\n", vec.x, vec.y)
 	#define PRINT_VEC3(vec) \
 		printf(#vec " = (%f, %f, %f)\n", vec.x, vec.y, vec.z)
 	#define PRINT_VEC4(vec) \
@@ -56,6 +58,11 @@ inline F mod_f(F a, F m) {
 }
 
 int floor_div(int num, int den);
+
+template<class T>
+inline bool in_between_inclusive(T a, T b, T x) {
+	return a <= x && x <= b;
+}
 
 template<class T>
 struct vec2_cmp_t {

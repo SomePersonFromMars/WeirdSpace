@@ -15,6 +15,7 @@ struct generator_t {
 protected:
 	const int &width, height;
 	const float ratio_wh, ratio_hw;
+	const glm::vec2 space_max {ratio_wh, 1}; // Maximum float coordinates
 
 	void draw_edge(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 end01,
 			uint32_t color);

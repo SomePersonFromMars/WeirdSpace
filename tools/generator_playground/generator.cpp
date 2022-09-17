@@ -150,20 +150,17 @@ void generator_B_t::new_seed() {
 
 void generator_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
 		uint32_t color) {
-	vec2 beg, end;
+	dvec2 beg, end;
 
-	beg.x = beg01.x*float(width-1);
-	beg.x /= float(width) / float(height);
-	beg.y = beg01.y*float(height-1);
+	beg.x = beg01.x*double(width-1);
+	beg.x /= double(width) / double(height);
+	beg.y = beg01.y*double(height-1);
 
-	end.x = end01.x*float(width-1);
-	end.x /= float(width) / float(height);
-	end.y = end01.y*float(height-1);
+	end.x = end01.x*double(width-1);
+	end.x /= double(width) / double(height);
+	end.y = end01.y*double(height-1);
 
-	// beg -= vec2(float(width), 0);
-	// end -= vec2(float(width), 0);
-
-	vec2 off = end - beg;
+	dvec2 off = end - beg;
 	const int iterations_cnt = std::max(
 			std::abs(int(off.x)), std::abs(int(off.y)));
 	if (std::abs(off.x) > std::abs(off.y)) {
@@ -172,10 +169,10 @@ void generator_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
 		off /= std::abs(off.y);
 	}
 
-	vec2 pos = beg;
+	dvec2 pos = beg;
 	for (int i = 0; i < iterations_cnt; ++i, pos += off) {
-		if (pos.x < 0 || pos.x >= float(width)
-				|| pos.y < 0 || pos.y >= float(height))
+		if (pos.x < 0 || pos.x >= double(width)
+				|| pos.y < 0 || pos.y >= double(height))
 			continue;
 		bitmap.set(pos.y, pos.x, color);
 	}
@@ -183,6 +180,48 @@ void generator_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
 
 void generator_t::draw_ray(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 mid01,
 		uint32_t color) {
+
+	bool on_left = beg01.x < 0.0f;
+	bool on_right = beg01.x > space_max.x;
+	bool on_bottom = beg01.y < 0.0f;
+	bool on_top = beg01.y > space_max.y;
+	if (on_left || on_right || on_bottom || on_top) {
+		bool drawable = false;
+		vec2 intersection;
+		vec2 off01 = mid01 - beg01;
+		if (!drawable && on_left && off01.x > 0) {
+			intersection.x = 0.0f;
+			intersection.y =
+				beg01.y + off01.y * (intersection.x - beg01.x) / off01.x;
+			drawable = in_between_inclusive(0.0f, space_max.y, intersection.y);
+		}
+		if (!drawable && on_right && off01.x < 0) {
+			intersection.x = space_max.x;
+			intersection.y =
+				beg01.y + off01.y * (intersection.x - beg01.x) / off01.x;
+			drawable = in_between_inclusive(0.0f, space_max.y, intersection.y);
+		}
+		if (!drawable && on_bottom && off01.y > 0) {
+			intersection.y = 0.0f;
+			intersection.x =
+				beg01.x + off01.x * (intersection.y - beg01.y) / off01.y;
+			drawable = in_between_inclusive(0.0f, space_max.x, intersection.x);
+		}
+		if (!drawable && on_top && off01.y < 0) {
+			intersection.y = space_max.y;
+			intersection.x =
+				beg01.x + off01.x * (intersection.y - beg01.y) / off01.y;
+			drawable = in_between_inclusive(0.0f, space_max.x, intersection.x);
+		}
+
+		if (drawable) {
+			beg01 = intersection;
+			mid01 = beg01 + off01;
+		} else {
+			return;
+		}
+	}
+
 	vec2 beg, mid;
 
 	beg.x = beg01.x*float(width-1);
@@ -192,9 +231,6 @@ void generator_t::draw_ray(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 mid01,
 	mid.x = mid01.x*float(width-1);
 	mid.x /= float(width) / float(height);
 	mid.y = mid01.y*float(height-1);
-
-	// beg -= vec2(float(width), 0);
-	// mid -= vec2(float(width), 0);
 
 	vec2 off = mid - beg;
 	if (std::abs(off.x) > std::abs(off.y)) {
@@ -522,15 +558,27 @@ glm::vec2 generator_C_t::triangle_circumcenter(
 
 void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	bitmap.clear();
+	// draw_point(bitmap, vec2(0.1, 0.1), 0.01, 0x00ff00);
 
-	// seed_voronoi = 1662653759901;
+	// Buggy seeds meant for 5 points
+	// seed_voronoi = 1662653759901; // Fixed
+	// Lacks one polygon, Fixed:
 	// seed_voronoi = 1662654644174;
-
 	// seed_voronoi = 1662841001959;
+	// Weird double edges, Fixed
 	// seed_voronoi = 1662841190818;
-	// seed_voronoi = 1662841295870;
+	// seed_voronoi = 1662841295870; // Best
 	// seed_voronoi = 1662841349208;
 	// seed_voronoi = 1662841708166;
+	// seed_voronoi = 1663425450766;
+	// seed_voronoi = 1663425738310;
+	// seed_voronoi = 1663425800255;
+	// Buggy seeds meant for 120 points:
+	// Very long rasterization:
+	// seed_voronoi = 1663428536766;
+
+	// Example seed:
+	// seed_voronoi = 1663429230839;
 
 	std::mt19937 gen(seed_voronoi);
 	PRINT_LU(seed_voronoi);
@@ -539,8 +587,8 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	std::uniform_real_distribution<double> distrib_y(0,
 			double(height-1)/double(height));
 
-	// constexpr std::size_t voronoi_cnt = 10;
-	constexpr std::size_t voronoi_cnt = 5;
+	constexpr std::size_t voronoi_cnt = 120;
+	// constexpr std::size_t voronoi_cnt = 5;
 	std::vector<double> coords(voronoi_cnt*2);
 	printf("\n");
 	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
@@ -575,9 +623,9 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		tri_centroid[i].y = (A.y + B.y + C.y) / 3.0;
 		tri_circumcenter[i] = triangle_circumcenter(A, B, C);
 
-		draw_edge(bitmap, A, B, 0x0000ff);
-		draw_edge(bitmap, A, C, 0x0000ff);
-		draw_edge(bitmap, B, C, 0x0000ff);
+		// draw_edge(bitmap, A, B, 0x0000ff);
+		// draw_edge(bitmap, A, C, 0x0000ff);
+		// draw_edge(bitmap, B, C, 0x0000ff);
 
 		// printf(
 		// 		"Triangle points: [[%f, %f], [%f, %f], [%f, %f]]\n",
@@ -590,8 +638,14 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		// 	  );
 	}
 
-	for (std::size_t i = 0; i < voronoi_cnt; ++i)
-		draw_point(bitmap, dvec2(coords[2*i], coords[2*i+1]), 0.01f, 0xff0000);
+	// for (std::size_t i = 0; i < voronoi_cnt; ++i)
+	// 	draw_point(
+	// 		bitmap, dvec2(coords[2*i], coords[2*i+1]), 0.005f, 0xff0000);
+
+	for (std::size_t i = 0; i < d.triangles.size(); i += 3) {
+		// draw_point(bitmap, tri_circumcenter[i/3], 0.005f, 0x00ff00);
+		// PRINT_VEC2(tri_circumcenter[i/3]);
+	}
 
 	for (std::size_t i = 0; i < d.triangles.size(); ++i) {
 		if (d.halfedges[i] == delaunator::INVALID_INDEX) {
@@ -613,13 +667,16 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 			const dvec2 X = P + v * (B*T - A*S) / (A*A + B*B);
 
 			const double det = determinant(v2 - P, Q - P);
+
+			// constexpr uint32_t ray_color = 0x888888;
+			constexpr uint32_t ray_color = 0xffffff;
 			if (det < 0)
-				draw_ray(bitmap, Q, X, 0xffffff);
+				draw_ray(bitmap, Q, X, ray_color);
 			else {
 				draw_ray(bitmap,
 						Q,
 						Q + (Q - X),
-						0xffffff);
+						ray_color);
 			}
 		} else {
 			draw_edge(bitmap, tri_circumcenter[i/3],
