@@ -100,6 +100,12 @@ private:
 
 	glm::vec2 triangle_circumcenter(
 			glm::vec2 A, glm::vec2 B, glm::vec2 C) const;
+
+	struct voronoi_t {
+		bool complete = false;
+		std::vector<glm::dvec2> points;
+		bool edge_voronoi = false;
+	};
 };
 
 #endif

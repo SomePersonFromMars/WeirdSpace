@@ -147,7 +147,7 @@ int32_t main(void) {
 			bitmapA.load_to_texture();
 		}
 
-		const float move_off = delta_time * 1.0;
+		const float move_off = delta_time * 1.0 / camera_zoom;
 		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
 			camera_pos.x -= move_off;
 		}
@@ -172,9 +172,6 @@ int32_t main(void) {
 		glClear(GL_COLOR_BUFFER_BIT);
 		mat4 M(1);
 
-		M = translate(M, -camera_pos *
-				vec3(1, float(window_width)/float(window_height), 1)
-			);
 		M = scale(M, vec3(camera_zoom));
 		bool enable_dualbitmap = false;
 		M = scale(M, vec3(1, float(bitmapA.HEIGHT)/float(bitmapA.WIDTH), 1));
@@ -183,6 +180,9 @@ int32_t main(void) {
 			M = scale(M, vec3(0.5, 0.5, 1));
 		}
 
+		M = translate(M, -camera_pos *
+				vec3(1, float(window_width)/float(window_height), 1)
+			);
 		if (!enable_dualbitmap) {
 			bitmapA.draw(M);
 		} else {
