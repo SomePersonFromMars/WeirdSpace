@@ -559,29 +559,7 @@ glm::vec2 generator_C_t::triangle_circumcenter(
 
 void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	bitmap.clear();
-	// draw_point(bitmap, vec2(0.1, 0.1), 0.01, 0x00ff00);
-
-	// Buggy seeds meant for 5 points
-	// seed_voronoi = 1662653759901; // Fixed
-	// Lacks one polygon, Fixed:
-	// seed_voronoi = 1662654644174;
-	// seed_voronoi = 1662841001959;
-	// Weird double edges, Fixed
-	// seed_voronoi = 1662841190818;
-	// seed_voronoi = 1662841295870; // Best
-	// seed_voronoi = 1662841349208;
-	// seed_voronoi = 1662841708166;
-	// seed_voronoi = 1663425450766;
-	// seed_voronoi = 1663425738310;
-	// seed_voronoi = 1663425800255;
-	// Buggy seeds meant for 120 points:
-	// Very long rasterization:
-	// seed_voronoi = 1663428536766;
-
-	// Example seed:
-	// seed_voronoi = 1663429230839;
-	// seed_voronoi = 1663601153388;
-	seed_voronoi = 1663602979903;
+	printf("\n");
 
 	std::mt19937 gen(seed_voronoi);
 	PRINT_LU(seed_voronoi);
@@ -597,7 +575,6 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	constexpr std::size_t voronoi_cnt = 60;
 	// constexpr std::size_t voronoi_cnt = 5;
 	std::vector<double> coords(voronoi_cnt*2);
-	printf("\n");
 	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
 		coords[2*i+0] = distrib_x(gen);
 		coords[2*i+1] = distrib_y(gen);
@@ -605,20 +582,10 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	}
 
 	delaunator::Delaunator d(coords);
-	std::vector<voronoi_t> voronoi(voronoi_cnt);
-	// std::vector<std::vector<std::size_t>> triangles_of_voronoi(voronoi_cnt);
-	// std::vector<bool> voronoi_complete(voronoi_cnt, false);
+	std::vector<voronoi_t> voronois(voronoi_cnt);
 	std::vector<dvec2> tri_centroid(d.triangles.size() / 3);
 	std::vector<dvec2> tri_circumcenter(d.triangles.size() / 3);
 	for (std::size_t i = 0; i < d.triangles.size() / 3; ++i) {
-		// d.triangles[i]
-		// d.triangles[i+1]
-		// d.triangles[i+2]
-
-		// triangles_of_voronoi[d.triangles[3*i]].push_back(i);
-		// triangles_of_voronoi[d.triangles[3*i+1]].push_back(i);
-		// triangles_of_voronoi[d.triangles[3*i+2]].push_back(i);
-
 		dvec2 A, B, C;
 		A.x = d.coords[2 * d.triangles[3*i]];
 		A.y = d.coords[2 * d.triangles[3*i] + 1];
@@ -631,9 +598,6 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		tri_centroid[i].y = (A.y + B.y + C.y) / 3.0;
 		tri_circumcenter[i] = triangle_circumcenter(A, B, C);
 
-		// draw_edge(bitmap, A, B, 0x0000ff);
-		// draw_edge(bitmap, A, C, 0x0000ff);
-		// draw_edge(bitmap, B, C, 0x0000ff);
 		draw_edge(bitmap, A, B, 0x011a8c);
 		draw_edge(bitmap, A, C, 0x011a8c);
 		draw_edge(bitmap, B, C, 0x011a8c);
@@ -658,56 +622,12 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		// PRINT_VEC2(tri_circumcenter[i/3]);
 	}
 
-// #define EDGE_BASED_VORONOI_RENDERING
-#ifdef EDGE_BASED_VORONOI_RENDERING
-	for (std::size_t i = 0; i < d.triangles.size(); ++i) {
-		if (d.halfedges[i] == delaunator::INVALID_INDEX) {
-			const dvec2 v1(
-					coords[2 * d.triangles[i]],
-					coords[2 * d.triangles[i] + 1]);
-			const dvec2 v2(
-					coords[2 * d.triangles[i-i%3+(i+1)%3]],
-					coords[2 * d.triangles[i-i%3+(i+1)%3] + 1]);
-			const dvec2 &P = v1;
-			const dvec2 &Q = tri_circumcenter[i/3];
-			const dvec2 v = v2 - v1;
-			const double &A = v.x;
-			const double &B = v.y;
-			if (A == 0 && B == 0)
-				continue;
-			const double S = P.x - Q.x;
-			const double T = Q.y - P.y;
-			const dvec2 X = P + v * (B*T - A*S) / (A*A + B*B);
-
-			const double det = determinant(v2 - P, Q - P);
-
-			// constexpr uint32_t ray_color = 0x888888;
-			constexpr uint32_t ray_color = 0xffffff;
-			if (det < 0)
-				draw_ray(bitmap, Q, X, ray_color);
-			else {
-				draw_ray(bitmap,
-						Q,
-						Q + (Q - X),
-						ray_color);
-			}
-		} else {
-			draw_edge(bitmap, tri_circumcenter[i/3],
-					tri_circumcenter[d.halfedges[i]/3], 0xffffff);
-			// draw_edge(bitmap, tri_centroid[i/3],
-			// 		tri_centroid[d.halfedges[i]/3], 0xffffff);
-		}
-	}
-	return;
-#endif
-
 	// Iterate over all half edges
 	for (std::size_t i = 0; i < d.triangles.size(); ++i) {
-		const std::size_t voronoi_id = d.triangles[i];
-		if (voronoi[voronoi_id].complete)
+		voronoi_t &voronoi = voronois[d.triangles[i]];
+		if (voronoi.complete)
 			continue;
-		voronoi[voronoi_id].complete = true;
-		std::vector<dvec2> &points = voronoi[voronoi_id].points;
+		voronoi.complete = true;
 
 		// Finding the triangle (if such exists)
 		// that is adjacent to void that is also
@@ -721,98 +641,28 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 			const std::size_t prev_voronoi_half_edge
 				= d.halfedges[next_half_edge_in_triangle];
 			if (prev_voronoi_half_edge == delaunator::INVALID_INDEX) {
-				voronoi[voronoi_id].edge_voronoi = true;
+				voronoi.edge_voronoi = true;
 				break;
 			}
 
 			beg_half_edge = prev_voronoi_half_edge;
 		} while (beg_half_edge != start_half_edge);
 
-		// Make the voronoi polygon look like it's spanning
-		// to infinity by adding dummy point on the visible
-		// plain border.
-		std::function<void(const dvec2 &, const dvec2 &, const dvec2 &)> f
-				= [this, &points]
-				(const dvec2 &v1, const dvec2 &v2, const dvec2 &Q) -> void {
-			const dvec2 &P = v1;
-			const dvec2 v = v2 - v1;
-			const dvec2 S(
-					static_cast<double>(space_max.x),
-					static_cast<double>(space_max.y));
-			const double &A = v.x;
-			const double &B = v.y;
-			if (A == 0 && B == 0)
-				return;
-
-			dvec2 X(0);
-			bool found_X = false;
-
-			// Left border
-			if (!found_X && B != 0) {
-				X.x = 0;
-				X.y = Q.y + A * Q.x / B;
-				if (in_between_inclusive(0.0, S.y, X.y)
-						&& determinant(v2 - P, X - P) >= 0)
-					found_X = true;
-			}
-
-			// Right border
-			if (!found_X && B != 0) {
-				X.x = S.x;
-				X.y = Q.y - A * (S.x - Q.x) / B;
-				if (in_between_inclusive(0.0, S.y, X.y)
-						&& determinant(v2 - P, X - P) >= 0)
-					found_X = true;
-			}
-
-			// Bottom border
-			if (!found_X && A != 0) {
-				X.x = Q.x + B * Q.y / A;
-				X.y = 0;
-				if (in_between_inclusive(0.0, S.x, X.x)
-						&& determinant(v2 - P, X - P) >= 0)
-					found_X = true;
-			}
-
-			// Top border
-			if (!found_X && A != 0) {
-				X.x = Q.x - B * (S.y - Q.y) / A;
-				X.y = S.y;
-				if (in_between_inclusive(0.0, S.x, X.x)
-						&& determinant(v2 - P, X - P) >= 0)
-					found_X = true;
-			}
-
-			if (found_X) {
-				points.push_back(X);
-			}
-		};
-
-		if (voronoi[voronoi_id].edge_voronoi) {
-			const std::size_t v2_half_edge = beg_half_edge;
-			const std::size_t v1_half_edge // This is the twinless half edge
-				= v2_half_edge - v2_half_edge%3
-				+ (v2_half_edge+2)%3;
-			const dvec2 v1(
-					coords[2* d.triangles[v1_half_edge]],
-					coords[2* d.triangles[v1_half_edge]+1]);
-			const dvec2 v2(
-					coords[2* d.triangles[v2_half_edge]],
-					coords[2* d.triangles[v2_half_edge]+1]);
-			const dvec2 &Q = tri_circumcenter[v1_half_edge/3];
-			f(v1, v2, Q);
-		}
-
 		// Finding the triangle (if such exists)
 		// that is adjacent to void that is also
 		// the most clockwise rotated about
 		// the voronoi center.
-		// Also add all visited triangles' circumcenters
-		// as the current voronoi's points.
+		// Also add all visited triangles' half edges
+		// such that they have their beg (or end) in the voronoi center
+		// as the current voronoi's half edges.
+		if (voronoi.edge_voronoi) {
+			voronoi.half_edges.push_back(
+				beg_half_edge - beg_half_edge%3 + (beg_half_edge+2)%3
+				);
+		}
 		std::size_t cur_half_edge = beg_half_edge;
 		do {
-			const std::size_t cur_triangle = cur_half_edge/3;
-			points.push_back(tri_circumcenter[cur_triangle]);
+			voronoi.half_edges.push_back(cur_half_edge);
 
 			const std::size_t twin_half_edge
 				= d.halfedges[cur_half_edge];
@@ -821,69 +671,66 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 			cur_half_edge
 				= twin_half_edge - twin_half_edge%3 + (twin_half_edge+1)%3;
 		} while (cur_half_edge != beg_half_edge);
-
-		if (voronoi[voronoi_id].edge_voronoi) {
-			const std::size_t v1_half_edge // This is the twinless half edge
-				= cur_half_edge;
-			const std::size_t v2_half_edge
-				= v1_half_edge - v1_half_edge%3 + (v1_half_edge+1)%3;
-			const dvec2 v1(
-					coords[2* d.triangles[v1_half_edge]],
-					coords[2* d.triangles[v1_half_edge]+1]);
-			const dvec2 v2(
-					coords[2* d.triangles[v2_half_edge]],
-					coords[2* d.triangles[v2_half_edge]+1]);
-			const dvec2 &Q = tri_circumcenter[v1_half_edge/3];
-			f(v1, v2, Q);
-
-			const dvec2 &A = points.front();
-			const dvec2 &B = points.back();
-			int side_A, side_B;
-		}
 	}
 
-	std::size_t debug_cnt = 0;
+	// std::size_t debug_cnt = 0;
 	// printf("\n");
-	// for (std::size_t i = 0; i < 1; ++i)
+	// PRINT_ZU(debug_val);
 	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
-		if (!voronoi[i].edge_voronoi || (debug_cnt++ != 9 && false))
-			continue;
-		PRINT_ZU(i);
-		// if (voronoi[i].edge_voronoi)
+		// if (!voronois[i].edge_voronoi || (debug_cnt++ != debug_val && true))
+		// 	continue;
+		// if (i != debug_val)
+		// 	continue;
+		// PRINT_ZU(i);
+
+		uint32_t color = 0xffffff;
+		// if (i != debug_val)
+		// 	color = 0x444444;
+
+		// if (voronois[i].edge_voronoi)
 		// 	draw_point(bitmap, dvec2(coords[2*i], coords[2*i+1]), 0.01f,
 		// 			0xf7676a);
 		// else
 		// 	draw_point(bitmap, dvec2(coords[2*i], coords[2*i+1]), 0.01f,
 		// 			0xb6ea4f);
-		// PRINT_ZU(voronoi[i].points.size());
-		for (std::size_t j = 0; j < voronoi[i].points.size(); ++j) {
-			// const std::size_t a = voronoi[i].points[j];
-			// const std::size_t b = voronoi[i].points
-			// 	[(j+1)%voronoi[i].points.size()];
-			// const dvec2 A = tri_circumcenter[a];
-			// const dvec2 B = tri_circumcenter[b];
-			// // const dvec2 A = tri_centroid[a];
-			// // const dvec2 B = tri_centroid[b];
-			const std::size_t k = (j+1)%voronoi[i].points.size();
-			const dvec2 &A = voronoi[i].points[j];
-			const dvec2 &B = voronoi[i].points[k];
+		// PRINT_ZU(voronois[i].points.size());
 
-			if (!voronoi[i].edge_voronoi)
-				draw_edge(bitmap, A, B, 0xffffff);
-			else {
-				draw_edge(bitmap, A, B, 0xf7676a);
+		for (const std::size_t j : voronois[i].half_edges) {
+			if (d.halfedges[j] == delaunator::INVALID_INDEX) {
+				const dvec2 v1(
+						coords[2 * d.triangles[j]],
+						coords[2 * d.triangles[j] + 1]);
+				const dvec2 v2(
+						coords[2 * d.triangles[j-j%3+(j+1)%3]],
+						coords[2 * d.triangles[j-j%3+(j+1)%3] + 1]);
+				const dvec2 &P = v1;
+				const dvec2 &Q = tri_circumcenter[j/3];
+				const dvec2 v = v2 - v1;
+				const double &A = v.x;
+				const double &B = v.y;
+				if (A == 0 && B == 0)
+					continue;
+				const double S = P.x - Q.x;
+				const double T = Q.y - P.y;
+				const dvec2 X = P + v * (B*T - A*S) / (A*A + B*B);
 
-				if (j == 0)
-					draw_point(bitmap, A, 0.01f, 0xfcc98f);
-				if (k == 0)
-					draw_point(bitmap, B, 0.01f, 0xfcc98f);
+				const double det = determinant(v2 - P, Q - P);
 
-				// if (j == voronoi[i].points.size()-1)
-				// 	draw_point(bitmap, A, 0.01f, 0xa1c1fc);
-				// if (k == voronoi[i].points.size()-1)
-				// 	draw_point(bitmap, B, 0.01f, 0xa1c1fc);
+				// constexpr uint32_t ray_color = 0x888888;
+				// constexpr uint32_t ray_color = 0xffffff;
+				const uint32_t ray_color = color;
+				if (det < 0)
+					draw_ray(bitmap, Q, X, ray_color);
+				else {
+					draw_ray(bitmap,
+							Q,
+							Q + (Q - X),
+							ray_color);
+				}
+			} else {
+				draw_edge(bitmap, tri_circumcenter[j/3],
+						tri_circumcenter[d.halfedges[j]/3], color);
 			}
-			// PRINT_F(A.x);
 		}
 	}
 }

@@ -12,6 +12,8 @@ struct generator_t {
 	virtual void new_seed() = 0;
 	virtual void generate_bitmap(bitmap_t &bitmap, int resolution_div) = 0;
 
+	std::size_t debug_val = 0;
+
 protected:
 	const int &width, height;
 	const float ratio_wh, ratio_hw;
@@ -103,7 +105,7 @@ private:
 
 	struct voronoi_t {
 		bool complete = false;
-		std::vector<glm::dvec2> points;
+		std::vector<std::size_t> half_edges;
 		bool edge_voronoi = false;
 	};
 };

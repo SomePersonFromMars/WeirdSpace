@@ -19,6 +19,8 @@ using namespace glm;
 
 struct callbacks_strct_t {
 	GLint window_width, window_height;
+	generator_t *generator;
+	bool refresh_required = false;
 
 	static inline callbacks_strct_t* get_strct(GLFWwindow *window) {
 		return reinterpret_cast<callbacks_strct_t*>(
@@ -37,6 +39,21 @@ void window_size_callback(GLFWwindow* window, int width, int height) {
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+}
+
+void key_callback(GLFWwindow* window,
+		int key, int scancode, int action, int mods) {
+	callbacks_strct_t * const strct_ptr
+		= callbacks_strct_t::get_strct(window);
+
+	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+		PRINT_ZU(++strct_ptr->generator->debug_val);
+		strct_ptr->refresh_required = true;
+	}
+	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
+		PRINT_ZU(--strct_ptr->generator->debug_val);
+		strct_ptr->refresh_required = true;
+	}
 }
 
 void fun_bitmap(bitmap_t &bitmap);
@@ -91,6 +108,7 @@ int32_t main(void) {
 			reinterpret_cast<void*>(&callbacksk_strct));
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetWindowSizeCallback(window, window_size_callback);
+	glfwSetKeyCallback(window, key_callback);
 
 	const auto background_color = color_hex_to_vec3(0);
 	glClearColor(background_color.x, background_color.y, background_color.z,
@@ -101,6 +119,7 @@ int32_t main(void) {
 	generator_B_t generator_B;
 	generator_C_t generator_C;
 	generator_t * const generator = &generator_C;
+	callbacksk_strct.generator = generator;
 	int resolution_div = 8;
 	generator->generate_bitmap(bitmapA, resolution_div);
 	bitmapA.load_to_texture();
@@ -122,6 +141,12 @@ int32_t main(void) {
 		const auto frame_end_time
 			= frame_beg_time + frame_min_duration;
 
+		if (callbacksk_strct.refresh_required) {
+			callbacksk_strct.refresh_required = false;
+			generator->generate_bitmap(bitmapA, resolution_div);
+			bitmapA.load_to_texture();
+		}
+
 		if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		}
@@ -138,13 +163,9 @@ int32_t main(void) {
 		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
 			resolution_div -= 1;
 			if (resolution_div <= 0) resolution_div = 1;
-			generator_A.generate_bitmap(bitmapA, resolution_div);
-			bitmapA.load_to_texture();
 		}
 		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
 			resolution_div += 1;
-			generator_A.generate_bitmap(bitmapA, resolution_div);
-			bitmapA.load_to_texture();
 		}
 
 		const float move_off = delta_time * 1.0 / camera_zoom;
@@ -161,12 +182,25 @@ int32_t main(void) {
 			camera_pos.y += move_off;
 		}
 
+		// if (glfwGetKey(window, GLFW_KEY_K) == GLFW_RELEASE) {
+		// 	++generator->debug_val;
+		// 	PRINT_ZU(generator->debug_val);
+		// }
+		// if (glfwGetKey(window, GLFW_KEY_J) == GLFW_RELEASE) {
+		// 	--generator->debug_val;
+		// 	PRINT_ZU(generator->debug_val);
+		// }
+
 		const float zoom_off = delta_time * 1.0;
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 			camera_zoom *= 1+zoom_off;
+			generator->generate_bitmap(bitmapA, resolution_div);
+			bitmapA.load_to_texture();
 		}
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 			camera_zoom *= 1-zoom_off;
+			generator->generate_bitmap(bitmapA, resolution_div);
+			bitmapA.load_to_texture();
 		}
 
 		glClear(GL_COLOR_BUFFER_BIT);
