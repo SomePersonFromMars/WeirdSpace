@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <functional>
 #include <ctime>
 #include <chrono>
 #include <random>
@@ -706,10 +707,11 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		if (voronoi[voronoi_id].complete)
 			continue;
 		voronoi[voronoi_id].complete = true;
+		std::vector<dvec2> &points = voronoi[voronoi_id].points;
 
 		// Finding the triangle (if such exists)
 		// that is adjacent to void that is also
-		// the most clockwise rotated about
+		// the most counter clockwise rotated about
 		// the voronoi center.
 		const std::size_t start_half_edge = i;
 		std::size_t beg_half_edge = start_half_edge;
@@ -726,10 +728,67 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 			beg_half_edge = prev_voronoi_half_edge;
 		} while (beg_half_edge != start_half_edge);
 
+		// Make the voronoi polygon look like it's spanning
+		// to infinity by adding dummy point on the visible
+		// plain border.
+		std::function<void(const dvec2 &, const dvec2 &, const dvec2 &)> f
+				= [this, &points]
+				(const dvec2 &v1, const dvec2 &v2, const dvec2 &Q) -> void {
+			const dvec2 &P = v1;
+			const dvec2 v = v2 - v1;
+			const dvec2 S(
+					static_cast<double>(space_max.x),
+					static_cast<double>(space_max.y));
+			const double &A = v.x;
+			const double &B = v.y;
+			if (A == 0 && B == 0)
+				return;
+
+			dvec2 X(0);
+			bool found_X = false;
+
+			// Left border
+			if (!found_X && B != 0) {
+				X.x = 0;
+				X.y = Q.y + A * Q.x / B;
+				if (in_between_inclusive(0.0, S.y, X.y)
+						&& determinant(v2 - P, X - P) >= 0)
+					found_X = true;
+			}
+
+			// Right border
+			if (!found_X && B != 0) {
+				X.x = S.x;
+				X.y = Q.y - A * (S.x - Q.x) / B;
+				if (in_between_inclusive(0.0, S.y, X.y)
+						&& determinant(v2 - P, X - P) >= 0)
+					found_X = true;
+			}
+
+			// Bottom border
+			if (!found_X && A != 0) {
+				X.x = Q.x + B * Q.y / A;
+				X.y = 0;
+				if (in_between_inclusive(0.0, S.x, X.x)
+						&& determinant(v2 - P, X - P) >= 0)
+					found_X = true;
+			}
+
+			// Top border
+			if (!found_X && A != 0) {
+				X.x = Q.x - B * (S.y - Q.y) / A;
+				X.y = S.y;
+				if (in_between_inclusive(0.0, S.x, X.x)
+						&& determinant(v2 - P, X - P) >= 0)
+					found_X = true;
+			}
+
+			if (found_X) {
+				points.push_back(X);
+			}
+		};
+
 		if (voronoi[voronoi_id].edge_voronoi) {
-			// Make the voronoi polygon look like it's spanning
-			// to infinity by adding dummy point on the visible
-			// plain border.
 			const std::size_t v2_half_edge = beg_half_edge;
 			const std::size_t v1_half_edge // This is the twinless half edge
 				= v2_half_edge - v2_half_edge%3
@@ -740,73 +799,20 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 			const dvec2 v2(
 					coords[2* d.triangles[v2_half_edge]],
 					coords[2* d.triangles[v2_half_edge]+1]);
-			const dvec2 &P = v1;
 			const dvec2 &Q = tri_circumcenter[v1_half_edge/3];
-			const dvec2 v = v2 - v1;
-			const dvec2 S(
-					static_cast<double>(space_max.x),
-					static_cast<double>(space_max.y));
-			const double &A = v.x;
-			const double &B = v.y;
-			if (A == 0 && B == 0)
-				goto if_end_1;
-
-			dvec2 X(0);
-			bool found_X = false;
-
-			// Left border
-			if (!found_X && A != 0) {
-				X.x = 0;
-				X.y = Q.y - B * Q.x / A;
-				if (in_between_inclusive(0.0, S.y, X.y)
-						&& determinant(v2 - P, X - P) <= 0)
-					found_X = true;
-			}
-
-			// Right border
-			if (!found_X && A != 0) {
-				X.x = S.x;
-				X.y = Q.y + B * (S.x - Q.x) / A;
-				if (in_between_inclusive(0.0, S.y, X.y)
-						&& determinant(v2 - P, X - P) <= 0)
-					found_X = true;
-			}
-
-			// Bottom border
-			if (!found_X && B != 0) {
-				X.x = Q.x - A * Q.y / B;
-				X.y = 0;
-				if (in_between_inclusive(0.0, S.x, X.x)
-						&& determinant(v2 - P, X - P) <= 0)
-					found_X = true;
-			}
-
-			// Top border
-			if (!found_X && B != 0) {
-				X.x = Q.x + A * (S.y - Q.y) / B;
-				X.y = S.y;
-				if (in_between_inclusive(0.0, S.x, X.x)
-						&& determinant(v2 - P, X - P) <= 0)
-					found_X = true;
-			}
-
-			if (found_X) {
-				voronoi[voronoi_id].points.push_back(X);
-			}
+			f(v1, v2, Q);
 		}
-if_end_1:
 
 		// Finding the triangle (if such exists)
 		// that is adjacent to void that is also
-		// the most counter clockwise rotated about
+		// the most clockwise rotated about
 		// the voronoi center.
 		// Also add all visited triangles' circumcenters
 		// as the current voronoi's points.
 		std::size_t cur_half_edge = beg_half_edge;
 		do {
 			const std::size_t cur_triangle = cur_half_edge/3;
-			voronoi[voronoi_id].
-				points.push_back(tri_circumcenter[cur_triangle]);
+			points.push_back(tri_circumcenter[cur_triangle]);
 
 			const std::size_t twin_half_edge
 				= d.halfedges[cur_half_edge];
@@ -815,11 +821,34 @@ if_end_1:
 			cur_half_edge
 				= twin_half_edge - twin_half_edge%3 + (twin_half_edge+1)%3;
 		} while (cur_half_edge != beg_half_edge);
+
+		if (voronoi[voronoi_id].edge_voronoi) {
+			const std::size_t v1_half_edge // This is the twinless half edge
+				= cur_half_edge;
+			const std::size_t v2_half_edge
+				= v1_half_edge - v1_half_edge%3 + (v1_half_edge+1)%3;
+			const dvec2 v1(
+					coords[2* d.triangles[v1_half_edge]],
+					coords[2* d.triangles[v1_half_edge]+1]);
+			const dvec2 v2(
+					coords[2* d.triangles[v2_half_edge]],
+					coords[2* d.triangles[v2_half_edge]+1]);
+			const dvec2 &Q = tri_circumcenter[v1_half_edge/3];
+			f(v1, v2, Q);
+
+			const dvec2 &A = points.front();
+			const dvec2 &B = points.back();
+			int side_A, side_B;
+		}
 	}
 
+	std::size_t debug_cnt = 0;
 	// printf("\n");
 	// for (std::size_t i = 0; i < 1; ++i)
 	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
+		if (!voronoi[i].edge_voronoi || (debug_cnt++ != 9 && false))
+			continue;
+		PRINT_ZU(i);
 		// if (voronoi[i].edge_voronoi)
 		// 	draw_point(bitmap, dvec2(coords[2*i], coords[2*i+1]), 0.01f,
 		// 			0xf7676a);
@@ -835,14 +864,25 @@ if_end_1:
 			// const dvec2 B = tri_circumcenter[b];
 			// // const dvec2 A = tri_centroid[a];
 			// // const dvec2 B = tri_centroid[b];
+			const std::size_t k = (j+1)%voronoi[i].points.size();
 			const dvec2 &A = voronoi[i].points[j];
-			const dvec2 &B = voronoi[i].points
-				[(j+1)%voronoi[i].points.size()];
+			const dvec2 &B = voronoi[i].points[k];
 
 			if (!voronoi[i].edge_voronoi)
 				draw_edge(bitmap, A, B, 0xffffff);
-			else
+			else {
 				draw_edge(bitmap, A, B, 0xf7676a);
+
+				if (j == 0)
+					draw_point(bitmap, A, 0.01f, 0xfcc98f);
+				if (k == 0)
+					draw_point(bitmap, B, 0.01f, 0xfcc98f);
+
+				// if (j == voronoi[i].points.size()-1)
+				// 	draw_point(bitmap, A, 0.01f, 0xa1c1fc);
+				// if (k == voronoi[i].points.size()-1)
+				// 	draw_point(bitmap, B, 0.01f, 0xa1c1fc);
+			}
 			// PRINT_F(A.x);
 		}
 	}
