@@ -60,6 +60,18 @@ inline F mod_f(F a, F m) {
 int floor_div(int num, int den);
 
 template<class T>
+inline T sign_of(const T x) {
+	return
+		x < T(0) ?
+		T(-1) :
+
+		x > T(0) ?
+		T( 1) :
+
+		T(0);
+}
+
+template<class T>
 inline bool in_between_inclusive(T a, T b, T x) {
 	return a <= x && x <= b;
 }
@@ -99,6 +111,13 @@ inline float len_sq(const glm::vec2& vec) {
 	return vec.x*vec.x + vec.y*vec.y;
 }
 
+inline bool same_direction_knowing_same_line(
+		const glm::dvec2 &v, const glm::dvec2 &w) {
+	return
+		sign_of(v.x) == sign_of(w.x) &&
+		sign_of(v.y) == sign_of(w.y);
+}
+
 template<class T>
 inline T determinant(
 		const glm::tvec2<T, glm::highp> &a,
@@ -106,6 +125,8 @@ inline T determinant(
 	return a.x*b.y - a.y*b.x;
 }
 
+// Warning! This gives only the length in 2D,
+// casting the vector to XY plane
 inline long long len_sq(const glm::ivec3& vec) {
 	using ll = long long;
 	return

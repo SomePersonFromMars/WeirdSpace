@@ -557,20 +557,339 @@ glm::vec2 generator_C_t::triangle_circumcenter(
 	return O;
 }
 
+std::pair<dvec2, bool> generator_C_t::intersect_line_h_segment(
+		dvec2 P, dvec2 v,
+		dvec2 S) {
+	const double &A = v.x;
+	const double &B = v.y;
+	dvec2 X;
+	X.y = S.y;
+	X.x = P.x + A * (S.y - P.y) / B;
+	const bool on_line = in_between_inclusive(0.0, S.x, X.x);
+	return {X, on_line};
+}
+
+std::pair<dvec2, bool> generator_C_t::intersect_line_v_segment(
+		dvec2 P, dvec2 v,
+		dvec2 S) {
+	const double &A = v.x;
+	const double &B = v.y;
+	dvec2 X;
+	X.x = S.x;
+	X.y = P.y + B * (S.x - P.x) / A;
+	const bool on_line = in_between_inclusive(0.0, S.y, X.y);
+	return {X, on_line};
+}
+
+std::pair<dvec2, generator_C_t::inters_t>
+	generator_C_t::find_closest_box_intersection_directed_edge(dvec2 P,
+		dvec2 v, dvec2 S) {
+
+	const double v_len_sq = len_sq(v);
+
+	std::pair<dvec2, bool> r;
+	inters_t inters = inters_t::OUTSIDE;
+
+	double closest_X_dist_sq = std::numeric_limits<double>::max();
+	dvec2 closest_X;
+
+	double dist_sq;
+	dvec2 w;
+
+	// Find intersection starting from P
+	// Left box edge
+	r = intersect_line_v_segment(P, v, {0, S.y});
+	w = r.first - P;
+	dist_sq = len_sq(w);
+	if (
+			r.second &&
+			dist_sq < closest_X_dist_sq &&
+			dist_sq <= v_len_sq &&
+			same_direction_knowing_same_line(v, w)
+			) {
+		closest_X_dist_sq = dist_sq;
+		closest_X = r.first;
+		inters = inters_t::LEFT;
+	}
+
+	// Right box edge
+	r = intersect_line_v_segment(P, v, {S.x, S.y});
+	w = r.first - P;
+	dist_sq = len_sq(w);
+	if (
+			r.second &&
+			dist_sq < closest_X_dist_sq &&
+			dist_sq <= v_len_sq &&
+			same_direction_knowing_same_line(v, w)
+			) {
+		closest_X_dist_sq = dist_sq;
+		closest_X = r.first;
+		inters = inters_t::RIGHT;
+	}
+
+	// Bottom box edge
+	r = intersect_line_h_segment(P, v, {S.x, 0});
+	w = r.first - P;
+	dist_sq = len_sq(w);
+	if (
+			r.second &&
+			dist_sq < closest_X_dist_sq &&
+			dist_sq <= v_len_sq &&
+			same_direction_knowing_same_line(v, w)
+			) {
+		closest_X_dist_sq = dist_sq;
+		closest_X = r.first;
+		inters = inters_t::BOTTOM;
+	}
+
+	// Top box edge
+	r = intersect_line_h_segment(P, v, {S.x, S.y});
+	w = r.first - P;
+	dist_sq = len_sq(w);
+	if (
+			r.second &&
+			dist_sq < closest_X_dist_sq &&
+			dist_sq <= v_len_sq &&
+			same_direction_knowing_same_line(v, w)
+			) {
+		closest_X_dist_sq = dist_sq;
+		closest_X = r.first;
+		inters = inters_t::TOP;
+	}
+
+	if (inters == inters_t::OUTSIDE) {
+		if (in_between_inclusive(0.0, S.x, P.x)
+			&& in_between_inclusive(0.0, S.y, P.y))
+			inters = inters_t::INSIDE;
+	}
+
+	return {closest_X, inters};
+}
+
+std::pair<generator_C_t::reduced_edge_t, bool> generator_C_t::trim_edge(
+		glm::dvec2 beg, glm::dvec2 end, glm::dvec2 S
+		) {
+
+	// Return value
+	reduced_edge_t red_edge;
+	red_edge.beg = beg;
+	red_edge.end = end;
+	red_edge.beg_inters = inters_t::INSIDE;
+	red_edge.end_inters = inters_t::INSIDE;
+
+	std::pair<dvec2, inters_t> r;
+	// Find intersection starting from beg
+	r = find_closest_box_intersection_directed_edge(
+			beg, end-beg, S);
+	if (r.second == inters_t::OUTSIDE) {
+		return {reduced_edge_t(), false};
+	}
+	if (
+			r.second != inters_t::INSIDE &&
+			(
+				!in_between_inclusive(0.0, S.x, beg.x) ||
+				!in_between_inclusive(0.0, S.y, beg.y)
+			)
+		) {
+		red_edge.beg = r.first;
+		red_edge.beg_inters = r.second;
+	}
+
+	// Find intersection starting from end
+	r = find_closest_box_intersection_directed_edge(
+			end, -(end-beg), S);
+	if (
+			r.second != inters_t::INSIDE &&
+			(
+				!in_between_inclusive(0.0, S.x, end.x) ||
+				!in_between_inclusive(0.0, S.y, end.y)
+			)
+		) {
+		red_edge.end = r.first;
+		red_edge.end_inters = r.second;
+	}
+
+	return {red_edge, true};
+}
+
+std::pair<generator_C_t::reduced_edge_t, bool> generator_C_t::trim_inf_edge(
+		const glm::dvec2 beg,
+		const glm::dvec2 direction_vec,
+		const glm::dvec2 S
+		) {
+
+	dvec2 closest_intersections[2];
+	inters_t closest_intersections_type[2] {
+		inters_t::OUTSIDE,
+		inters_t::OUTSIDE
+	};
+	double closest_intersections_dist_sq[2] {
+		std::numeric_limits<double>::infinity(),
+		std::numeric_limits<double>::infinity()
+	};
+
+	std::pair<dvec2, bool> r;
+	dvec2 w;
+	double w_len_sq;
+
+	// Find intersections starting from beg
+	// Left box edge
+	r = intersect_line_v_segment(beg, direction_vec, {0, S.y});
+	w = r.first - beg;
+	w_len_sq = len_sq(w);
+	if (
+			r.second &&
+			w_len_sq < closest_intersections_dist_sq[1] &&
+			same_direction_knowing_same_line(direction_vec, w)
+			) {
+		if (w_len_sq < closest_intersections_dist_sq[0]) {
+			closest_intersections[1]
+				= closest_intersections[0];
+			closest_intersections_type[1]
+				= closest_intersections_type[0];
+			closest_intersections_dist_sq[1]
+				= closest_intersections_dist_sq[0];
+
+			closest_intersections[0] = r.first;
+			closest_intersections_type[0] = inters_t::LEFT;
+			closest_intersections_dist_sq[0] = w_len_sq;
+		} else {
+			closest_intersections[1] = r.first;
+			closest_intersections_type[1] = inters_t::LEFT;
+			closest_intersections_dist_sq[1] = w_len_sq;
+		}
+	}
+
+	// Right box edge
+	r = intersect_line_v_segment(beg, direction_vec, {S.x, S.y});
+	w = r.first - beg;
+	w_len_sq = len_sq(w);
+	if (
+			r.second &&
+			w_len_sq < closest_intersections_dist_sq[1] &&
+			same_direction_knowing_same_line(direction_vec, w)
+			) {
+		if (w_len_sq < closest_intersections_dist_sq[0]) {
+			closest_intersections[1]
+				= closest_intersections[0];
+			closest_intersections_type[1]
+				= closest_intersections_type[0];
+			closest_intersections_dist_sq[1]
+				= closest_intersections_dist_sq[0];
+
+			closest_intersections[0] = r.first;
+			closest_intersections_type[0] = inters_t::RIGHT;
+			closest_intersections_dist_sq[0] = w_len_sq;
+		} else {
+			closest_intersections[1] = r.first;
+			closest_intersections_type[1] = inters_t::RIGHT;
+			closest_intersections_dist_sq[1] = w_len_sq;
+		}
+	}
+
+	// Bottom box edge
+	r = intersect_line_h_segment(beg, direction_vec, {S.x, 0});
+	w = r.first - beg;
+	w_len_sq = len_sq(w);
+	if (
+			r.second &&
+			w_len_sq < closest_intersections_dist_sq[1] &&
+			same_direction_knowing_same_line(direction_vec, w)
+			) {
+		if (w_len_sq < closest_intersections_dist_sq[0]) {
+			closest_intersections[1]
+				= closest_intersections[0];
+			closest_intersections_type[1]
+				= closest_intersections_type[0];
+			closest_intersections_dist_sq[1]
+				= closest_intersections_dist_sq[0];
+
+			closest_intersections[0] = r.first;
+			closest_intersections_type[0] = inters_t::BOTTOM;
+			closest_intersections_dist_sq[0] = w_len_sq;
+		} else {
+			closest_intersections[1] = r.first;
+			closest_intersections_type[1] = inters_t::BOTTOM;
+			closest_intersections_dist_sq[1] = w_len_sq;
+		}
+	}
+
+	// Top box edge
+	r = intersect_line_h_segment(beg, direction_vec, {S.x, S.y});
+	w = r.first - beg;
+	w_len_sq = len_sq(w);
+	if (
+			r.second &&
+			w_len_sq < closest_intersections_dist_sq[1] &&
+			same_direction_knowing_same_line(direction_vec, w)
+			) {
+		if (w_len_sq < closest_intersections_dist_sq[0]) {
+			closest_intersections[1]
+				= closest_intersections[0];
+			closest_intersections_type[1]
+				= closest_intersections_type[0];
+			closest_intersections_dist_sq[1]
+				= closest_intersections_dist_sq[0];
+
+			closest_intersections[0] = r.first;
+			closest_intersections_type[0] = inters_t::TOP;
+			closest_intersections_dist_sq[0] = w_len_sq;
+		} else {
+			closest_intersections[1] = r.first;
+			closest_intersections_type[1] = inters_t::TOP;
+			closest_intersections_dist_sq[1] = w_len_sq;
+		}
+	}
+
+	if (closest_intersections_dist_sq[0]
+			== std::numeric_limits<double>::infinity()) {
+		return {reduced_edge_t(), false};
+	} else if (closest_intersections_dist_sq[1]
+			== std::numeric_limits<double>::infinity()) {
+		reduced_edge_t red_edge;
+		red_edge.beg = beg;
+		red_edge.beg_inters = inters_t::INSIDE;
+		red_edge.end = closest_intersections[0];
+		red_edge.end_inters = closest_intersections_type[0];
+		return {red_edge, true};
+	} else {
+		reduced_edge_t red_edge;
+		red_edge.beg = closest_intersections[0];
+		red_edge.beg_inters = closest_intersections_type[0];
+		red_edge.end = closest_intersections[1];
+		red_edge.end_inters = closest_intersections_type[1];
+		return {red_edge, true};
+	}
+}
+
 void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	bitmap.clear();
 	printf("\n");
 
+	// // Coordinates tests
+	// draw_point(bitmap, vec2(0.1f, 0.1f) * space_max, 0.01, 0xff0000);
+	// draw_point(bitmap, vec2(0.9f, 0.1f) * space_max, 0.01, 0x00ff00);
+	// draw_point(bitmap, vec2(0.1f, 0.9f) * space_max, 0.01, 0x0000ff);
+	// draw_edge(bitmap, (vec2(0.0f, 0.0f)+vec2(0.5f))*space_max,
+	// 		(vec2(-2.0f, 3.0f)+vec2(0.5f))*space_max, 0xff0000);
+	// draw_edge(bitmap, (vec2(0.0f, 0.0f)+vec2(0.5f))*space_max,
+	// 		(vec2(3.0f, 2.0f)+vec2(0.5f))*space_max, 0x00ff00);
+
+	// Buggy seeds:
+	// Bad non-edge voronois clipping:
+	seed_voronoi = 1667157016119;
+	// seed_voronoi = 1667156960118;
+
 	std::mt19937 gen(seed_voronoi);
 	PRINT_LU(seed_voronoi);
-	// std::uniform_real_distribution<double> distrib_x(0,
-	// 		double(width-1)/double(width) * ratio_wh);
-	// std::uniform_real_distribution<double> distrib_y(0,
-	// 		double(height-1)/double(height));
-	std::uniform_real_distribution<double> distrib_x(0.2,
-			double(width-1)/double(width) * ratio_wh -0.2);
-	std::uniform_real_distribution<double> distrib_y(0.2,
-			double(height-1)/double(height) -0.2);
+	std::uniform_real_distribution<double> distrib_x(0,
+			double(width-1)/double(width) * ratio_wh);
+	std::uniform_real_distribution<double> distrib_y(0,
+			double(height-1)/double(height));
+	// std::uniform_real_distribution<double> distrib_x(0.2,
+	// 		double(width-1)/double(width) * ratio_wh -0.2);
+	// std::uniform_real_distribution<double> distrib_y(0.2,
+	// 		double(height-1)/double(height) -0.2);
 
 	constexpr std::size_t voronoi_cnt = 60;
 	// constexpr std::size_t voronoi_cnt = 5;
@@ -578,10 +897,16 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
 		coords[2*i+0] = distrib_x(gen);
 		coords[2*i+1] = distrib_y(gen);
-		// printf("vec2(%f, %f),\n", coords[2*i+0], coords[2*i+1]);
 	}
 
 	delaunator::Delaunator d(coords);
+	// // Mirroring the Y coordinates so the triangles are directed clockwise
+	// // in OpenGL coordinate system. For now the algorithm is breaking with
+	// // this change.
+	// for (std::size_t i = 0; i < voronoi_cnt; ++i) {
+	// 	coords[2*i+1] = 1.0-coords[2*i+1];
+	// }
+
 	std::vector<voronoi_t> voronois(voronoi_cnt);
 	std::vector<dvec2> tri_centroid(d.triangles.size() / 3);
 	std::vector<dvec2> tri_circumcenter(d.triangles.size() / 3);
@@ -602,24 +927,11 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		draw_edge(bitmap, A, C, 0x011a8c);
 		draw_edge(bitmap, B, C, 0x011a8c);
 
-		// printf(
-		// 		"Triangle points: [[%f, %f], [%f, %f], [%f, %f]]\n",
-		// 		d.coords[2 * d.triangles[i]],        //tx0
-		// 		d.coords[2 * d.triangles[i] + 1],    //ty0
-		// 		d.coords[2 * d.triangles[i + 1]],    //tx1
-		// 		d.coords[2 * d.triangles[i + 1] + 1],//ty1
-		// 		d.coords[2 * d.triangles[i + 2]],    //tx2
-		// 		d.coords[2 * d.triangles[i + 2] + 1] //ty2
-		// 	  );
-	}
-
-	// for (std::size_t i = 0; i < voronoi_cnt; ++i)
-	// 	draw_point(
-	// 		bitmap, dvec2(coords[2*i], coords[2*i+1]), 0.005f, 0xff0000);
-
-	for (std::size_t i = 0; i < d.triangles.size(); i += 3) {
-		// draw_point(bitmap, tri_circumcenter[i/3], 0.005f, 0x00ff00);
-		// PRINT_VEC2(tri_circumcenter[i/3]);
+		if (i == 5) {
+			draw_point(bitmap, A, 0.01, 0xff0000);
+			draw_point(bitmap, B, 0.01, 0x00ff00);
+			draw_point(bitmap, C, 0.01, 0x0000ff);
+		}
 	}
 
 	// Iterate over all half edges
@@ -656,13 +968,15 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		// such that they have their beg (or end) in the voronoi center
 		// as the current voronoi's half edges.
 		if (voronoi.edge_voronoi) {
-			voronoi.half_edges.push_back(
+			// This is the only case that a half edge has its end
+			// in the voronoi center.
+			voronoi.tri_half_edges.push_back(
 				beg_half_edge - beg_half_edge%3 + (beg_half_edge+2)%3
 				);
 		}
 		std::size_t cur_half_edge = beg_half_edge;
 		do {
-			voronoi.half_edges.push_back(cur_half_edge);
+			voronoi.tri_half_edges.push_back(cur_half_edge);
 
 			const std::size_t twin_half_edge
 				= d.halfedges[cur_half_edge];
@@ -673,29 +987,10 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		} while (cur_half_edge != beg_half_edge);
 	}
 
-	// std::size_t debug_cnt = 0;
-	// printf("\n");
-	// PRINT_ZU(debug_val);
 	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
-		// if (!voronois[i].edge_voronoi || (debug_cnt++ != debug_val && true))
-		// 	continue;
-		// if (i != debug_val)
-		// 	continue;
-		// PRINT_ZU(i);
-
-		uint32_t color = 0xffffff;
-		// if (i != debug_val)
-		// 	color = 0x444444;
-
-		// if (voronois[i].edge_voronoi)
-		// 	draw_point(bitmap, dvec2(coords[2*i], coords[2*i+1]), 0.01f,
-		// 			0xf7676a);
-		// else
-		// 	draw_point(bitmap, dvec2(coords[2*i], coords[2*i+1]), 0.01f,
-		// 			0xb6ea4f);
-		// PRINT_ZU(voronois[i].points.size());
-
-		for (const std::size_t j : voronois[i].half_edges) {
+		constexpr uint32_t color = 0x444444;
+		// constexpr uint32_t color = 0xffffff;
+		for (const std::size_t j : voronois[i].tri_half_edges) {
 			if (d.halfedges[j] == delaunator::INVALID_INDEX) {
 				const dvec2 v1(
 						coords[2 * d.triangles[j]],
@@ -716,8 +1011,6 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 
 				const double det = determinant(v2 - P, Q - P);
 
-				// constexpr uint32_t ray_color = 0x888888;
-				// constexpr uint32_t ray_color = 0xffffff;
 				const uint32_t ray_color = color;
 				if (det < 0)
 					draw_ray(bitmap, Q, X, ray_color);
@@ -732,5 +1025,309 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 						tri_circumcenter[d.halfedges[j]/3], color);
 			}
 		}
+	}
+
+	std::pair<reduced_edge_t, bool> tmp_r;
+	// // 1
+	// tmp_r = trim_edge(dvec2(3, -1), dvec2(-2, 6), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 2
+	// tmp_r = trim_edge(dvec2(1, 6), dvec2(2, 4), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 3
+	// tmp_r = trim_edge(dvec2(4, 2), dvec2(7, 4), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 4
+	// tmp_r = trim_edge(dvec2(6, 1), dvec2(7, -1), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 5
+	// tmp_r = trim_edge(dvec2(8, -4), dvec2(6, -2), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 6
+	// tmp_r = trim_edge(dvec2(8, 2), dvec2(11, 5), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 7
+	// tmp_r = trim_edge(dvec2(13, -3), dvec2(10, -1), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 8
+	// tmp_r = trim_edge(dvec2(4, 0), dvec2(6, 0), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 9
+	// tmp_r = trim_edge(dvec2(9, -1), dvec2(9, 1), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 10
+	// tmp_r = trim_edge(dvec2(4, 6), dvec2(7, 6), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 11
+	// tmp_r = trim_edge(dvec2(7, 7), dvec2(11, 7), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 1
+	// tmp_r = trim_inf_edge(dvec2(-2, 5), dvec2(1, -2), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 2
+	// tmp_r = trim_inf_edge(dvec2(2, 6), dvec2(1, -1), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 3
+	// tmp_r = trim_inf_edge(dvec2(1, -3), dvec2(2, 0), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 4
+	// tmp_r = trim_inf_edge(dvec2(-1, -4), dvec2(3, 0), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 5
+	// tmp_r = trim_inf_edge(dvec2(6, 3), dvec2(7, 2), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 6
+	// tmp_r = trim_inf_edge(dvec2(6, 2), dvec2(1, 0), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 7
+	// tmp_r = trim_inf_edge(dvec2(9, 1), dvec2(4, -3), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// // 8
+	// tmp_r = trim_inf_edge(dvec2(9, -2), dvec2(0, 1), dvec2(9, 5));
+	// PRINT_D(static_cast<int>(tmp_r.second));
+	// PRINT_VEC2(tmp_r.first.beg);
+	// PRINT_VEC2(tmp_r.first.end);
+	// PRINT_D(static_cast<int>(tmp_r.first.beg_inters));
+	// PRINT_D(static_cast<int>(tmp_r.first.end_inters));
+	// puts("");
+
+	// std::size_t debug_cnter = 0;
+	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
+		voronoi_t &voronoi = voronois[i];
+		for (const std::size_t j : voronoi.tri_half_edges) {
+			if (d.halfedges[j] == delaunator::INVALID_INDEX) {
+				const dvec2 v1(
+						coords[2 * d.triangles[j]],
+						coords[2 * d.triangles[j] + 1]);
+				const dvec2 v2(
+						coords[2 * d.triangles[j-j%3+(j+1)%3]],
+						coords[2 * d.triangles[j-j%3+(j+1)%3] + 1]);
+				const dvec2 &beg = tri_circumcenter[j/3];
+				const dvec2 v = v2 - v1;
+				// Rotating the new edge 90 degrees relatively to
+				// the current tri_half_edge.
+				// Not sure why rotating counter clockwise instead of rotating
+				// clockwise, but it seems to be working correctly. :)
+				// It is probably related to the Delaunator coordinate system
+				// problem.
+				const dvec2 direction_vec(-v.y, v.x);
+				const dvec2 S = space_max;
+
+				auto [red_edge, b]
+					= trim_inf_edge(beg, direction_vec, S);
+				if (b) {
+					if (voronoi.points.empty()) {
+						// This is the only case that a half edge has its end
+						// in the voronoi center, so it is necessary to swap
+						// beg with end in the new edge.
+						std::swap(red_edge.beg, red_edge.end);
+						std::swap(red_edge.beg_inters, red_edge.end_inters);
+						// voronoi.end_edge_inters = red_edge.beg_inters;
+					} else {
+						// This is nonfirst infinite edge, so
+						// it must be the last one.
+						// voronoi.beg_edge_inters = red_edge.end_inters;
+					}
+					voronoi.red_edges.push_back(red_edge);
+					voronoi.points.push_back(red_edge.beg);
+					voronoi.points.push_back(red_edge.end);
+				}
+			} else {
+				const dvec2 beg = tri_circumcenter[j/3];
+				const dvec2 end = tri_circumcenter[d.halfedges[j]/3];
+				const dvec2 S = space_max;
+
+				const std::pair<reduced_edge_t, bool> r
+					= trim_edge(beg, end, S);
+				if (r.second) {
+					// if (
+					// 	r.first.beg_inters != inters_t::INSIDE ||
+					// 	r.first.end_inters != inters_t::INSIDE)
+					// 	voronoi.edge_voronoi = true;
+					voronoi.red_edges.push_back(r.first);
+					voronoi.points.push_back(r.first.beg);
+					voronoi.points.push_back(r.first.end);
+				}
+			}
+		}
+
+		if (!voronoi.points.empty() && voronoi.edge_voronoi) {
+			const reduced_edge_t &first
+				= voronoi.red_edges.front();
+			const reduced_edge_t &last
+				= voronoi.red_edges.back();
+			voronoi.beg_edge_inters = last.end_inters;
+			voronoi.end_edge_inters = first.beg_inters;
+
+			const uint8_t beg_side_id
+				= static_cast<uint8_t>(voronoi.beg_edge_inters);
+			const uint8_t end_side_id
+				= static_cast<uint8_t>(voronoi.end_edge_inters);
+			constexpr uint8_t SIDES_CNT
+				= static_cast<uint8_t>(inters_t::SIDES_CNT);
+			assert(beg_side_id < SIDES_CNT);
+			assert(end_side_id < SIDES_CNT);
+
+			// PRINT_D(beg_side_id);
+			// PRINT_D(end_side_id);
+
+			if (beg_side_id != end_side_id)
+				for (
+						uint8_t j = (beg_side_id+0)%SIDES_CNT;
+						j != end_side_id;
+						j = (j+1)%SIDES_CNT) {
+					switch (static_cast<inters_t>(j)) {
+						case inters_t::LEFT:
+							voronoi.points.push_back({0, 0});
+							break;
+						case inters_t::TOP:
+							voronoi.points.push_back({0, space_max.y});
+							break;
+						case inters_t::RIGHT:
+							voronoi.points.push_back(
+									{space_max.x, space_max.y});
+							break;
+						case inters_t::BOTTOM:
+							voronoi.points.push_back({space_max.x, 0});
+							break;
+						default:
+							break;
+					}
+				}
+		}
+	}
+
+	// std::size_t debug_cnter = 0;
+	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
+		const voronoi_t &voronoi = voronois[i];
+		// if (i != 26)
+		// 	continue;
+		// if (!voronoi.edge_voronoi)
+		// 	continue;
+		// if (debug_cnter++ != debug_val)
+		// 	continue;
+		constexpr uint32_t color = 0xffffff;
+		// draw_point(bitmap, voronoi.points[0], 0.01f, 0x888800);
+		// draw_point(bitmap, voronoi.points.back(), 0.01f, 0x880000);
+		for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
+			draw_edge(bitmap,
+					voronoi.points[j],
+					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
+					color);
+		}
+		// for (const reduced_edge_t &red_edge : voronoi.red_edges) {
+		// 	draw_edge(bitmap,
+		// 			red_edge.beg,
+		// 			red_edge.end,
+		// 			color);
+		// }
 	}
 }
