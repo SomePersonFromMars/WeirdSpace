@@ -124,13 +124,11 @@ private:
 		bool complete = false;
 		std::vector<std::size_t> tri_half_edges;
 		std::vector<reduced_edge_t> red_edges;
+		std::size_t last_incoming_red_edge_id
+			= std::numeric_limits<std::size_t>::max();
 		std::vector<glm::dvec2> points;
-		// TODO Find a way to assign below 3 values correctly
-		// to voronoi polygons that became edge voronois
-		// after the clipping.
+		// Means that the voronoi is clipped
 		bool edge_voronoi = false;
-		inters_t end_edge_inters;
-		inters_t beg_edge_inters;
 	};
 
 	// line: parallel to vector v and passing through P

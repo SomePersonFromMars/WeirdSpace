@@ -875,9 +875,9 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	// draw_edge(bitmap, (vec2(0.0f, 0.0f)+vec2(0.5f))*space_max,
 	// 		(vec2(3.0f, 2.0f)+vec2(0.5f))*space_max, 0x00ff00);
 
-	// Buggy seeds:
-	// Bad non-edge voronois clipping:
-	seed_voronoi = 1667157016119;
+	// Edge case seeds:
+	// Non-infinite voronois clipping:
+	// seed_voronoi = 1667157016119;
 	// seed_voronoi = 1667156960118;
 
 	std::mt19937 gen(seed_voronoi);
@@ -927,11 +927,12 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		draw_edge(bitmap, A, C, 0x011a8c);
 		draw_edge(bitmap, B, C, 0x011a8c);
 
-		if (i == 5) {
-			draw_point(bitmap, A, 0.01, 0xff0000);
-			draw_point(bitmap, B, 0.01, 0x00ff00);
-			draw_point(bitmap, C, 0.01, 0x0000ff);
-		}
+		// // Coordinates test
+		// if (i == 5) {
+		// 	draw_point(bitmap, A, 0.01, 0xff0000);
+		// 	draw_point(bitmap, B, 0.01, 0x00ff00);
+		// 	draw_point(bitmap, C, 0.01, 0x0000ff);
+		// }
 	}
 
 	// Iterate over all half edges
@@ -1203,6 +1204,8 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	for (std::size_t i = 0; i < voronoi_cnt; ++i) {
 		voronoi_t &voronoi = voronois[i];
 		for (const std::size_t j : voronoi.tri_half_edges) {
+			bool exists;
+			reduced_edge_t red_edge;
 			if (d.halfedges[j] == delaunator::INVALID_INDEX) {
 				const dvec2 v1(
 						coords[2 * d.triangles[j]],
@@ -1221,24 +1224,27 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 				const dvec2 direction_vec(-v.y, v.x);
 				const dvec2 S = space_max;
 
-				auto [red_edge, b]
+				const std::pair<reduced_edge_t, bool> r
 					= trim_inf_edge(beg, direction_vec, S);
-				if (b) {
-					if (voronoi.points.empty()) {
+				red_edge = r.first;
+				exists = r.second;
+				if (r.second) {
+					if (voronoi.red_edges.empty()) {
 						// This is the only case that a half edge has its end
 						// in the voronoi center, so it is necessary to swap
 						// beg with end in the new edge.
 						std::swap(red_edge.beg, red_edge.end);
 						std::swap(red_edge.beg_inters, red_edge.end_inters);
 						// voronoi.end_edge_inters = red_edge.beg_inters;
-					} else {
-						// This is nonfirst infinite edge, so
-						// it must be the last one.
-						// voronoi.beg_edge_inters = red_edge.end_inters;
 					}
-					voronoi.red_edges.push_back(red_edge);
-					voronoi.points.push_back(red_edge.beg);
-					voronoi.points.push_back(red_edge.end);
+					// else {
+					// 	// This is nonfirst infinite edge, so
+					// 	// it must be the last one.
+					// 	// voronoi.beg_edge_inters = red_edge.end_inters;
+					// }
+					// voronoi.red_edges.push_back(red_edge);
+					// voronoi.points.push_back(red_edge.beg);
+					// voronoi.points.push_back(red_edge.end);
 				}
 			} else {
 				const dvec2 beg = tri_circumcenter[j/3];
@@ -1247,62 +1253,133 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 
 				const std::pair<reduced_edge_t, bool> r
 					= trim_edge(beg, end, S);
-				if (r.second) {
-					// if (
-					// 	r.first.beg_inters != inters_t::INSIDE ||
-					// 	r.first.end_inters != inters_t::INSIDE)
-					// 	voronoi.edge_voronoi = true;
-					voronoi.red_edges.push_back(r.first);
-					voronoi.points.push_back(r.first.beg);
-					voronoi.points.push_back(r.first.end);
+				red_edge = r.first;
+				exists = r.second;
+				// if (r.second) {
+				// 	// if (
+				// 	// 	r.first.beg_inters != inters_t::INSIDE ||
+				// 	// 	r.first.end_inters != inters_t::INSIDE)
+				// 	// 	voronoi.edge_voronoi = true;
+				// 	// voronoi.red_edges.push_back(r.first);
+				// 	// voronoi.points.push_back(r.first.beg);
+				// 	// voronoi.points.push_back(r.first.end);
+				// }
+			}
+
+			if (exists) {
+				if (red_edge.end_inters != inters_t::INSIDE) {
+					voronoi.last_incoming_red_edge_id
+						= voronoi.red_edges.size();
+					voronoi.edge_voronoi = true;
 				}
+				voronoi.red_edges.push_back(red_edge);
 			}
 		}
 
-		if (!voronoi.points.empty() && voronoi.edge_voronoi) {
-			const reduced_edge_t &first
-				= voronoi.red_edges.front();
-			const reduced_edge_t &last
-				= voronoi.red_edges.back();
-			voronoi.beg_edge_inters = last.end_inters;
-			voronoi.end_edge_inters = first.beg_inters;
+		if (voronoi.edge_voronoi) {
+			std::size_t j = voronoi.last_incoming_red_edge_id;
+			assert(j != INVALID_ID);
 
-			const uint8_t beg_side_id
-				= static_cast<uint8_t>(voronoi.beg_edge_inters);
-			const uint8_t end_side_id
-				= static_cast<uint8_t>(voronoi.end_edge_inters);
-			constexpr uint8_t SIDES_CNT
-				= static_cast<uint8_t>(inters_t::SIDES_CNT);
-			assert(beg_side_id < SIDES_CNT);
-			assert(end_side_id < SIDES_CNT);
-
-			// PRINT_D(beg_side_id);
-			// PRINT_D(end_side_id);
-
-			if (beg_side_id != end_side_id)
-				for (
-						uint8_t j = (beg_side_id+0)%SIDES_CNT;
-						j != end_side_id;
-						j = (j+1)%SIDES_CNT) {
-					switch (static_cast<inters_t>(j)) {
-						case inters_t::LEFT:
-							voronoi.points.push_back({0, 0});
-							break;
-						case inters_t::TOP:
-							voronoi.points.push_back({0, space_max.y});
-							break;
-						case inters_t::RIGHT:
-							voronoi.points.push_back(
-									{space_max.x, space_max.y});
-							break;
-						case inters_t::BOTTOM:
-							voronoi.points.push_back({space_max.x, 0});
-							break;
-						default:
-							break;
-					}
+			do {
+				const reduced_edge_t &e1 = voronoi.red_edges[j];
+				voronoi.points.push_back(e1.beg);
+				if (!(e1.end_inters != inters_t::INSIDE)) {
+					continue;
 				}
+				voronoi.points.push_back(e1.end);
+				const reduced_edge_t &e2
+					= voronoi.red_edges[(j+1) % voronoi.red_edges.size()];
+				assert(e2.beg_inters != inters_t::INSIDE);
+
+				const inters_t beg_edge_inters = e1.end_inters;
+				const inters_t end_edge_inters = e2.beg_inters;
+				const uint8_t beg_side_id
+					= static_cast<uint8_t>(beg_edge_inters);
+				const uint8_t end_side_id
+					= static_cast<uint8_t>(end_edge_inters);
+				constexpr uint8_t SIDES_CNT
+					= static_cast<uint8_t>(inters_t::SIDES_CNT);
+				assert(beg_side_id < SIDES_CNT);
+				assert(end_side_id < SIDES_CNT);
+
+				if (beg_side_id != end_side_id)
+					for (
+							uint8_t k = (beg_side_id+0)%SIDES_CNT;
+							k != end_side_id;
+							k = (k+1)%SIDES_CNT) {
+						switch (static_cast<inters_t>(k)) {
+							case inters_t::LEFT:
+								voronoi.points.push_back({0, 0});
+								break;
+							case inters_t::TOP:
+								voronoi.points.push_back({0, space_max.y});
+								break;
+							case inters_t::RIGHT:
+								voronoi.points.push_back(
+										{space_max.x, space_max.y});
+								break;
+							case inters_t::BOTTOM:
+								voronoi.points.push_back({space_max.x, 0});
+								break;
+							default:
+								break;
+						}
+					}
+
+			} while (
+					j = (j+1) % voronoi.red_edges.size(),
+					j != voronoi.last_incoming_red_edge_id
+					);
+		} else {
+			for (const reduced_edge_t &e : voronoi.red_edges)
+				voronoi.points.push_back(e.beg);
 		}
+
+		// if (false) {
+		// 	// if (!voronoi.points.empty() && voronoi.edge_voronoi)
+		// 	const reduced_edge_t &first
+		// 		= voronoi.red_edges.front();
+		// 	const reduced_edge_t &last
+		// 		= voronoi.red_edges.back();
+		// 	const inters_t beg_edge_inters = last.end_inters;
+		// 	const inters_t end_edge_inters = first.beg_inters;
+
+		// 	const uint8_t beg_side_id
+		// 		= static_cast<uint8_t>(beg_edge_inters);
+		// 	const uint8_t end_side_id
+		// 		= static_cast<uint8_t>(end_edge_inters);
+		// 	constexpr uint8_t SIDES_CNT
+		// 		= static_cast<uint8_t>(inters_t::SIDES_CNT);
+		// 	assert(beg_side_id < SIDES_CNT);
+		// 	assert(end_side_id < SIDES_CNT);
+
+		// 	// PRINT_D(beg_side_id);
+		// 	// PRINT_D(end_side_id);
+
+		// 	if (beg_side_id != end_side_id)
+		// 		for (
+		// 				uint8_t j = (beg_side_id+0)%SIDES_CNT;
+		// 				j != end_side_id;
+		// 				j = (j+1)%SIDES_CNT) {
+		// 			switch (static_cast<inters_t>(j)) {
+		// 				case inters_t::LEFT:
+		// 					voronoi.points.push_back({0, 0});
+		// 					break;
+		// 				case inters_t::TOP:
+		// 					voronoi.points.push_back({0, space_max.y});
+		// 					break;
+		// 				case inters_t::RIGHT:
+		// 					voronoi.points.push_back(
+		// 							{space_max.x, space_max.y});
+		// 					break;
+		// 				case inters_t::BOTTOM:
+		// 					voronoi.points.push_back({space_max.x, 0});
+		// 					break;
+		// 				default:
+		// 					break;
+		// 			}
+		// 		}
+		// }
 	}
 
 	// std::size_t debug_cnter = 0;

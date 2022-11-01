@@ -47,10 +47,10 @@ private:
 	};
 
 	static constexpr GLfloat quad_uvs[] {
-		0, 0,
 		0, 1,
-		1, 0,
+		0, 0,
 		1, 1,
+		1, 0,
 	};
 };
 

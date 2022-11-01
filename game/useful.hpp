@@ -34,6 +34,7 @@
 #endif
 
 constexpr double PI = 3.14159265358979323846;
+constexpr std::size_t INVALID_ID = std::numeric_limits<std::size_t>::max();
 
 #define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
