@@ -4,6 +4,7 @@
 
 #include "bitmap.hpp"
 #include "noise.hpp"
+#include "voronoi.hpp"
 
 #include <random>
 
@@ -99,60 +100,6 @@ struct generator_C_t : generator_t {
 
 private:
 	std::mt19937::result_type seed_voronoi;
-
-	glm::vec2 triangle_circumcenter(
-			glm::vec2 A, glm::vec2 B, glm::vec2 C) const;
-
-	enum class inters_t : uint8_t {
-		// Counterclockwise sides order
-		// (Should be clockwise, but Delaunator
-		// coordinate system conflicts with the OpenGL's)
-		LEFT = 0,
-		BOTTOM,
-		RIGHT,
-		TOP,
-		SIDES_CNT,
-		INSIDE,
-		OUTSIDE,
-	};
-	struct reduced_edge_t {
-		glm::dvec2 beg, end;
-		inters_t beg_inters = inters_t::OUTSIDE;
-		inters_t end_inters = inters_t::OUTSIDE;
-	};
-	struct voronoi_t {
-		bool complete = false;
-		std::vector<std::size_t> tri_half_edges;
-		std::vector<reduced_edge_t> red_edges;
-		std::size_t last_incoming_red_edge_id
-			= std::numeric_limits<std::size_t>::max();
-		std::vector<glm::dvec2> points;
-		// Means that the voronoi is clipped
-		bool edge_voronoi = false;
-	};
-
-	// line: parallel to vector v and passing through P
-	// horizontal segment: (0, S.y), (S.x, S.y)
-	static std::pair<glm::dvec2, bool> intersect_line_h_segment(
-			glm::dvec2 P, glm::dvec2 v, glm::dvec2 S);
-	// line: parallel to vector v and passing through P
-	// vertical segment: (S.x, 0), (S.x, S.y)
-	static std::pair<glm::dvec2, bool> intersect_line_v_segment(
-			glm::dvec2 P, glm::dvec2 v, glm::dvec2 S);
-
-	static std::pair<glm::dvec2, inters_t>
-		find_closest_box_intersection_directed_edge(
-			glm::dvec2 P, glm::dvec2 v, glm::dvec2 S);
-
-	static std::pair<reduced_edge_t, bool> trim_edge(
-			glm::dvec2 beg, glm::dvec2 end, glm::dvec2 S
-			);
-
-	static std::pair<reduced_edge_t, bool> trim_inf_edge(
-			const glm::dvec2 beg,
-			const glm::dvec2 direction_vec,
-			const glm::dvec2 S
-			);
 };
 
 #endif

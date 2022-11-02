@@ -8,6 +8,7 @@ add_executable(generator_playground
 
 	generator.cpp
 	noise.cpp
+	voronoi.cpp
 	)
 target_link_libraries(generator_playground
 	${ALL_LIBS}
