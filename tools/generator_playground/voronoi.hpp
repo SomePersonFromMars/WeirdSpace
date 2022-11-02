@@ -5,22 +5,34 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-struct voronoi_diagram_t {
-	struct voronoi_t {
-		// Polygon fully calculated
-		bool complete = false;
-		std::vector<glm::dvec2> points;
-		bool clipped = false;
-	};
+struct voronoi_diagram_t;
+struct voronoi_t {
+	glm::dvec2 center;
+	std::vector<glm::dvec2> points;
+private:
+	// Polygon fully calculated
+	bool complete = false;
+	bool clipped = false;
+	friend voronoi_diagram_t;
+};
 
+struct voronoi_diagram_t {
 	glm::dvec2 space_max;
-	std::size_t voronoi_cnt;
-	std::vector<double> coords;
 	std::vector<voronoi_t> voronois;
 
-	void generate();
+	inline std::size_t voronois_cnt();
+	void generate_relaxed(std::size_t iterations_cnt);
 
 private:
+	std::vector<double> centers;
+	void generate();
+	// Applies Lloyd's relaxation algorithm
+	// Calculations are based on the `voronois`
+	// array. After calculating new voronoi centers
+	// it restores default voronoi polygons state
+	// without clearing `voronois` array.
+	void voronoi_iteration();
+
 	enum class inters_t : uint8_t {
 		// Clockwise sides order
 		LEFT = 0,
@@ -65,5 +77,9 @@ private:
 			const glm::dvec2 S
 			);
 };
+
+inline std::size_t voronoi_diagram_t::voronois_cnt() {
+	return voronois.size();
+}
 
 #endif

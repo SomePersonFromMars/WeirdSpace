@@ -81,7 +81,7 @@ private:
 
 	struct fractal_grid_t {
 		glm::ivec2 size;
-		int voronoi_cnt;
+		int voronois_cnt;
 		float land_probability;
 		std::vector<std::vector<tile_t>> grid;
 		void generate_grid(std::mt19937::result_type seed_voronoi,

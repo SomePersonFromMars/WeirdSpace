@@ -416,7 +416,7 @@ void generator_B_t::fractal_grid_t::generate_grid(
 
 	std::queue<ivec2> next_v_A, next_v_B;
 	std::set<ivec2, vec2_cmp_t<int>> points;
-	for (int i = 0; i < voronoi_cnt; ++i) {
+	for (int i = 0; i < voronois_cnt; ++i) {
 		ivec2 p;
 		while (
 			points.find(
@@ -428,7 +428,7 @@ void generator_B_t::fractal_grid_t::generate_grid(
 
 		next_v_A.push(p);
 		// grid[p.y][p.x] = hsv_to_rgb(
-		// 		float(i)/float(voronoi_cnt), 0.9f, 0.8f);
+		// 		float(i)/float(voronois_cnt), 0.9f, 0.8f);
 
 		if (distrib_land(gen) <= land_probability)
 			grid[p.y][p.x].type = tile_t::LAND_BIT;
@@ -540,16 +540,18 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 
 	voronoi_diagram_t diagram;
 	diagram.space_max = space_max;
-	diagram.voronoi_cnt = 60;
-	diagram.coords = std::vector<double>(diagram.voronoi_cnt*2);
-	for (std::size_t i = 0; i < diagram.voronoi_cnt; ++i) {
-		diagram.coords[2*i+0] = distrib_x(gen);
-		diagram.coords[2*i+1] = distrib_y(gen);
+	diagram.voronois = std::vector<voronoi_t>(60);
+	for (voronoi_t &voronoi : diagram.voronois) {
+		voronoi.center.x = distrib_x(gen);
+		voronoi.center.y = distrib_y(gen);
 	}
 
-	diagram.generate();
+	diagram.generate_relaxed(5);
 
-	for (const voronoi_diagram_t::voronoi_t &voronoi : diagram.voronois) {
+	// std::size_t debug_i = 0;
+	for (const voronoi_t &voronoi : diagram.voronois) {
+		// if (debug_i++ != debug_val)
+		// 	continue;
 		constexpr uint32_t color = 0xffffff;
 		for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
 			draw_edge(bitmap,
@@ -557,5 +559,10 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
 					color);
 		}
+		// --debug_i;
+		// draw_point(bitmap,
+		// 		vec2(diagram.coords[2*debug_i], diagram.coords[2*debug_i+1]),
+		// 		0.01, color);
+		// ++debug_i;
 	}
 }

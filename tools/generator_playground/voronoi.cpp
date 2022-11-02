@@ -338,8 +338,8 @@ std::pair<voronoi_diagram_t::reduced_edge_t, bool>
 }
 
 void voronoi_diagram_t::generate() {
-	delaunator::Delaunator d(coords);
-	voronois = std::vector<voronoi_t>(voronoi_cnt);
+	delaunator::Delaunator d(centers);
+	voronois = std::vector<voronoi_t>(voronois_cnt());
 	std::vector<dvec2> tri_circumcenter(d.triangles.size() / 3);
 	for (std::size_t i = 0; i < d.triangles.size() / 3; ++i) {
 		dvec2 A, B, C;
@@ -423,11 +423,11 @@ void voronoi_diagram_t::generate() {
 			reduced_edge_t red_edge;
 			if (d.halfedges[j] == delaunator::INVALID_INDEX) {
 				const dvec2 v1(
-						coords[2 * d.triangles[j]],
-						coords[2 * d.triangles[j] + 1]);
+						centers[2 * d.triangles[j]],
+						centers[2 * d.triangles[j] + 1]);
 				const dvec2 v2(
-						coords[2 * d.triangles[j-j%3+(j+1)%3]],
-						coords[2 * d.triangles[j-j%3+(j+1)%3] + 1]);
+						centers[2 * d.triangles[j-j%3+(j+1)%3]],
+						centers[2 * d.triangles[j-j%3+(j+1)%3] + 1]);
 				const dvec2 &beg = tri_circumcenter[j/3];
 				const dvec2 v = v2 - v1;
 				// Rotating the new edge 90 degrees clockwise
@@ -528,5 +528,42 @@ void voronoi_diagram_t::generate() {
 			for (const reduced_edge_t &e : red_edges)
 				voronoi.points.push_back(e.beg);
 		}
+	}
+}
+
+void voronoi_diagram_t::voronoi_iteration() {
+	for (std::size_t i = 0; i < voronois_cnt(); ++i) {
+		dvec2 new_center(0);
+		for (const dvec2 &p : voronois[i].points)
+			new_center += p;
+		new_center /= static_cast<double>(voronois[i].points.size());
+		centers[2*i+0] = new_center.x;
+		centers[2*i+1] = new_center.y;
+
+		// Previous calculations are not valid anymore
+		voronois[i].points.clear();
+		voronois[i].complete = false;
+		voronois[i].clipped = false;
+	}
+}
+
+void voronoi_diagram_t::generate_relaxed(std::size_t iterations_cnt) {
+	centers.resize(voronois_cnt()*2);
+	for (std::size_t i = 0; i < voronois_cnt(); ++i) {
+		centers[2*i+0] = voronois[i].center.x;
+		centers[2*i+1] = voronois[i].center.y;
+	}
+
+	generate();
+	for (std::size_t iteration = 0; iteration < iterations_cnt; ++iteration) {
+		voronoi_iteration();
+		generate();
+	}
+
+	for (std::size_t i = 0; i < voronois_cnt(); ++i) {
+		voronois[i].center = dvec2(
+				centers[2*i+0],
+				centers[2*i+1]
+				);
 	}
 }
