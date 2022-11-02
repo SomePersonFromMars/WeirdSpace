@@ -9,6 +9,7 @@ struct voronoi_diagram_t;
 struct voronoi_t {
 	glm::dvec2 center;
 	std::vector<glm::dvec2> points;
+	std::vector<std::size_t> al;
 private:
 	// Polygon fully calculated
 	bool complete = false;

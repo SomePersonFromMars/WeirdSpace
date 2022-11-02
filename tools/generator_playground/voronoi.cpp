@@ -412,6 +412,20 @@ void voronoi_diagram_t::generate() {
 				= twin_half_edge - twin_half_edge%3 + (twin_half_edge+1)%3;
 		} while (cur_half_edge != beg_half_edge);
 
+		// Find neighbors
+		for (std::size_t j = 0; j < tri_half_edges.size(); ++j) {
+			const std::size_t half_edge = tri_half_edges[j];
+			std::size_t neighbor_id;
+			if (voronoi.clipped && j == 0) {
+				neighbor_id = d.triangles[half_edge];
+			} else if (d.halfedges[half_edge] == delaunator::INVALID_INDEX) {
+				continue;
+			} else {
+				neighbor_id = d.triangles[d.halfedges[half_edge]];
+			}
+			voronoi.al.push_back(neighbor_id);
+		}
+
 		// Converting Delaunay triangulation half edges
 		// to voronoi diagram edges, clipping them
 		// and ignoring them if they don't exist
@@ -542,6 +556,7 @@ void voronoi_diagram_t::voronoi_iteration() {
 
 		// Previous calculations are not valid anymore
 		voronois[i].points.clear();
+		voronois[i].al.clear();
 		voronois[i].complete = false;
 		voronois[i].clipped = false;
 	}

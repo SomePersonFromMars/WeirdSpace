@@ -13,7 +13,7 @@ struct generator_t {
 	virtual void new_seed() = 0;
 	virtual void generate_bitmap(bitmap_t &bitmap, int resolution_div) = 0;
 
-	std::size_t debug_val = 2;
+	std::size_t debug_val = 0;
 
 protected:
 	const int &width, height;

@@ -540,13 +540,23 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 
 	voronoi_diagram_t diagram;
 	diagram.space_max = space_max;
-	diagram.voronois = std::vector<voronoi_t>(60);
+	diagram.voronois = std::vector<voronoi_t>(360);
 	for (voronoi_t &voronoi : diagram.voronois) {
 		voronoi.center.x = distrib_x(gen);
 		voronoi.center.y = distrib_y(gen);
 	}
 
-	diagram.generate_relaxed(5);
+	diagram.generate_relaxed(debug_val);
+
+	for (const voronoi_t &voronoi : diagram.voronois) {
+		constexpr uint32_t color = 0x011a8c;
+		for (std::size_t j = 0; j < voronoi.al.size(); ++j) {
+			draw_edge(bitmap,
+					voronoi.center,
+					diagram.voronois[voronoi.al[j]].center,
+					color);
+		}
+	}
 
 	// std::size_t debug_i = 0;
 	for (const voronoi_t &voronoi : diagram.voronois) {
