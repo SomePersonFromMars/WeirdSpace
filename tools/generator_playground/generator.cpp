@@ -21,8 +21,8 @@ using namespace glm;
 generator_t::generator_t()
 	:width{bitmap_t::WIDTH}
 	,height{bitmap_t::HEIGHT}
-	,ratio_wh{float(width)/float(height)}
-	,ratio_hw{float(height)/float(width)}
+	,ratio_wh{double(width)/double(height)}
+	,ratio_hw{double(height)/double(width)}
 {
 	// new_seed();
 }
@@ -69,14 +69,14 @@ u8vec3 generator_A_t::get(ivec2 ipos) {
 	uint8_t val_u8 = static_cast<uint8_t>(val * 255.0);
 	return u8vec3(val_u8);
 
-	vec3 val_v3 = lerp<vec3, float>(
+	dvec3 val_v3 = lerp<dvec3, double>(
 		// color_hex_to_vec3(0x826348),
 		color_hex_to_vec3(0x826948),
 
 		color_hex_to_vec3(0xf9d186),
 		val);
 
-	// vec3 val_v3(1);
+	// dvec3 val_v3(1);
 
 	// return val_u8v3;
 	return u8vec3(
@@ -147,21 +147,14 @@ void generator_B_t::new_seed() {
 	coast_noise.reseed(seed_noise);
 }
 
-void generator_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
+void generator_t::draw_edge(bitmap_t &bitmap, dvec2 beg, dvec2 end,
 		uint32_t color) {
-	dvec2 beg, end;
-
-	beg.x = beg01.x*double(width-1);
-	beg.x /= double(width) / double(height);
-	beg.y = beg01.y*double(height-1);
-
-	end.x = end01.x*double(width-1);
-	end.x /= double(width) / double(height);
-	end.y = end01.y*double(height-1);
+	beg = space_to_bitmap_coords(beg);
+	end = space_to_bitmap_coords(end);
 
 	dvec2 off = end - beg;
 	const int iterations_cnt = std::max(
-			std::abs(int(off.x)), std::abs(int(off.y)));
+			std::abs(int(off.x)), std::abs(int(off.y)))+1;
 	if (std::abs(off.x) > std::abs(off.y)) {
 		off /= std::abs(off.x);
 	} else {
@@ -177,84 +170,14 @@ void generator_t::draw_edge(bitmap_t &bitmap, vec2 beg01, vec2 end01,
 	}
 }
 
-void generator_t::draw_ray(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 mid01,
-		uint32_t color) {
-
-	bool on_left = beg01.x < 0.0f;
-	bool on_right = beg01.x > space_max.x;
-	bool on_bottom = beg01.y < 0.0f;
-	bool on_top = beg01.y > space_max.y;
-	if (on_left || on_right || on_bottom || on_top) {
-		bool drawable = false;
-		vec2 intersection;
-		vec2 off01 = mid01 - beg01;
-		if (!drawable && on_left && off01.x > 0) {
-			intersection.x = 0.0f;
-			intersection.y =
-				beg01.y + off01.y * (intersection.x - beg01.x) / off01.x;
-			drawable = in_between_inclusive(0.0f, space_max.y, intersection.y);
-		}
-		if (!drawable && on_right && off01.x < 0) {
-			intersection.x = space_max.x;
-			intersection.y =
-				beg01.y + off01.y * (intersection.x - beg01.x) / off01.x;
-			drawable = in_between_inclusive(0.0f, space_max.y, intersection.y);
-		}
-		if (!drawable && on_bottom && off01.y > 0) {
-			intersection.y = 0.0f;
-			intersection.x =
-				beg01.x + off01.x * (intersection.y - beg01.y) / off01.y;
-			drawable = in_between_inclusive(0.0f, space_max.x, intersection.x);
-		}
-		if (!drawable && on_top && off01.y < 0) {
-			intersection.y = space_max.y;
-			intersection.x =
-				beg01.x + off01.x * (intersection.y - beg01.y) / off01.y;
-			drawable = in_between_inclusive(0.0f, space_max.x, intersection.x);
-		}
-
-		if (drawable) {
-			beg01 = intersection;
-			mid01 = beg01 + off01;
-		} else {
-			return;
-		}
-	}
-
-	vec2 beg, mid;
-
-	beg.x = beg01.x*float(width-1);
-	beg.x /= float(width) / float(height);
-	beg.y = beg01.y*float(height-1);
-
-	mid.x = mid01.x*float(width-1);
-	mid.x /= float(width) / float(height);
-	mid.y = mid01.y*float(height-1);
-
-	vec2 off = mid - beg;
-	if (std::abs(off.x) > std::abs(off.y)) {
-		off /= std::abs(off.x);
-	} else {
-		off /= std::abs(off.y);
-	}
-
-	vec2 pos = beg;
-	for (; ; pos += off) {
-		if (pos.x < 0 || pos.x >= float(width)
-				|| pos.y < 0 || pos.y >= float(height))
-			break;
-		bitmap.set(pos.y, pos.x, color);
-	}
-}
-
-void generator_t::draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
+void generator_t::draw_point(bitmap_t &bitmap, glm::dvec2 pos, double dim,
 		uint32_t color) {
 
 	ivec2 beg, end;
-	beg.x = (pos.x-dim/2.0f)*float(width-1)/ratio_wh;
-	end.x = (pos.x+dim/2.0f)*float(width-1)/ratio_wh;
-	beg.y = (pos.y-dim/2.0f)*float(height-1);
-	end.y = (pos.y+dim/2.0f)*float(height-1);
+	beg.x = (pos.x-dim/2.0f)*double(width-1)/ratio_wh;
+	end.x = (pos.x+dim/2.0f)*double(width-1)/ratio_wh;
+	beg.y = (pos.y-dim/2.0f)*double(height-1);
+	end.y = (pos.y+dim/2.0f)*double(height-1);
 
 	for (int x = beg.x; x <= end.x; ++x) {
 		if (x < 0 || x >= width) continue;
@@ -266,11 +189,136 @@ void generator_t::draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
 	}
 }
 
-void generator_B_t::fill(bitmap_t &bitmap, glm::vec2 origin,
+void generator_t::fill(bitmap_t &bitmap, glm::dvec2 origin,
+		uint32_t fill_color) {
+	origin = space_to_bitmap_coords(origin);
+
+	ivec2 first_pixel(origin.x, origin.y);
+	// first_pixel.x = origin.x * double(width-1) / ratio_wh;
+	// first_pixel.y = origin.y * double(height-1);
+	if (first_pixel.x < 0 || first_pixel.x >= width)
+		return;
+	if (first_pixel.y < 0 || first_pixel.y >= height)
+		return;
+
+	static const ivec2 dir[] {
+		ivec2(-1, 0),
+		ivec2(1, 0),
+		ivec2(0, -1),
+		ivec2(0, 1)
+	};
+
+	std::queue<ivec2> next_pixel;
+	next_pixel.push(first_pixel);
+	bitmap.set(first_pixel.y, first_pixel.x, fill_color);
+
+	while (!next_pixel.empty()) {
+		ivec2 pixel = next_pixel.front();
+		next_pixel.pop();
+
+		for (int i = 0; i < 4; ++i) {
+			const ivec2 d = dir[i];
+			const ivec2 p = pixel+d;
+			if (p.x < 0 || p.x >= width)
+				continue;
+			if (p.y < 0 || p.y >= height)
+				continue;
+
+			const uint32_t cur_color = bitmap.get(p.y, p.x);
+			if (cur_color != 0x000000)
+				continue;
+
+			next_pixel.push(p);
+			bitmap.set(p.y, p.x, fill_color);
+		}
+	}
+}
+
+void generator_t::draw_convex_polygon(bitmap_t &bitmap,
+		const std::vector<glm::dvec2> _points,
+		const uint32_t color) {
+	if (_points.size() == 0)
+		return;
+	using ll = long long;
+	constexpr ll MULT = 10000;
+	static std::vector<tvec2<ll, highp>> points;
+	points.resize(_points.size());
+	ll min_x = std::numeric_limits<ll>::max();
+	ll min_y = std::numeric_limits<ll>::max();
+	ll max_x = std::numeric_limits<ll>::min();
+	ll max_y = std::numeric_limits<ll>::min();
+	for (std::size_t i = 0; i < _points.size(); ++i) {
+		points[i] = space_to_bitmap_coords(_points[i]);
+		min_replace(min_x, points[i].x);
+		max_replace(max_x, points[i].x);
+		min_replace(min_y, points[i].y);
+		max_replace(max_y, points[i].y);
+		points[i] = space_to_bitmap_coords(_points[i])
+			* static_cast<double>(MULT);
+	}
+
+	for (ll y = min_y; y <= max_y; ++y) {
+		for (ll x = min_x; x <= max_x; ++x) {
+			const tvec2<ll, highp> p(x*MULT, y*MULT);
+			bool inside = true;
+			for (std::size_t i = 0; i < points.size(); ++i) {
+				const std::size_t j = i == points.size()-1 ? 0 : i+1;
+				const ll det
+					= determinant(points[j]-points[i], p-points[i]);
+				if (!(det >= 0)) {
+					inside = false;
+					break;
+				}
+			}
+			if (inside)
+				bitmap.set(y, x, color);
+		}
+	}
+}
+
+// void generator_t::draw_convex_polygon(bitmap_t &bitmap,
+// 		const std::vector<glm::dvec2> _points,
+// 		const uint32_t color) {
+// 	if (_points.size() == 0)
+// 		return;
+// 	static std::vector<dvec2> points;
+// 	points.resize(_points.size());
+// 	double min_x = std::numeric_limits<double>::max();
+// 	double min_y = std::numeric_limits<double>::max();
+// 	double max_x = std::numeric_limits<double>::min();
+// 	double max_y = std::numeric_limits<double>::min();
+// 	for (std::size_t i = 0; i < _points.size(); ++i) {
+// 		points[i] = space_to_bitmap_coords(_points[i]);
+// 		min_replace(min_x, points[i].x);
+// 		max_replace(max_x, points[i].x);
+// 		min_replace(min_y, points[i].y);
+// 		max_replace(max_y, points[i].y);
+// 	}
+//
+// 	for (int y = min_y; y <= max_y; ++y) {
+// 		for (int x = min_x; x <= max_x; ++x) {
+// 			const dvec2 p(x, y);
+// 			bool inside = true;
+// 			for (std::size_t i = 0; i < points.size(); ++i) {
+// 				const std::size_t j = i == points.size()-1 ? 0 : i+1;
+// 				const double det
+// 					= determinant(points[j]-points[i], p-points[i]);
+// 				if (!(det >= 0)) {
+// 					inside = false;
+// 					break;
+// 				}
+// 			}
+// 			if (inside)
+// 				bitmap.set(y, x, color);
+// 		}
+// 	}
+// }
+
+void generator_B_t::fill(bitmap_t &bitmap, glm::dvec2 origin,
 		uint32_t edge_color, uint32_t fill_color) {
 	ivec2 first_pixel;
-	first_pixel.x = origin.x * float(width-1) / ratio_wh;
-	first_pixel.y = origin.y * float(height-1);
+	first_pixel.x = origin.x * double(width-1) / ratio_wh;
+	first_pixel.y = origin.y * double(height-1);
 	if (first_pixel.x < 0 || first_pixel.x >= width)
 		return;
 	if (first_pixel.y < 0 || first_pixel.y >= height)
@@ -365,11 +413,11 @@ void generator_B_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 			// }
 
 			if (type & tile_t::COAST_BIT) {
-				const float depth = std::sqrt(
-						float(len_sq(v - tile.coast_origin))) /
-					float(tile_t::COAST_DEPTH+1);
-				// const float depth = 1.0f -
-				// 	float(tile.coast_dist) / float(tile_t::COAST_DEPTH);
+				const double depth = std::sqrt(
+						double(len_sq(v - tile.coast_origin))) /
+					double(tile_t::COAST_DEPTH+1);
+				// const double depth = 1.0f -
+				// 	double(tile.coast_dist) / double(tile_t::COAST_DEPTH);
 				u8vec3 color(depth*255.0f);
 				// const u8vec3 color(tile.tmp*255.0f);
 
@@ -410,7 +458,7 @@ void generator_B_t::fractal_grid_t::generate_grid(
 	std::mt19937 gen(seed_voronoi);
 	std::uniform_int_distribution<> distrib_x(0, size.x-1);
 	std::uniform_int_distribution<> distrib_y(0, size.y-1);
-	std::uniform_real_distribution<float> distrib_land(0.0f, 1.0f);
+	std::uniform_real_distribution<double> distrib_land(0.0, 1.0f);
 
 	grid.assign(size.y, std::vector<tile_t>(size.x, {0}));
 
@@ -428,7 +476,7 @@ void generator_B_t::fractal_grid_t::generate_grid(
 
 		next_v_A.push(p);
 		// grid[p.y][p.x] = hsv_to_rgb(
-		// 		float(i)/float(voronois_cnt), 0.9f, 0.8f);
+		// 		double(i)/double(voronois_cnt), 0.9f, 0.8f);
 
 		if (distrib_land(gen) <= land_probability)
 			grid[p.y][p.x].type = tile_t::LAND_BIT;
@@ -533,46 +581,135 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	bitmap.clear();
 	printf("\n");
 
+	// // Leaky polygon buggy test case
+	// seed_voronoi = 1667804331201;
+	// PRINT_ZU(diagram.voronois[45].points.size()); // 4
+	// diagram.voronois[45].points[0] = {1.611641, 0.955208};
+	// diagram.voronois[45].points[1] = {1.613465, 0.917026};
+	// diagram.voronois[45].points[2] = {1.642438, 0.926850};
+	// diagram.voronois[45].points[3] = {1.645050, 0.930818};
+
+	// seed_voronoi = 1667805325327;
+
 	std::mt19937 gen(seed_voronoi);
 	PRINT_LU(seed_voronoi);
 	std::uniform_real_distribution<double> distrib_x(0, space_max.x);
 	std::uniform_real_distribution<double> distrib_y(0, space_max.y);
-
 	voronoi_diagram_t diagram;
 	diagram.space_max = space_max;
-	diagram.voronois = std::vector<voronoi_t>(360);
+	diagram.voronois = std::vector<voronoi_t>(3000);
+	// diagram.voronois = std::vector<voronoi_t>(6);
 	for (voronoi_t &voronoi : diagram.voronois) {
 		voronoi.center.x = distrib_x(gen);
 		voronoi.center.y = distrib_y(gen);
 	}
-
 	diagram.generate_relaxed(debug_val);
+	// diagram.generate_relaxed(0);
 
-	for (const voronoi_t &voronoi : diagram.voronois) {
-		constexpr uint32_t color = 0x011a8c;
-		for (std::size_t j = 0; j < voronoi.al.size(); ++j) {
-			draw_edge(bitmap,
-					voronoi.center,
-					diagram.voronois[voronoi.al[j]].center,
-					color);
+	constexpr std::size_t super_voro_cnt = 40;
+	std::vector<std::size_t> super_voro_rep(
+			diagram.voronois_cnt(), INVALID_ID);
+	std::vector<double> super_voro_rep_dist(
+			diagram.voronois_cnt(), std::numeric_limits<double>::infinity()
+			);
+	// Voronoi id, voronoi dist to its super voronoi representant
+	using voro_priority_queue_t = std::pair<std::size_t, double>;
+	auto cmp = []
+		(const voro_priority_queue_t a, const voro_priority_queue_t b) {
+			return a.second < b.second;
+	};
+	std::priority_queue<voro_priority_queue_t,
+		std::vector<voro_priority_queue_t>, decltype(cmp)>
+		next_v(cmp);
+	std::set<std::size_t> super_voro_origins;
+
+	std::uniform_int_distribution<std::size_t> distrib_voronoi_id(
+			0, diagram.voronois_cnt()-1);
+	while (super_voro_origins.size() < super_voro_cnt) {
+		const std::size_t new_origin = distrib_voronoi_id(gen);
+		const auto r = super_voro_origins.insert(new_origin);
+		if (r.second) {
+			super_voro_rep[new_origin] = new_origin;
+			super_voro_rep_dist[new_origin] = 0.0;
+			next_v.push(voro_priority_queue_t(new_origin, 0.0));
 		}
 	}
 
-	// std::size_t debug_i = 0;
-	for (const voronoi_t &voronoi : diagram.voronois) {
-		// if (debug_i++ != debug_val)
-		// 	continue;
-		constexpr uint32_t color = 0xffffff;
-		for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
-			draw_edge(bitmap,
-					voronoi.points[j],
-					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
-					color);
+	std::vector<uint32_t> voro_colors(diagram.voronois_cnt(), 0x0);
+
+	while (!next_v.empty()) {
+		const voro_priority_queue_t p = next_v.top();
+		const std::size_t v = p.first;
+		next_v.pop();
+		// const double v_dist_sq = super_voro_rep_dist[v];
+		const double v_dist_sq
+			= len_sq(
+					diagram.voronois[v].center -
+					diagram.voronois[super_voro_rep[v]].center
+					);
+		if (v_dist_sq != p.second)
+			continue;
+		for (const size_t w : diagram.voronois[v].al) {
+			const double cur_w_dist_sq
+				= super_voro_rep[w] == INVALID_ID ?
+				std::numeric_limits<double>::infinity() :
+				len_sq(
+						diagram.voronois[w].center -
+						diagram.voronois[super_voro_rep[w]].center
+						);
+				// super_voro_rep_dist[w];
+			const double new_w_dist_sq
+				// = v_dist_sq + 1.0;
+				= len_sq(
+						diagram.voronois[w].center -
+						diagram.voronois[super_voro_rep[v]].center
+						);
+			if (new_w_dist_sq >= cur_w_dist_sq)
+				continue;
+			super_voro_rep[w] = super_voro_rep[v];
+			super_voro_rep_dist[w] = new_w_dist_sq;
+			next_v.push(
+					voro_priority_queue_t(w, new_w_dist_sq));
 		}
-		// --debug_i;
-		// draw_point(bitmap,
-		// 		vec2(diagram.coords[2*debug_i], diagram.coords[2*debug_i+1]),
-		// 		0.01, color);
-		// ++debug_i;
+	}
+
+	std::uniform_int_distribution<uint32_t> distrib_color(1, 100);
+	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
+		if (super_voro_rep[i] != i)
+			continue;
+		uint32_t &color = voro_colors[i];
+
+		static constexpr uint32_t WATER_COLOR = 0x77c4dd;
+		static constexpr uint32_t LAND_COLOR = 0x3a9648;
+
+		color = distrib_color(gen);
+		if (color <= 25)
+			color = LAND_COLOR;
+		else
+			color = WATER_COLOR;
+	}
+
+	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
+		if (super_voro_rep[i] == i)
+			continue;
+		assert(super_voro_rep[i] != INVALID_ID);
+		voro_colors[i] = voro_colors[super_voro_rep[i]];
+	}
+
+	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
+		// if (i != debug_val)
+		// 	continue;
+		const voronoi_t &voronoi = diagram.voronois[i];
+		// constexpr uint32_t color = 0xffffff;
+		const uint32_t color = voro_colors[i];
+		draw_convex_polygon(bitmap, voronoi.points, color);
+		// for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
+		// 	draw_edge(bitmap,
+		// 			voronoi.points[j],
+		// 			voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
+		// 			0xffffff);
+		// }
+		// fill(bitmap, voronoi.center, 0x73c6b8);
+		// fill(bitmap, voronoi.center, color);
 	}
 }

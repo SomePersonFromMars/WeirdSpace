@@ -4,8 +4,8 @@
 
 using namespace glm;
 
-glm::vec2 voronoi_diagram_t::triangle_circumcenter(
-		glm::vec2 A, glm::vec2 B, glm::vec2 C) const {
+glm::dvec2 voronoi_diagram_t::triangle_circumcenter(
+		glm::dvec2 A, glm::dvec2 B, glm::dvec2 C) const {
 
 	const double A_len_sq = len_sq(A);
 	const double B_len_sq = len_sq(B);
@@ -14,7 +14,7 @@ glm::vec2 voronoi_diagram_t::triangle_circumcenter(
 	const double denominator
 		= A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y);
 
-	vec2 O(0, 0);
+	dvec2 O(0, 0);
 	O.x += A_len_sq * (B.y - C.y);
 	O.x += B_len_sq * (C.y - A.y);
 	O.x += C_len_sq * (A.y - B.y);

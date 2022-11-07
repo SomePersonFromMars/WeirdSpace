@@ -17,15 +17,20 @@ struct generator_t {
 
 protected:
 	const int &width, height;
-	const float ratio_wh, ratio_hw;
-	const glm::vec2 space_max {ratio_wh, 1}; // Maximum float coordinates
+	const double ratio_wh, ratio_hw;
+	const glm::dvec2 space_max {ratio_wh, 1}; // Maximum double coordinates
 
-	void draw_edge(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 end01,
+	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos);
+	void draw_edge(bitmap_t &bitmap, glm::dvec2 beg, glm::dvec2 end,
 			uint32_t color);
-	void draw_ray(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 mid01,
+	void draw_point(bitmap_t &bitmap, glm::dvec2 pos, double dim,
 			uint32_t color);
-	void draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
-			uint32_t color);
+	// Fills whole consistent black space starting at origin
+	void fill(bitmap_t &bitmap, glm::dvec2 origin,
+			uint32_t fill_color);
+	void draw_convex_polygon(bitmap_t &bitmap,
+			const std::vector<glm::dvec2> _points,
+			const uint32_t color);
 };
 
 struct generator_A_t : generator_t {
@@ -53,13 +58,8 @@ private:
 	std::mt19937::result_type seed_voronoi;
 	noise_t coast_noise;
 
-	void draw_edge(bitmap_t &bitmap, glm::vec2 beg01, glm::vec2 end01,
-			uint32_t color);
-	void draw_point(bitmap_t &bitmap, glm::vec2 pos, float dim,
-			uint32_t color);
-
 	// edge_color is a border color
-	void fill(bitmap_t &bitmap, glm::vec2 origin,
+	void fill(bitmap_t &bitmap, glm::dvec2 origin,
 			uint32_t edge_color, uint32_t fill_color);
 
 	struct tile_t {
@@ -82,7 +82,7 @@ private:
 	struct fractal_grid_t {
 		glm::ivec2 size;
 		int voronois_cnt;
-		float land_probability;
+		double land_probability;
 		std::vector<std::vector<tile_t>> grid;
 		void generate_grid(std::mt19937::result_type seed_voronoi,
 				noise_t &noise);
@@ -101,5 +101,14 @@ struct generator_C_t : generator_t {
 private:
 	std::mt19937::result_type seed_voronoi;
 };
+
+inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) {
+	return
+		pos.x = pos.x*double(width-1),
+		pos.x /= double(width) / double(height),
+		pos.y = pos.y*double(height-1),
+
+		pos;
+}
 
 #endif

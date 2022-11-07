@@ -50,8 +50,8 @@ private:
 		inters_t end_inters = inters_t::OUTSIDE;
 	};
 
-	glm::vec2 triangle_circumcenter(
-			glm::vec2 A, glm::vec2 B, glm::vec2 C) const;
+	glm::dvec2 triangle_circumcenter(
+			glm::dvec2 A, glm::dvec2 B, glm::dvec2 C) const;
 
 	// Find intersection of a line with a horizontal segment
 	// line: parallel to vector v and passing through P

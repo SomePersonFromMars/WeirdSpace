@@ -51,8 +51,10 @@ void key_callback(GLFWwindow* window,
 		strct_ptr->refresh_required = true;
 	}
 	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
-		PRINT_ZU(--strct_ptr->generator->debug_val);
-		strct_ptr->refresh_required = true;
+		if (strct_ptr->generator->debug_val != 0) {
+			PRINT_ZU(--strct_ptr->generator->debug_val);
+			strct_ptr->refresh_required = true;
+		}
 	}
 }
 
@@ -194,13 +196,13 @@ int32_t main(void) {
 		const float zoom_off = delta_time * 1.0;
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 			camera_zoom *= 1+zoom_off;
-			generator->generate_bitmap(bitmapA, resolution_div);
-			bitmapA.load_to_texture();
+			// generator->generate_bitmap(bitmapA, resolution_div);
+			// bitmapA.load_to_texture();
 		}
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 			camera_zoom *= 1-zoom_off;
-			generator->generate_bitmap(bitmapA, resolution_div);
-			bitmapA.load_to_texture();
+			// generator->generate_bitmap(bitmapA, resolution_div);
+			// bitmapA.load_to_texture();
 		}
 
 		glClear(GL_COLOR_BUFFER_BIT);

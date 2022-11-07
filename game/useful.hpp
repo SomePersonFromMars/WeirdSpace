@@ -78,6 +78,24 @@ inline bool in_between_inclusive(T a, T b, T x) {
 }
 
 template<class T>
+bool min_replace(T &a, const T &b) {
+	if (b < a) {
+		a = b;
+		return true;
+	} else
+		return false;
+}
+
+template<class T>
+bool max_replace(T &a, const T &b) {
+	if (b > a) {
+		a = b;
+		return true;
+	} else
+		return false;
+}
+
+template<class T>
 struct vec2_cmp_t {
 	inline bool operator()(
 			const glm::tvec2<T, glm::highp> &a,
@@ -108,7 +126,13 @@ inline glm::vec3 vec2_to_vec3(const glm::vec2& vec) {
 	return glm::vec3(vec.x, vec.y, 0.0f);
 }
 
-inline float len_sq(const glm::vec2& vec) {
+inline long long len_sq(const glm::ivec2 &vec) {
+	return vec.x*vec.x + vec.y*vec.y;
+}
+inline double len_sq(const glm::dvec2 &vec) {
+	return vec.x*vec.x + vec.y*vec.y;
+}
+inline float len_sq(const glm::vec2 &vec) {
 	return vec.x*vec.x + vec.y*vec.y;
 }
 
