@@ -22,7 +22,7 @@ protected:
 
 	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos);
 	void draw_edge(bitmap_t &bitmap, glm::dvec2 beg, glm::dvec2 end,
-			uint32_t color);
+			uint32_t color, bool draw_only_empty = false);
 	void draw_point(bitmap_t &bitmap, glm::dvec2 pos, double dim,
 			uint32_t color);
 	// Fills whole consistent black space starting at origin
@@ -30,6 +30,15 @@ protected:
 			uint32_t fill_color);
 	void draw_convex_polygon(bitmap_t &bitmap,
 			const std::vector<glm::dvec2> _points,
+			const uint32_t color);
+	void draw_noisy_edge(bitmap_t &bitmap,
+			std::mt19937 &gen,
+			const std::size_t level,
+			const double amplitude,
+			const glm::dvec2 A,
+			const glm::dvec2 B,
+			const glm::dvec2 X,
+			const glm::dvec2 Y,
 			const uint32_t color);
 };
 
@@ -100,6 +109,18 @@ struct generator_C_t : generator_t {
 
 private:
 	std::mt19937::result_type seed_voronoi;
+
+	// struct tile_t {
+	// 	enum type_t {
+	// 		WATER,
+	// 		LAND,
+	// 		COAST
+	// 	} type;
+
+	// 	int coast_dist;
+	// };
+
+	// vector<vector
 };
 
 inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) {

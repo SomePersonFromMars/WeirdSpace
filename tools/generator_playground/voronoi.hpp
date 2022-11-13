@@ -9,7 +9,26 @@ struct voronoi_diagram_t;
 struct voronoi_t {
 	glm::dvec2 center;
 	std::vector<glm::dvec2> points;
-	std::vector<std::size_t> al;
+
+	struct edge_t {
+		std::size_t neighbor_id;
+		// Array useful for drawing voronoi diagram
+		// without drawing edges twice
+		std::size_t smaller_half_edge_id;
+		bool visible;
+
+		// Beg and end are the edge's ends and
+		// a quadrilateral's side points.
+		// The quadrilateral is useful for
+		// making the edge noisy while drawing.
+		glm::dvec2 quad_top;
+		glm::dvec2 quad_bottom;
+		glm::dvec2 beg;
+		glm::dvec2 end;
+
+		void correct_quad();
+	};
+	std::vector<edge_t> al;
 private:
 	// Polygon fully calculated
 	bool complete = false;
@@ -20,6 +39,10 @@ private:
 struct voronoi_diagram_t {
 	glm::dvec2 space_max;
 	std::vector<voronoi_t> voronois;
+
+	// Array useful for drawing voronoi diagram
+	// without drawing edges twice
+	std::vector<bool> half_edge_drawn;
 
 	inline std::size_t voronois_cnt();
 	void generate_relaxed(std::size_t iterations_cnt);

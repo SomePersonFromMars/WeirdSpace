@@ -148,7 +148,7 @@ void generator_B_t::new_seed() {
 }
 
 void generator_t::draw_edge(bitmap_t &bitmap, dvec2 beg, dvec2 end,
-		uint32_t color) {
+		uint32_t color, bool draw_only_empty) {
 	beg = space_to_bitmap_coords(beg);
 	end = space_to_bitmap_coords(end);
 
@@ -166,7 +166,8 @@ void generator_t::draw_edge(bitmap_t &bitmap, dvec2 beg, dvec2 end,
 		if (pos.x < 0 || pos.x >= double(width)
 				|| pos.y < 0 || pos.y >= double(height))
 			continue;
-		bitmap.set(pos.y, pos.x, color);
+		if (!draw_only_empty || bitmap.get(pos.y, pos.x) == 0x0)
+			bitmap.set(pos.y, pos.x, color);
 	}
 }
 
@@ -270,7 +271,7 @@ void generator_t::draw_convex_polygon(bitmap_t &bitmap,
 					break;
 				}
 			}
-			if (inside)
+			if (inside && bitmap.get(y, x) == 0x0)
 				bitmap.set(y, x, color);
 		}
 	}
@@ -313,6 +314,50 @@ void generator_t::draw_convex_polygon(bitmap_t &bitmap,
 // 		}
 // 	}
 // }
+
+void generator_t::draw_noisy_edge(bitmap_t &bitmap,
+		std::mt19937 &gen,
+		const std::size_t level,
+		const double amplitude,
+		const glm::dvec2 A,
+		const glm::dvec2 B,
+		const glm::dvec2 X,
+		const glm::dvec2 Y,
+		const uint32_t color) {
+	if (level == 0) {
+		draw_edge(bitmap, A, B, color);
+	} else {
+		std::uniform_real_distribution<double> distrib(
+				0.5-amplitude, 0.5+amplitude);
+		const dvec2 P = lerp(X, Y, distrib(gen));
+		// const dvec2 P = lerp(X, Y, 1.0);
+		draw_noisy_edge(
+				bitmap,
+				gen,
+
+				level-1,
+				amplitude,
+
+				A, P,
+				(A+X)/2.0,
+				(A+Y)/2.0,
+				color
+				);
+		draw_noisy_edge(
+				bitmap,
+				gen,
+
+				level-1,
+				amplitude,
+
+				P, B,
+				(B+X)/2.0,
+				(B+Y)/2.0,
+				color
+				);
+	}
+}
+
 
 void generator_B_t::fill(bitmap_t &bitmap, glm::dvec2 origin,
 		uint32_t edge_color, uint32_t fill_color) {
@@ -591,13 +636,15 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 
 	// seed_voronoi = 1667805325327;
 
+	// seed_voronoi = 1668341609744;
+
 	std::mt19937 gen(seed_voronoi);
 	PRINT_LU(seed_voronoi);
 	std::uniform_real_distribution<double> distrib_x(0, space_max.x);
 	std::uniform_real_distribution<double> distrib_y(0, space_max.y);
 	voronoi_diagram_t diagram;
 	diagram.space_max = space_max;
-	diagram.voronois = std::vector<voronoi_t>(3000);
+	diagram.voronois = std::vector<voronoi_t>(600);
 	// diagram.voronois = std::vector<voronoi_t>(6);
 	for (voronoi_t &voronoi : diagram.voronois) {
 		voronoi.center.x = distrib_x(gen);
@@ -649,7 +696,8 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 					);
 		if (v_dist_sq != p.second)
 			continue;
-		for (const size_t w : diagram.voronois[v].al) {
+		for (const voronoi_t::edge_t &neighbor : diagram.voronois[v].al) {
+			const std::size_t w = neighbor.neighbor_id;
 			const double cur_w_dist_sq
 				= super_voro_rep[w] == INVALID_ID ?
 				std::numeric_limits<double>::infinity() :
@@ -696,20 +744,109 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		voro_colors[i] = voro_colors[super_voro_rep[i]];
 	}
 
-	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
-		// if (i != debug_val)
-		// 	continue;
-		const voronoi_t &voronoi = diagram.voronois[i];
-		// constexpr uint32_t color = 0xffffff;
-		const uint32_t color = voro_colors[i];
-		draw_convex_polygon(bitmap, voronoi.points, color);
+	// for (const voronoi_t &voronoi : diagram.voronois) {
+	// 	for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
+	// 		draw_edge(bitmap,
+	// 				voronoi.points[j],
+	// 				voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
+	// 				0x777777);
+	// 	}
+	// }
+
+	auto draw_voronoi = [&] (const std::size_t id) {
+		const voronoi_t &voronoi = diagram.voronois[id];
+
+		const uint32_t color = voro_colors[id];
+		// draw_convex_polygon(bitmap, voronoi.points, color);
+
 		// for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
 		// 	draw_edge(bitmap,
 		// 			voronoi.points[j],
 		// 			voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
-		// 			0xffffff);
+		// 			0x777777, true);
 		// }
+
+		for (std::size_t j = 0; j < voronoi.al.size(); ++j) {
+			// if (j != 2)
+			// 	continue;
+			// if (j != debug_val)
+			// 	continue;
+
+			const voronoi_t::edge_t &edge = voronoi.al[j];
+			if (!edge.visible)
+				continue;
+			if (diagram.half_edge_drawn[edge.smaller_half_edge_id])
+				continue;
+			diagram.half_edge_drawn[edge.smaller_half_edge_id] = true;
+
+			// draw_edge(
+			// 		bitmap,
+			// 		// edge.beg,
+			// 		// edge.end,
+			// 		voronoi.center,
+			// 		diagram.voronois[edge.neighbor_id].center,
+			// 		// 0x062399
+			// 		0x7a92f4
+			// 		);
+			// continue;
+
+			// draw_edge(
+			// 		bitmap,
+			// 		edge.edge_beg,
+			// 		edge.end,
+			// 		0xffffff
+			// 		);
+
+			draw_noisy_edge(
+					bitmap,
+					gen,
+
+					5,
+					0.15,
+					edge.beg,
+					edge.end,
+					edge.quad_top,
+					edge.quad_bottom,
+					// 0xffffff
+					color
+					);
+
+			// draw_point(bitmap, edge.quad_top, 0.01, 0xa5ba7a);
+			// draw_point(bitmap, edge.quad_bottom, 0.01, 0xa5ba7a);
+			// draw_point(bitmap, diagram.voronois[edge.neighbor_id].center,
+			// 		0.01, 0xd69773);
+
+			// dvec2 v = edge.end - edge.beg;
+			// v = dvec2(-v.y, v.x);
+			// draw_edge(bitmap, edge.beg, edge.beg + v, 0xa5ba7a);
+
+			// PRINT_ZU(edge.smaller_half_edge_id);
+			// PRINT_VEC2(edge.beg);
+			// PRINT_VEC2(edge.end);
+		}
 		// fill(bitmap, voronoi.center, 0x73c6b8);
 		// fill(bitmap, voronoi.center, color);
+
+		// draw_point(bitmap, voronoi.center, 0.01, 0xd69773);
+	};
+
+	// draw_voronoi(debug_val);
+	// draw_voronoi(diagram.voronois[3].al[2].neighbor_id);
+
+	// PRINT_ZU(diagram.voronois[10].al[4].neighbor_id);
+	// PRINT_VEC2(diagram.voronois[10].al[4].beg);
+	// PRINT_VEC2(diagram.voronois[10].al[4].end);
+
+	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
+		// if (i != debug_val)
+		// 	continue;
+		draw_voronoi(i);
+	}
+
+	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
+		// if (i != debug_val)
+		// 	continue;
+		const voronoi_t &voronoi = diagram.voronois[i];
+		fill(bitmap, voronoi.center, voro_colors[i]);
 	}
 }
