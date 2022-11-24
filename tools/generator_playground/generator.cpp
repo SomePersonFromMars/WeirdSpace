@@ -17,6 +17,7 @@ using namespace glm;
 #include "settings.hpp"
 
 #include "noise.hpp"
+#include <delaunator.hpp>
 
 generator_t::generator_t()
 	:width{bitmap_t::WIDTH}
@@ -622,30 +623,12 @@ void generator_C_t::new_seed() {
 		).count() / 1;
 }
 
-void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
-	bitmap.clear();
-	printf("\n");
-
-	// // Leaky polygon buggy test case
-	// seed_voronoi = 1667804331201;
-	// PRINT_ZU(diagram.voronois[45].points.size()); // 4
-	// diagram.voronois[45].points[0] = {1.611641, 0.955208};
-	// diagram.voronois[45].points[1] = {1.613465, 0.917026};
-	// diagram.voronois[45].points[2] = {1.642438, 0.926850};
-	// diagram.voronois[45].points[3] = {1.645050, 0.930818};
-
-	// seed_voronoi = 1667805325327;
-
-	// seed_voronoi = 1668341609744;
-
-	std::mt19937 gen(seed_voronoi);
-	PRINT_LU(seed_voronoi);
+void generator_C_t::generate_continents(std::mt19937 &gen) {
 	std::uniform_real_distribution<double> distrib_x(0, space_max.x);
 	std::uniform_real_distribution<double> distrib_y(0, space_max.y);
-	voronoi_diagram_t diagram;
+	diagram = voronoi_diagram_t();
 	diagram.space_max = space_max;
-	diagram.voronois = std::vector<voronoi_t>(600);
-	// diagram.voronois = std::vector<voronoi_t>(6);
+	diagram.voronois.assign(600, voronoi_t());
 	for (voronoi_t &voronoi : diagram.voronois) {
 		voronoi.center.x = distrib_x(gen);
 		voronoi.center.y = distrib_y(gen);
@@ -653,7 +636,6 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	diagram.generate_relaxed(debug_val);
 	// diagram.generate_relaxed(0);
 
-	constexpr std::size_t super_voro_cnt = 40;
 	std::vector<std::size_t> super_voro_rep(
 			diagram.voronois_cnt(), INVALID_ID);
 	std::vector<double> super_voro_rep_dist(
@@ -682,13 +664,10 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		}
 	}
 
-	std::vector<uint32_t> voro_colors(diagram.voronois_cnt(), 0x0);
-
 	while (!next_v.empty()) {
 		const voro_priority_queue_t p = next_v.top();
 		const std::size_t v = p.first;
 		next_v.pop();
-		// const double v_dist_sq = super_voro_rep_dist[v];
 		const double v_dist_sq
 			= len_sq(
 					diagram.voronois[v].center -
@@ -705,9 +684,7 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 						diagram.voronois[w].center -
 						diagram.voronois[super_voro_rep[w]].center
 						);
-				// super_voro_rep_dist[w];
 			const double new_w_dist_sq
-				// = v_dist_sq + 1.0;
 				= len_sq(
 						diagram.voronois[w].center -
 						diagram.voronois[super_voro_rep[v]].center
@@ -721,29 +698,29 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 		}
 	}
 
-	std::uniform_int_distribution<uint32_t> distrib_color(1, 100);
-	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
+	plates.assign(diagram.voronois_cnt(), plate_t());
+	for (std::size_t i = 0, j = 0; i < diagram.voronois_cnt(); ++i) {
 		if (super_voro_rep[i] != i)
 			continue;
-		uint32_t &color = voro_colors[i];
+		plate_t &plate = plates[i];
 
-		static constexpr uint32_t WATER_COLOR = 0x77c4dd;
-		static constexpr uint32_t LAND_COLOR = 0x3a9648;
-
-		color = distrib_color(gen);
-		if (color <= 25)
-			color = LAND_COLOR;
+		if (j <= super_voro_cnt * 25 / 100)
+			plate.type = plate_t::LAND;
 		else
-			color = WATER_COLOR;
+			plate.type = plate_t::WATER;
+
+		++j;
 	}
 
 	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
 		if (super_voro_rep[i] == i)
 			continue;
 		assert(super_voro_rep[i] != INVALID_ID);
-		voro_colors[i] = voro_colors[super_voro_rep[i]];
+		plates[i].type = plates[super_voro_rep[i]].type;
 	}
+}
 
+void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 	// for (const voronoi_t &voronoi : diagram.voronois) {
 	// 	for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
 	// 		draw_edge(bitmap,
@@ -756,7 +733,7 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	auto draw_voronoi = [&] (const std::size_t id) {
 		const voronoi_t &voronoi = diagram.voronois[id];
 
-		const uint32_t color = voro_colors[id];
+		const uint32_t color = COLORS[static_cast<uint8_t>(plates[id].type)];
 		// draw_convex_polygon(bitmap, voronoi.points, color);
 
 		// for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
@@ -779,24 +756,6 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 				continue;
 			diagram.half_edge_drawn[edge.smaller_half_edge_id] = true;
 
-			// draw_edge(
-			// 		bitmap,
-			// 		// edge.beg,
-			// 		// edge.end,
-			// 		voronoi.center,
-			// 		diagram.voronois[edge.neighbor_id].center,
-			// 		// 0x062399
-			// 		0x7a92f4
-			// 		);
-			// continue;
-
-			// draw_edge(
-			// 		bitmap,
-			// 		edge.edge_beg,
-			// 		edge.end,
-			// 		0xffffff
-			// 		);
-
 			draw_noisy_edge(
 					bitmap,
 					gen,
@@ -810,43 +769,151 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 					// 0xffffff
 					color
 					);
-
-			// draw_point(bitmap, edge.quad_top, 0.01, 0xa5ba7a);
-			// draw_point(bitmap, edge.quad_bottom, 0.01, 0xa5ba7a);
-			// draw_point(bitmap, diagram.voronois[edge.neighbor_id].center,
-			// 		0.01, 0xd69773);
-
-			// dvec2 v = edge.end - edge.beg;
-			// v = dvec2(-v.y, v.x);
-			// draw_edge(bitmap, edge.beg, edge.beg + v, 0xa5ba7a);
-
-			// PRINT_ZU(edge.smaller_half_edge_id);
-			// PRINT_VEC2(edge.beg);
-			// PRINT_VEC2(edge.end);
 		}
-		// fill(bitmap, voronoi.center, 0x73c6b8);
-		// fill(bitmap, voronoi.center, color);
-
-		// draw_point(bitmap, voronoi.center, 0.01, 0xd69773);
 	};
-
-	// draw_voronoi(debug_val);
-	// draw_voronoi(diagram.voronois[3].al[2].neighbor_id);
-
-	// PRINT_ZU(diagram.voronois[10].al[4].neighbor_id);
-	// PRINT_VEC2(diagram.voronois[10].al[4].beg);
-	// PRINT_VEC2(diagram.voronois[10].al[4].end);
-
 	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
-		// if (i != debug_val)
-		// 	continue;
 		draw_voronoi(i);
 	}
-
 	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
-		// if (i != debug_val)
-		// 	continue;
 		const voronoi_t &voronoi = diagram.voronois[i];
-		fill(bitmap, voronoi.center, voro_colors[i]);
+		fill(bitmap, voronoi.center, COLORS[
+				static_cast<uint8_t>(plates[i].type)]);
 	}
+}
+
+void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
+	std::vector<std::size_t> land_voronois;
+	std::vector<std::size_t> water_voronois;
+	for (std::size_t i = 0; i < plates.size(); ++i) {
+		if (plates[i].type == plate_t::LAND)
+			land_voronois.push_back(i);
+		if (plates[i].type == plate_t::WATER)
+			water_voronois.push_back(i);
+	}
+	const std::size_t land_path_points_cnt = land_voronois.size() * 20 / 100;
+	const std::size_t water_path_points_cnt = std::min(
+			land_path_points_cnt * 25 / 75,
+			water_voronois.size()
+			);
+	const std::size_t path_points_cnt
+		= land_path_points_cnt + water_path_points_cnt;
+
+	std::vector<double> chosen_points_coords(path_points_cnt*2);
+	for (std::size_t i = 0; i < path_points_cnt; ++i) {
+		chosen_points_coords[2*i+0]
+			= diagram.voronois[land_voronois[i]].center.x;
+		chosen_points_coords[2*i+1]
+			= diagram.voronois[land_voronois[i]].center.y;
+	}
+	for (std::size_t i = 0; i < water_path_points_cnt; ++i) {
+		chosen_points_coords[2*i+0]
+			= diagram.voronois[water_voronois[i]].center.x;
+		chosen_points_coords[2*i+1]
+			= diagram.voronois[water_voronois[i]].center.y;
+	}
+
+	for (std::size_t i = 0; i < chosen_points_coords.size(); i += 2) {
+		draw_point(bitmap,
+				dvec2(chosen_points_coords[i], chosen_points_coords[i+1]),
+				0.01, 0xef6b81);
+	}
+
+	const delaunator::Delaunator d(chosen_points_coords);
+
+	struct weighted_edge_t {
+		std::size_t a, b;
+		double len_sq;
+	};
+	std::vector<weighted_edge_t> all_edges;
+	std::vector<std::vector<std::size_t>> al(path_points_cnt);
+
+	for (std::size_t half_edge = 0;
+			half_edge < d.triangles.size();
+			++half_edge) {
+		weighted_edge_t weighted_edge;
+		const std::size_t p = weighted_edge.a = d.triangles[half_edge];
+		const std::size_t next_half_edge
+			= (half_edge % 3 == 2) ? half_edge - 2 : half_edge + 1;
+		const std::size_t q = weighted_edge.b = d.triangles[next_half_edge];
+
+		if (p > q && d.halfedges[half_edge] != delaunator::INVALID_INDEX)
+			continue;
+
+		weighted_edge.len_sq
+			= len_sq(
+			dvec2(chosen_points_coords[2*q+0], chosen_points_coords[2*q+1]) -
+			dvec2(chosen_points_coords[2*p+0], chosen_points_coords[2*p+1])
+			);
+
+		all_edges.push_back(weighted_edge);
+	}
+
+	std::sort(all_edges.begin(), all_edges.end(),
+			[] (const weighted_edge_t &a, const weighted_edge_t &b) -> bool {
+				return a.len_sq < b.len_sq;
+			});
+
+	struct fau_t {
+		std::vector<std::size_t> rep, set_size;
+		fau_t(const std::size_t size)
+			:rep(size)
+			,set_size(size, 1)
+		{
+			for (std::size_t i = 0; i < size; ++i)
+				rep[i] = i;
+		}
+
+		std::size_t find(const std::size_t v) {
+			if (rep[v] == v)
+				return v;
+			else
+				return rep[v] = find(rep[v]);
+		}
+
+		void union_(std::size_t a, std::size_t b) {
+			a = find(a);
+			b = find(b);
+			if (a == b)
+				return;
+			if (set_size[a] > set_size[b])
+				std::swap(a, b);
+			set_size[b] += set_size[a];
+			rep[a] = b;
+		}
+	} fau(path_points_cnt);
+
+	for (const weighted_edge_t &e : all_edges) {
+		if (fau.find(e.a) == fau.find(e.b))
+			continue;
+
+		fau.union_(e.a, e.b);
+		al[e.a].push_back(e.b);
+		// al[e.b].push_back(e.a);
+	}
+
+	for (std::size_t v = 0; v < path_points_cnt; ++v) {
+		for (const std::size_t w : al[v]) {
+			draw_edge(bitmap,
+				dvec2(
+					chosen_points_coords[2*v+0],
+					chosen_points_coords[2*v+1]),
+				dvec2(
+					chosen_points_coords[2*w+0],
+					chosen_points_coords[2*w+1]),
+				0x9e0922
+				);
+		}
+	}
+}
+
+void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
+	bitmap.clear();
+	printf("\n");
+
+	std::mt19937 gen(seed_voronoi);
+	PRINT_LU(seed_voronoi);
+
+	generate_continents(gen);
+	draw_map(bitmap, gen);
+	draw_tour_path(bitmap, gen);
 }

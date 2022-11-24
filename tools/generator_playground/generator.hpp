@@ -108,19 +108,28 @@ struct generator_C_t : generator_t {
 			int resolution_div) override;
 
 private:
+	void generate_continents(std::mt19937 &gen);
+	void draw_map(bitmap_t &bitmap, std::mt19937 &gen);
+	void draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen);
+
 	std::mt19937::result_type seed_voronoi;
 
-	// struct tile_t {
-	// 	enum type_t {
-	// 		WATER,
-	// 		LAND,
-	// 		COAST
-	// 	} type;
+	struct plate_t {
+		enum type_t : uint8_t {
+			NONE = 0,
+			LAND,
+			WATER
+		} type = NONE;
+	};
+	static constexpr uint32_t COLORS[] {
+		0x0,
+		0x3a9648, // WATER
+		0x77c4dd, // LAND
+	};
 
-	// 	int coast_dist;
-	// };
-
-	// vector<vector
+	voronoi_diagram_t diagram;
+	static constexpr std::size_t super_voro_cnt = 40;
+	std::vector<plate_t> plates;
 };
 
 inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) {

@@ -60,6 +60,14 @@ inline F mod_f(F a, F m) {
 
 int floor_div(int num, int den);
 
+inline int ceil_div(const int num, const int den) {
+	return 1 + ((num - 1) / den);
+}
+
+inline std::size_t ceil_div(const std::size_t num, const std::size_t den) {
+	return (num + den - 1) / den;
+}
+
 template<class T>
 inline T sign_of(const T x) {
 	return

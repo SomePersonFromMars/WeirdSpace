@@ -380,7 +380,7 @@ void voronoi_t::edge_t::correct_quad() {
 }
 
 void voronoi_diagram_t::generate() {
-	delaunator::Delaunator d(centers);
+	const delaunator::Delaunator d(centers);
 	half_edge_drawn.resize(d.halfedges.size());
 	voronois = std::vector<voronoi_t>(voronois_cnt());
 	std::vector<dvec2> tri_circumcenter(d.triangles.size() / 3);
