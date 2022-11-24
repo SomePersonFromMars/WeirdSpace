@@ -54,3 +54,8 @@ target_link_libraries(GLEW_1130
 	${OPENGL_LIBRARY}
 	${EXTRA_LIBS}
 )
+
+### Delaunator-cpp ###
+add_library(delaunator-cpp STATIC
+	delaunator-cpp/src/delaunator.cpp
+)

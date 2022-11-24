@@ -21,6 +21,7 @@ set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
 	GLEW_1130
+	delaunator-cpp
 	)
 
 add_definitions(
