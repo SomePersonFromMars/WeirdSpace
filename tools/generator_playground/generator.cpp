@@ -624,15 +624,36 @@ void generator_C_t::new_seed() {
 }
 
 void generator_C_t::generate_continents(std::mt19937 &gen) {
-	std::uniform_real_distribution<double> distrib_x(0, space_max.x);
+	std::uniform_real_distribution<double> distrib_x(
+			space_max.x * 1.0 / 3.0,
+			space_max.x * 2.0 / 3.0);
+	// std::uniform_real_distribution<double> distrib_x(0, space_max.x);
 	std::uniform_real_distribution<double> distrib_y(0, space_max.y);
 	diagram = voronoi_diagram_t();
 	diagram.space_max = space_max;
-	diagram.voronois.assign(600, voronoi_t());
+	diagram.space_max_x_duplicate_off = space_max.x * 1.0 / 3.0;
+	diagram.voronois.assign(voro_cnt, voronoi_t());
+
 	for (voronoi_t &voronoi : diagram.voronois) {
 		voronoi.center.x = distrib_x(gen);
 		voronoi.center.y = distrib_y(gen);
 	}
+
+	// for (std::size_t i = 0; i < voro_cnt/3; ++i) {
+	// 	diagram.voronois[i].center.x = distrib_x(gen);
+	// 	diagram.voronois[i].center.y = distrib_y(gen);
+
+	// 	diagram.voronois[i+voro_cnt/3].center.x
+	// 		= diagram.voronois[i].center.x - diagram.space_max_x_duplicate_off;
+	// 	diagram.voronois[i+voro_cnt/3].center.y
+	// 		= diagram.voronois[i].center.y;
+
+	// 	diagram.voronois[i+voro_cnt*2/3].center.x
+	// 		= diagram.voronois[i].center.x + diagram.space_max_x_duplicate_off;
+	// 	diagram.voronois[i+voro_cnt*2/3].center.y
+	// 		= diagram.voronois[i].center.y;
+	// }
+
 	diagram.generate_relaxed(debug_val);
 	// diagram.generate_relaxed(0);
 
@@ -721,28 +742,76 @@ void generator_C_t::generate_continents(std::mt19937 &gen) {
 }
 
 void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
-	// for (const voronoi_t &voronoi : diagram.voronois) {
-	// 	for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
-	// 		draw_edge(bitmap,
-	// 				voronoi.points[j],
-	// 				voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
-	// 				0x777777);
-	// 	}
-	// }
+	draw_edge(bitmap,
+			dvec2(space_max.x * 1.0 / 3.0, 0),
+			dvec2(space_max.x * 1.0 / 3.0, space_max.y),
+			0x7c7c7c);
+	draw_edge(bitmap,
+			dvec2(space_max.x * 2.0 / 3.0, 0),
+			dvec2(space_max.x * 2.0 / 3.0, space_max.y),
+			0x7c7c7c);
 
+	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
+		const dvec2 A = diagram.voronois[i].center;
+		for (const voronoi_t::edge_t &edge : diagram.voronois[i].al) {
+			if (not edge.visible)
+				continue;
+			dvec2 B = diagram.voronois[edge.neighbor_id].center;
+			if (edge.type == edge.TO_LEFT) {
+				draw_edge(bitmap,
+						A,
+						B - dvec2(diagram.space_max_x_duplicate_off, 0.0),
+						0xfcf485);
+			} else if (edge.type == edge.TO_RIGHT) {
+				draw_edge(bitmap,
+						A,
+						B + dvec2(diagram.space_max_x_duplicate_off, 0.0),
+						0xfcb985);
+			} else {
+				draw_edge(bitmap,
+						A,
+						B,
+						0x70a9f9);
+			}
+		}
+	}
+
+#define DRAW_POLYGONS
+#ifdef DRAW_POLYGONS
 	auto draw_voronoi = [&] (const std::size_t id) {
 		const voronoi_t &voronoi = diagram.voronois[id];
-
+// #define DRAW_NOISY
+#ifdef DRAW_NOISY
 		const uint32_t color = COLORS[static_cast<uint8_t>(plates[id].type)];
+		// const uint32_t color = 0x015e1f;
+#endif
 		// draw_convex_polygon(bitmap, voronoi.points, color);
+#ifndef DRAW_NOISY
+		for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
+			draw_edge(bitmap,
+					voronoi.points[j],
+					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
+					0xffffff, true);
 
-		// for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
-		// 	draw_edge(bitmap,
-		// 			voronoi.points[j],
-		// 			voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
-		// 			0x777777, true);
-		// }
+			draw_edge(bitmap,
+					voronoi.points[j]
+					- dvec2(diagram.space_max_x_duplicate_off, 0.0),
 
+					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1]
+					- dvec2(diagram.space_max_x_duplicate_off, 0.0),
+
+					0xa2f9d9, true);
+
+			draw_edge(bitmap,
+					voronoi.points[j]
+					+ dvec2(diagram.space_max_x_duplicate_off, 0.0),
+
+					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1]
+					+ dvec2(diagram.space_max_x_duplicate_off, 0.0),
+
+					0xa2eef9, true);
+		}
+#else
 		for (std::size_t j = 0; j < voronoi.al.size(); ++j) {
 			// if (j != 2)
 			// 	continue;
@@ -770,15 +839,20 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 					color
 					);
 		}
+#endif
+#undef DRAW_NOISY
 	};
+	// draw_voronoi(23);
 	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
 		draw_voronoi(i);
 	}
-	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
-		const voronoi_t &voronoi = diagram.voronois[i];
-		fill(bitmap, voronoi.center, COLORS[
-				static_cast<uint8_t>(plates[i].type)]);
-	}
+#endif
+#undef DRAW_POLYGONS
+	// for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
+	// 	const voronoi_t &voronoi = diagram.voronois[i];
+	// 	fill(bitmap, voronoi.center, COLORS[
+	// 			static_cast<uint8_t>(plates[i].type)]);
+	// }
 }
 
 void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
@@ -915,5 +989,5 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 
 	generate_continents(gen);
 	draw_map(bitmap, gen);
-	draw_tour_path(bitmap, gen);
+	// draw_tour_path(bitmap, gen);
 }

@@ -127,8 +127,10 @@ private:
 		0x77c4dd, // LAND
 	};
 
+	static constexpr std::size_t voro_cnt = 30;
+	static constexpr std::size_t super_voro_cnt = std::min<std::size_t>(
+			40, voro_cnt);
 	voronoi_diagram_t diagram;
-	static constexpr std::size_t super_voro_cnt = 40;
 	std::vector<plate_t> plates;
 };
 

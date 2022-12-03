@@ -11,7 +11,7 @@
 struct bitmap_t {
 	// static constexpr int WIDTH = 256;
 	// static constexpr int HEIGHT = 32*5;
-	static constexpr int WIDTH = CHUNK_DIM*6;
+	static constexpr int WIDTH = CHUNK_DIM*6 * 3;
 	static constexpr int HEIGHT = CHUNK_DIM*3;
 	// uint8_t content[HEIGHT][WIDTH][3] { };
 	inline uint32_t get(int y, int x);

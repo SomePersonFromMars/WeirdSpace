@@ -12,10 +12,17 @@ struct voronoi_t {
 
 	struct edge_t {
 		std::size_t neighbor_id;
-		// Array useful for drawing voronoi diagram
+		// Variable useful for drawing voronoi diagram
 		// without drawing edges twice
 		std::size_t smaller_half_edge_id;
 		bool visible;
+		enum type_t {
+			NONE = 0,
+			USUAL,
+			TO_LEFT,
+			TO_RIGHT
+		} type = NONE;
+		// bool loop_edge = false;
 
 		// Beg and end are the edge's ends and
 		// a quadrilateral's side points.
@@ -31,13 +38,15 @@ struct voronoi_t {
 	std::vector<edge_t> al;
 private:
 	// Polygon fully calculated
-	bool complete = false;
+	bool base_complete = false;
+	// bool duplicate_complete = false;
 	bool clipped = false;
 	friend voronoi_diagram_t;
 };
 
 struct voronoi_diagram_t {
 	glm::dvec2 space_max;
+	double space_max_x_duplicate_off;
 	std::vector<voronoi_t> voronois;
 
 	// Array useful for drawing voronoi diagram

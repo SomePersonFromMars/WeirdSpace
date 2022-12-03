@@ -382,7 +382,7 @@ void voronoi_t::edge_t::correct_quad() {
 void voronoi_diagram_t::generate() {
 	const delaunator::Delaunator d(centers);
 	half_edge_drawn.resize(d.halfedges.size());
-	voronois = std::vector<voronoi_t>(voronois_cnt());
+	voronois.assign(voronois_cnt(), voronoi_t());
 	std::vector<dvec2> tri_circumcenter(d.triangles.size() / 3);
 	for (std::size_t i = 0; i < d.triangles.size() / 3; ++i) {
 		dvec2 A, B, C;
@@ -398,14 +398,22 @@ void voronoi_diagram_t::generate() {
 
 	// Iterate over all half edges
 	for (std::size_t i = 0; i < d.triangles.size(); ++i) {
-		const std::size_t voronoi_id = d.triangles[i];
+		const std::size_t center_id = d.triangles[i];
+		const bool voronoi_is_duplicate = center_id >= voronois_cnt();
+		if (voronoi_is_duplicate)
+			continue;
+		// const std::size_t voronoi_id
+		// 	= center_id < voronois_cnt()
+		// 	? center_id : center_id - voronois_cnt();
+		const std::size_t voronoi_id = center_id;
 		voronoi_t &voronoi = voronois[voronoi_id];
+
 		// There are many half edges starting in a voronoi
 		// center, but this loop finds only one of them
 		// and then iterates over the others.
-		if (voronoi.complete)
+		if (voronoi.base_complete)
 			continue;
-		voronoi.complete = true;
+		voronoi.base_complete = true;
 
 		// Half edges' indices from Delaunay triangulation
 		// equivalent to the voronoi's edges
@@ -471,27 +479,21 @@ void voronoi_diagram_t::generate() {
 				edge.neighbor_id = d.triangles[d.halfedges[half_edge]];
 				min_replace(edge.smaller_half_edge_id, d.halfedges[half_edge]);
 			}
-			// edge.beg = voronoi.center;
-			// edge.end = voronois[edge.neighbor_id].center;
-			edge.quad_top.x = d.coords[2*voronoi_id+0];
-			edge.quad_top.y = d.coords[2*voronoi_id+1];
+
+			edge.quad_top.x = d.coords[2*center_id+0];
+			edge.quad_top.y = d.coords[2*center_id+1];
 			edge.quad_bottom.x = d.coords[2*edge.neighbor_id+0];
 			edge.quad_bottom.y = d.coords[2*edge.neighbor_id+1];
-			// {
-			// 	// const std::size_t a = d.triangles[half_edge];
-			// 	// const std::size_t b = d.triangles[d.halfedges[half_edge]];
-			// 	// const dvec2 A(
-			// 	// 		d.coords[2*a+0],
-			// 	// 		d.coords[2*a+1]
-			// 	// 		);
-			// 	// const dvec2 B(
-			// 	// 		d.coords[2*b+0],
-			// 	// 		d.coords[2*b+1]
-			// 	// 		);
-			// 	const dvec2 A = voronoi.center;
-			// 	const dvec2 B = voronois[neighbor_id].center;
-			// 	// voronoi.al_edges_tri.push_back(std::make_pair(A, B));
-			// }
+
+			if (edge.neighbor_id >= 2*voronois_cnt()) {
+				edge.type = voronoi_t::edge_t::TO_RIGHT;
+				edge.neighbor_id -= 2*voronois_cnt();
+			} else if (edge.neighbor_id >= 1*voronois_cnt()) {
+				edge.type = voronoi_t::edge_t::TO_LEFT;
+				edge.neighbor_id -= 1*voronois_cnt();
+			} else {
+				edge.type = voronoi_t::edge_t::USUAL;
+			}
 		}
 
 		// Converting Delaunay triangulation half edges
@@ -539,6 +541,7 @@ void voronoi_diagram_t::generate() {
 				red_edge = r.first;
 				exists = r.second;
 			}
+
 			voronoi.al[j].visible = exists;
 			if (exists) {
 				if (red_edge.end_inters != inters_t::INSIDE) {
@@ -547,10 +550,9 @@ void voronoi_diagram_t::generate() {
 					voronoi.clipped = true;
 				}
 				red_edges.push_back(red_edge);
+
 				voronoi.al[j].beg = red_edge.beg;
 				voronoi.al[j].end = red_edge.end;
-
-				// if (voronoi_id == 3 && j == 2)
 				voronoi.al[j].correct_quad();
 			}
 		}
@@ -621,6 +623,7 @@ void voronoi_diagram_t::generate() {
 }
 
 void voronoi_diagram_t::voronoi_iteration() {
+	const std::size_t cnt = voronois_cnt();
 	for (std::size_t i = 0; i < voronois_cnt(); ++i) {
 		dvec2 new_center(0);
 		for (const dvec2 &p : voronois[i].points)
@@ -628,21 +631,31 @@ void voronoi_diagram_t::voronoi_iteration() {
 		new_center /= static_cast<double>(voronois[i].points.size());
 		centers[2*i+0] = new_center.x;
 		centers[2*i+1] = new_center.y;
+		centers[2*(cnt*1+i) + 0]
+			= new_center.x - space_max_x_duplicate_off;
+		centers[2*(cnt*1+i) + 1] = new_center.y;
+		centers[2*(cnt*2+i) + 0]
+			= new_center.x + space_max_x_duplicate_off;
+		centers[2*(cnt*2+i) + 1] = new_center.y;
 
 		// Previous calculations are not valid anymore
-		voronois[i].points.clear();
-		voronois[i].al.clear();
-		voronois[i].complete = false;
-		voronois[i].clipped = false;
+		voronois[i] = voronoi_t();
 	}
 	half_edge_drawn.clear();
 }
 
 void voronoi_diagram_t::generate_relaxed(std::size_t iterations_cnt) {
-	centers.resize(voronois_cnt()*2);
-	for (std::size_t i = 0; i < voronois_cnt(); ++i) {
+	const std::size_t cnt = voronois_cnt();
+	centers.resize(cnt*2 *3);
+	for (std::size_t i = 0; i < cnt; ++i) {
 		centers[2*i+0] = voronois[i].center.x;
 		centers[2*i+1] = voronois[i].center.y;
+		centers[2*(cnt*1+i) + 0]
+			= voronois[i].center.x - space_max_x_duplicate_off;
+		centers[2*(cnt*1+i) + 1] = voronois[i].center.y;
+		centers[2*(cnt*2+i) + 0]
+			= voronois[i].center.x + space_max_x_duplicate_off;
+		centers[2*(cnt*2+i) + 1] = voronois[i].center.y;
 	}
 
 	generate();
@@ -651,7 +664,7 @@ void voronoi_diagram_t::generate_relaxed(std::size_t iterations_cnt) {
 		generate();
 	}
 
-	for (std::size_t i = 0; i < voronois_cnt(); ++i) {
+	for (std::size_t i = 0; i < cnt; ++i) {
 		voronois[i].center = dvec2(
 				centers[2*i+0],
 				centers[2*i+1]
