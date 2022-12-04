@@ -411,9 +411,9 @@ void voronoi_diagram_t::generate() {
 		// There are many half edges starting in a voronoi
 		// center, but this loop finds only one of them
 		// and then iterates over the others.
-		if (voronoi.base_complete)
+		if (voronoi.completed)
 			continue;
-		voronoi.base_complete = true;
+		voronoi.completed = true;
 
 		// Half edges' indices from Delaunay triangulation
 		// equivalent to the voronoi's edges

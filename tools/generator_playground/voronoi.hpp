@@ -38,15 +38,16 @@ struct voronoi_t {
 	std::vector<edge_t> al;
 private:
 	// Polygon fully calculated
-	bool base_complete = false;
-	// bool duplicate_complete = false;
+	bool completed = false;
 	bool clipped = false;
+
 	friend voronoi_diagram_t;
 };
 
 struct voronoi_diagram_t {
 	glm::dvec2 space_max;
 	double space_max_x_duplicate_off;
+	glm::dvec2 duplicate_off_vec;
 	std::vector<voronoi_t> voronois;
 
 	// Array useful for drawing voronoi diagram
