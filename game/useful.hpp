@@ -59,6 +59,7 @@ inline F mod_f(F a, F m) {
 }
 
 int floor_div(int num, int den);
+std::pair<long long, long long> floor_div_rem(long long num, long long den);
 
 inline int ceil_div(const int num, const int den) {
 	return 1 + ((num - 1) / den);

@@ -7,6 +7,11 @@
 #include "voronoi.hpp"
 
 #include <random>
+#include <functional>
+
+// Catmull–Rom spline
+double spline(double t, const std::function<double(const long long)> &f);
+// double spline_gradient(const double t, double (*f)(int));
 
 struct generator_t {
 	generator_t();

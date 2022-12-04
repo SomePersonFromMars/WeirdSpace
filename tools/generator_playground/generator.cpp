@@ -908,7 +908,34 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #undef DRAW_SPACE_CYCLIC_BORDER
 }
 
+double spline(double t, const std::function<double(const long long)> &f) {
+	const double floor_t = std::floor(t);
+
+	const long long p1 = static_cast<long long>(floor_t) + 1;
+	const long long p2 = p1 + 1;
+	const long long p3 = p2 + 1;
+	const long long p0 = p1 - 1;
+
+	t -= floor_t;
+	const double tt = t * t;
+	const double ttt = tt * t;
+
+	const double q1 = -ttt + 2.0f*tt - t;
+	const double q2 = 3.0f*ttt - 5.0f*tt + 2.0f;
+	const double q3 = -3.0f*ttt + 4.0f*tt + t;
+	const double q4 = ttt - tt;
+
+	const double res
+		= 0.5 * (
+			f(p0) * q1 + f(p1) * q2 + f(p2) * q3 + f(p3) * q4
+			);
+
+	return res;
+}
+
 void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
+	const double duplicate_off_x = diagram.space_max_x_duplicate_off;
+
 	std::size_t land_voronois_cnt = 0;
 	std::size_t water_voronois_cnt = 0;
 	for (std::size_t i = 0; i < plates.size(); ++i) {
@@ -938,7 +965,7 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 				= diagram.voronois[i].center.y;
 			chosen_points_coords[2*j+0 + 2*path_points_cnt]
 				= diagram.voronois[i].center.x
-				- diagram.space_max_x_duplicate_off;
+				- duplicate_off_x;
 			chosen_points_coords[2*j+1 + 2*path_points_cnt]
 				= diagram.voronois[i].center.y;
 			++j;
@@ -954,32 +981,32 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 				= diagram.voronois[i].center.y;
 			chosen_points_coords[2*j+0 + 2*path_points_cnt]
 				= diagram.voronois[i].center.x
-				- diagram.space_max_x_duplicate_off;
+				- duplicate_off_x;
 			chosen_points_coords[2*j+1 + 2*path_points_cnt]
 				= diagram.voronois[i].center.y;
 			++j;
 		}
 	}
 
-	for (std::size_t i = 0; i < chosen_points_coords.size() / 2; i += 2) {
-		// draw_point(bitmap,
-		// 		dvec2(chosen_points_coords[i], chosen_points_coords[i+1]),
-		// 		0.01, 0xef6b81);
+	// for (std::size_t i = 0; i < chosen_points_coords.size() / 2; i += 2) {
+	// 	draw_point(bitmap,
+	// 			dvec2(chosen_points_coords[i], chosen_points_coords[i+1]),
+	// 			0.01, 0xef6b81);
 
-		// draw_point(bitmap,
-		// 		dvec2(
-		// 			chosen_points_coords[i]
-		// 			- diagram.space_max_x_duplicate_off,
-		// 			chosen_points_coords[i+1]),
-		// 		0.01, 0xef6b81);
+	// 	draw_point(bitmap,
+	// 			dvec2(
+	// 				chosen_points_coords[i]
+	// 				- duplicate_off_x,
+	// 				chosen_points_coords[i+1]),
+	// 			0.01, 0xef6b81);
 
-		// draw_point(bitmap,
-		// 		dvec2(
-		// 			chosen_points_coords[i]
-		// 			+ diagram.space_max_x_duplicate_off,
-		// 			chosen_points_coords[i+1]),
-		// 		0.01, 0xef6b81);
-	}
+	// 	draw_point(bitmap,
+	// 			dvec2(
+	// 				chosen_points_coords[i]
+	// 				+ duplicate_off_x,
+	// 				chosen_points_coords[i+1]),
+	// 			0.01, 0xef6b81);
+	// }
 
 	const delaunator::Delaunator d(chosen_points_coords);
 
@@ -993,26 +1020,6 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 	cyclic_edge.b = INVALID_ID;
 	cyclic_edge.len_sq = std::numeric_limits<double>::infinity();
 	std::vector<std::vector<std::size_t>> al(path_points_cnt);
-
-	// for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
-	// 	const voronoi_t &voronoi = diagram.voronois[i];
-	// 	for (const voronoi_t::edge_t &edge : voronoi.al) {
-	// 		if (edge.type != edge.USUAL)
-	// 			continue;
-
-	// 		weighted_edge_t weighted_edge;
-	// 		weighted_edge.a = i;
-	// 		weighted_edge.b = edge.neighbor_id;
-	// 		weighted_edge.len_sq
-	// 			= len_sq(
-	// 					diagram.voronois[edge.neighbor_id].center -
-	// 					voronoi.center
-	// 					);
-	// 		assert(weighted_edge.a < diagram.voronois_cnt());
-	// 		assert(weighted_edge.b < diagram.voronois_cnt());
-	// 		all_edges.push_back(weighted_edge);
-	// 	}
-	// }
 
 	for (std::size_t half_edge = 0;
 			half_edge < d.triangles.size();
@@ -1109,11 +1116,11 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 	// 		draw_edge(bitmap,
 	// 			dvec2(
 	// 				chosen_points_coords[2*v+0]
-	// 				- diagram.space_max_x_duplicate_off,
+	// 				- duplicate_off_x,
 	// 				chosen_points_coords[2*v+1]),
 	// 			dvec2(
 	// 				chosen_points_coords[2*w+0]
-	// 				- diagram.space_max_x_duplicate_off,
+	// 				- duplicate_off_x,
 	// 				chosen_points_coords[2*w+1]),
 	// 			0x9e0922
 	// 			);
@@ -1121,11 +1128,11 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 	// 		draw_edge(bitmap,
 	// 			dvec2(
 	// 				chosen_points_coords[2*v+0]
-	// 				+ diagram.space_max_x_duplicate_off,
+	// 				+ duplicate_off_x,
 	// 				chosen_points_coords[2*v+1]),
 	// 			dvec2(
 	// 				chosen_points_coords[2*w+0]
-	// 				+ diagram.space_max_x_duplicate_off,
+	// 				+ duplicate_off_x,
 	// 				chosen_points_coords[2*w+1]),
 	// 			0x9e0922
 	// 			);
@@ -1133,28 +1140,26 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 	// }
 
 	assert(cyclic_edge.len_sq != std::numeric_limits<double>::infinity());
-	draw_edge(bitmap,
-		dvec2(
-			chosen_points_coords[2*cyclic_edge.a+0],
-			chosen_points_coords[2*cyclic_edge.a+1]),
-		dvec2(
-			chosen_points_coords[2*cyclic_edge.b+0]
-			- diagram.space_max_x_duplicate_off,
-			chosen_points_coords[2*cyclic_edge.b+1]),
-		// 0x9e0922
-		0x9e0922
-		);
-	draw_edge(bitmap,
-		dvec2(
-			chosen_points_coords[2*cyclic_edge.a+0]
-			+ diagram.space_max_x_duplicate_off,
-			chosen_points_coords[2*cyclic_edge.a+1]),
-		dvec2(
-			chosen_points_coords[2*cyclic_edge.b+0],
-			chosen_points_coords[2*cyclic_edge.b+1]),
-		// 0x9e0922
-		0x9e0922
-		);
+	// draw_edge(bitmap,
+	// 	dvec2(
+	// 		chosen_points_coords[2*cyclic_edge.a+0],
+	// 		chosen_points_coords[2*cyclic_edge.a+1]),
+	// 	dvec2(
+	// 		chosen_points_coords[2*cyclic_edge.b+0]
+	// 		- duplicate_off_x,
+	// 		chosen_points_coords[2*cyclic_edge.b+1]),
+	// 	0x9e0922
+	// 	);
+	// draw_edge(bitmap,
+	// 	dvec2(
+	// 		chosen_points_coords[2*cyclic_edge.a+0]
+	// 		+ duplicate_off_x,
+	// 		chosen_points_coords[2*cyclic_edge.a+1]),
+	// 	dvec2(
+	// 		chosen_points_coords[2*cyclic_edge.b+0],
+	// 		chosen_points_coords[2*cyclic_edge.b+1]),
+	// 	0x9e0922
+	// 	);
 
 	std::vector<std::size_t> cycle;
 
@@ -1182,73 +1187,114 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 	}
 	cycle.push_back(cyclic_edge.b);
 
-	for (std::size_t i = 0; ; ++i) {
+	const auto get_cycle_x =
+		[&cycle, &chosen_points_coords, &duplicate_off_x]
+		(const long long id) -> double
+	{
+		const auto [plane_id, point_id]
+			= floor_div_rem(
+					id,
+					static_cast<long long>(cycle.size()));
+		return
+			chosen_points_coords[2*cycle[point_id]+0]
+			+ static_cast<double>(plane_id) * duplicate_off_x;
+	};
+
+	const auto get_cycle_y =
+		[&cycle, &chosen_points_coords]
+		(const long long id) -> double
+	{
+		const long long point_id
+			= floor_div_rem(
+					id,
+					static_cast<long long>(cycle.size())).second;
+		return chosen_points_coords[2*cycle[point_id]+1];
+	};
+
+	for (
+		double t = -static_cast<double>(cycle.size());
+		t <= static_cast<double>(2*cycle.size()-1);
+		t += 0.01)
+	{
 		draw_point(
 			bitmap,
 			dvec2(
-				chosen_points_coords[2*cycle[i+0]+0]
-				+ diagram.space_max_x_duplicate_off,
-				chosen_points_coords[2*cycle[i+0]+1]),
-			0.01,
-			0xef6b81
-			);
-
-		draw_point(
-			bitmap,
-			dvec2(
-				chosen_points_coords[2*cycle[i+0]+0]
-				- diagram.space_max_x_duplicate_off,
-				chosen_points_coords[2*cycle[i+0]+1]),
-			0.01,
-			0xef6b81
-			);
-
-		draw_point(
-			bitmap,
-			dvec2(
-				chosen_points_coords[2*cycle[i+0]+0],
-				chosen_points_coords[2*cycle[i+0]+1]),
-			0.01,
-			0xef6b81
-			);
-
-		if (i+1 == cycle.size())
-			break;
-
-		draw_edge(bitmap,
-			dvec2(
-				chosen_points_coords[2*cycle[i+0]+0],
-				chosen_points_coords[2*cycle[i+0]+1]),
-			dvec2(
-				chosen_points_coords[2*cycle[i+1]+0],
-				chosen_points_coords[2*cycle[i+1]+1]),
-			0x9e0922
-			);
-
-		draw_edge(bitmap,
-			dvec2(
-				chosen_points_coords[2*cycle[i+0]+0]
-				- diagram.space_max_x_duplicate_off,
-				chosen_points_coords[2*cycle[i+0]+1]),
-			dvec2(
-				chosen_points_coords[2*cycle[i+1]+0]
-				- diagram.space_max_x_duplicate_off,
-				chosen_points_coords[2*cycle[i+1]+1]),
-			0x9e0922
-			);
-
-		draw_edge(bitmap,
-			dvec2(
-				chosen_points_coords[2*cycle[i+0]+0]
-				+ diagram.space_max_x_duplicate_off,
-				chosen_points_coords[2*cycle[i+0]+1]),
-			dvec2(
-				chosen_points_coords[2*cycle[i+1]+0]
-				+ diagram.space_max_x_duplicate_off,
-				chosen_points_coords[2*cycle[i+1]+1]),
+				spline(t, get_cycle_x),
+				spline(t, get_cycle_y)),
+			0.001,
 			0x9e0922
 			);
 	}
+
+	// for (std::size_t i = 0; ; ++i) {
+	// 	draw_point(
+	// 		bitmap,
+	// 		dvec2(
+	// 			get_cycle_x(static_cast<long long>(i)
+	// 				+ static_cast<long long>(cycle.size())),
+	// 			get_cycle_y(static_cast<long long>(i)
+	// 				+ static_cast<long long>(cycle.size()))),
+	// 		0.01,
+	// 		0xef6b81
+	// 		);
+
+	// 	draw_point(
+	// 		bitmap,
+	// 		dvec2(
+	// 			get_cycle_x(static_cast<long long>(i)
+	// 				- static_cast<long long>(cycle.size())),
+	// 			get_cycle_y(static_cast<long long>(i)
+	// 				- static_cast<long long>(cycle.size()))),
+	// 		0.01,
+	// 		0xef6b81
+	// 		);
+
+	// 	draw_point(
+	// 		bitmap,
+	// 		dvec2(
+	// 			get_cycle_x(static_cast<long long>(i)),
+	// 			get_cycle_y(static_cast<long long>(i))),
+	// 		0.01,
+	// 		0xef6b81
+	// 		);
+
+	// 	if (i+1 == cycle.size())
+	// 		break;
+
+	// 	draw_edge(bitmap,
+	// 		dvec2(
+	// 			chosen_points_coords[2*cycle[i+0]+0],
+	// 			chosen_points_coords[2*cycle[i+0]+1]),
+	// 		dvec2(
+	// 			chosen_points_coords[2*cycle[i+1]+0],
+	// 			chosen_points_coords[2*cycle[i+1]+1]),
+	// 		0x9e0922
+	// 		);
+
+	// 	draw_edge(bitmap,
+	// 		dvec2(
+	// 			chosen_points_coords[2*cycle[i+0]+0]
+	// 			- duplicate_off_x,
+	// 			chosen_points_coords[2*cycle[i+0]+1]),
+	// 		dvec2(
+	// 			chosen_points_coords[2*cycle[i+1]+0]
+	// 			- duplicate_off_x,
+	// 			chosen_points_coords[2*cycle[i+1]+1]),
+	// 		0x9e0922
+	// 		);
+
+	// 	draw_edge(bitmap,
+	// 		dvec2(
+	// 			chosen_points_coords[2*cycle[i+0]+0]
+	// 			+ duplicate_off_x,
+	// 			chosen_points_coords[2*cycle[i+0]+1]),
+	// 		dvec2(
+	// 			chosen_points_coords[2*cycle[i+1]+0]
+	// 			+ duplicate_off_x,
+	// 			chosen_points_coords[2*cycle[i+1]+1]),
+	// 		0x9e0922
+	// 		);
+	// }
 }
 
 void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {

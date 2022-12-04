@@ -8,9 +8,21 @@ int floor_div(int num, int den) {
 	if ((num^den) > 0)
 		return num/den;
 	else {
-		div_t res = div(num, den);
+		const div_t res = div(num, den);
 		return res.rem
 			? res.quot-1 : res.quot;
+	}
+}
+
+std::pair<long long, long long> floor_div_rem(long long num, long long den) {
+	const lldiv_t res = lldiv(num, den);
+	if ((num^den) > 0ll) {
+		return {res.quot, res.rem};
+	} else {
+		if (res.rem == 0ll)
+			return {res.quot, 0ll};
+		else
+			return {res.quot-1ll, res.rem + den};
 	}
 }
 
