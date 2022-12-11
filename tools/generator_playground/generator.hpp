@@ -11,7 +11,8 @@
 
 // Catmull–Rom spline
 double spline(double t, const std::function<double(const long long)> &f);
-// double spline_gradient(const double t, double (*f)(int));
+double spline_gradient(
+		double t, const std::function<double(const long long)> &f);
 
 struct generator_t {
 	generator_t();
@@ -22,8 +23,10 @@ struct generator_t {
 
 protected:
 	const int &width, height;
+public:
 	const double ratio_wh, ratio_hw;
 	const glm::dvec2 space_max {ratio_wh, 1}; // Maximum double coordinates
+protected:
 
 	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos);
 	void draw_edge(bitmap_t &bitmap, glm::dvec2 beg, glm::dvec2 end,
@@ -112,10 +115,17 @@ struct generator_C_t : generator_t {
 	virtual void generate_bitmap(bitmap_t &bitmap,
 			int resolution_div) override;
 
+	std::pair<glm::dvec2, glm::dvec2> get_tour_path_points(const double off);
+
 private:
 	void generate_continents(std::mt19937 &gen);
 	void draw_map(bitmap_t &bitmap, std::mt19937 &gen);
 	void draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen);
+
+	const std::function<double(const long long)> get_tour_path_point_x;
+	const std::function<double(const long long)> get_tour_path_point_y;
+	// double get_tour_path_point_x(const long long id);
+	// double get_tour_path_point_y(const long long id);
 
 	std::mt19937::result_type seed_voronoi;
 
@@ -137,6 +147,7 @@ private:
 			40, voro_cnt);
 	voronoi_diagram_t diagram;
 	std::vector<plate_t> plates;
+	std::vector<glm::dvec2> tour_path_points;
 };
 
 inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) {

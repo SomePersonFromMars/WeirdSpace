@@ -613,6 +613,23 @@ void generator_B_t::fractal_grid_t::generate_grid(
 
 generator_C_t::generator_C_t()
 	:generator_t()
+	,get_tour_path_point_x { [this] (const long long id) -> double {
+		const double duplicate_off_x = diagram.space_max_x_duplicate_off;
+		const auto [plane_id, point_id]
+			= floor_div_rem(
+					id,
+					static_cast<long long>(tour_path_points.size()));
+		return
+			tour_path_points[point_id].x
+			+ static_cast<double>(plane_id) * duplicate_off_x;
+	} }
+	,get_tour_path_point_y { [this] (const long long id) -> double {
+		const long long point_id
+			= floor_div_rem(
+					id,
+					static_cast<long long>(tour_path_points.size())).second;
+		return tour_path_points[point_id].y;
+	} }
 {
 	new_seed();
 }
@@ -911,7 +928,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 double spline(double t, const std::function<double(const long long)> &f) {
 	const double floor_t = std::floor(t);
 
-	const long long p1 = static_cast<long long>(floor_t) + 1;
+	const long long p1 = static_cast<long long>(floor_t) + 0;
 	const long long p2 = p1 + 1;
 	const long long p3 = p2 + 1;
 	const long long p0 = p1 - 1;
@@ -931,6 +948,45 @@ double spline(double t, const std::function<double(const long long)> &f) {
 			);
 
 	return res;
+}
+
+double spline_gradient(
+		double t, const std::function<double(const long long)> &f) {
+	const double floor_t = std::floor(t);
+
+	const long long p1 = static_cast<long long>(floor_t) + 0;
+	const long long p2 = p1 + 1;
+	const long long p3 = p2 + 1;
+	const long long p0 = p1 - 1;
+
+	t -= floor_t;
+	const double tt = t * t;
+
+	const double q1 = -3.0 * tt + 4.0*t - 1;
+	const double q2 = 9.0*tt - 10.0*t;
+	const double q3 = -9.0*tt + 8.0*t + 1.0;
+	const double q4 = 3.0*tt - 2.0*t;
+
+	const double res
+		= 0.5 * (
+			f(p0) * q1 + f(p1) * q2 + f(p2) * q3 + f(p3) * q4
+			);
+
+	return res;
+}
+
+std::pair<glm::dvec2, glm::dvec2>
+generator_C_t::get_tour_path_points(const double off) {
+	const dvec2 pos(
+			spline(off, get_tour_path_point_x),
+			spline(off, get_tour_path_point_y)
+			);
+	const dvec2 gradient(
+			spline_gradient(off, get_tour_path_point_x),
+			spline_gradient(off, get_tour_path_point_y)
+			);
+
+	return { pos, gradient };
 }
 
 void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
@@ -1187,29 +1243,11 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 	}
 	cycle.push_back(cyclic_edge.b);
 
-	const auto get_cycle_x =
-		[&cycle, &chosen_points_coords, &duplicate_off_x]
-		(const long long id) -> double
-	{
-		const auto [plane_id, point_id]
-			= floor_div_rem(
-					id,
-					static_cast<long long>(cycle.size()));
-		return
-			chosen_points_coords[2*cycle[point_id]+0]
-			+ static_cast<double>(plane_id) * duplicate_off_x;
-	};
-
-	const auto get_cycle_y =
-		[&cycle, &chosen_points_coords]
-		(const long long id) -> double
-	{
-		const long long point_id
-			= floor_div_rem(
-					id,
-					static_cast<long long>(cycle.size())).second;
-		return chosen_points_coords[2*cycle[point_id]+1];
-	};
+	tour_path_points.resize(cycle.size());
+	for (std::size_t i = 0; i < cycle.size(); ++i) {
+		tour_path_points[i].x = chosen_points_coords[2*cycle[i]+0];
+		tour_path_points[i].y = chosen_points_coords[2*cycle[i]+1];
+	}
 
 	for (
 		double t = -static_cast<double>(cycle.size());
@@ -1219,82 +1257,82 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 		draw_point(
 			bitmap,
 			dvec2(
-				spline(t, get_cycle_x),
-				spline(t, get_cycle_y)),
+				spline(t, get_tour_path_point_x),
+				spline(t, get_tour_path_point_y)),
 			0.001,
 			0x9e0922
 			);
 	}
 
-	// for (std::size_t i = 0; ; ++i) {
-	// 	draw_point(
-	// 		bitmap,
-	// 		dvec2(
-	// 			get_cycle_x(static_cast<long long>(i)
-	// 				+ static_cast<long long>(cycle.size())),
-	// 			get_cycle_y(static_cast<long long>(i)
-	// 				+ static_cast<long long>(cycle.size()))),
-	// 		0.01,
-	// 		0xef6b81
-	// 		);
+	for (std::size_t i = 0; ; ++i) {
+		draw_point(
+			bitmap,
+			dvec2(
+				get_tour_path_point_x(static_cast<long long>(i)
+					+ static_cast<long long>(cycle.size())),
+				get_tour_path_point_y(static_cast<long long>(i)
+					+ static_cast<long long>(cycle.size()))),
+			0.01,
+			0xef6b81
+			);
 
-	// 	draw_point(
-	// 		bitmap,
-	// 		dvec2(
-	// 			get_cycle_x(static_cast<long long>(i)
-	// 				- static_cast<long long>(cycle.size())),
-	// 			get_cycle_y(static_cast<long long>(i)
-	// 				- static_cast<long long>(cycle.size()))),
-	// 		0.01,
-	// 		0xef6b81
-	// 		);
+		draw_point(
+			bitmap,
+			dvec2(
+				get_tour_path_point_x(static_cast<long long>(i)
+					- static_cast<long long>(cycle.size())),
+				get_tour_path_point_y(static_cast<long long>(i)
+					- static_cast<long long>(cycle.size()))),
+			0.01,
+			0xef6b81
+			);
 
-	// 	draw_point(
-	// 		bitmap,
-	// 		dvec2(
-	// 			get_cycle_x(static_cast<long long>(i)),
-	// 			get_cycle_y(static_cast<long long>(i))),
-	// 		0.01,
-	// 		0xef6b81
-	// 		);
+		draw_point(
+			bitmap,
+			dvec2(
+				get_tour_path_point_x(static_cast<long long>(i)),
+				get_tour_path_point_y(static_cast<long long>(i))),
+			0.01,
+			0xef6b81
+			);
 
-	// 	if (i+1 == cycle.size())
-	// 		break;
+		if (i+1 == cycle.size())
+			break;
 
-	// 	draw_edge(bitmap,
-	// 		dvec2(
-	// 			chosen_points_coords[2*cycle[i+0]+0],
-	// 			chosen_points_coords[2*cycle[i+0]+1]),
-	// 		dvec2(
-	// 			chosen_points_coords[2*cycle[i+1]+0],
-	// 			chosen_points_coords[2*cycle[i+1]+1]),
-	// 		0x9e0922
-	// 		);
+		// draw_edge(bitmap,
+		// 	dvec2(
+		// 		chosen_points_coords[2*cycle[i+0]+0],
+		// 		chosen_points_coords[2*cycle[i+0]+1]),
+		// 	dvec2(
+		// 		chosen_points_coords[2*cycle[i+1]+0],
+		// 		chosen_points_coords[2*cycle[i+1]+1]),
+		// 	0x9e0922
+		// 	);
 
-	// 	draw_edge(bitmap,
-	// 		dvec2(
-	// 			chosen_points_coords[2*cycle[i+0]+0]
-	// 			- duplicate_off_x,
-	// 			chosen_points_coords[2*cycle[i+0]+1]),
-	// 		dvec2(
-	// 			chosen_points_coords[2*cycle[i+1]+0]
-	// 			- duplicate_off_x,
-	// 			chosen_points_coords[2*cycle[i+1]+1]),
-	// 		0x9e0922
-	// 		);
+		// draw_edge(bitmap,
+		// 	dvec2(
+		// 		chosen_points_coords[2*cycle[i+0]+0]
+		// 		- duplicate_off_x,
+		// 		chosen_points_coords[2*cycle[i+0]+1]),
+		// 	dvec2(
+		// 		chosen_points_coords[2*cycle[i+1]+0]
+		// 		- duplicate_off_x,
+		// 		chosen_points_coords[2*cycle[i+1]+1]),
+		// 	0x9e0922
+		// 	);
 
-	// 	draw_edge(bitmap,
-	// 		dvec2(
-	// 			chosen_points_coords[2*cycle[i+0]+0]
-	// 			+ duplicate_off_x,
-	// 			chosen_points_coords[2*cycle[i+0]+1]),
-	// 		dvec2(
-	// 			chosen_points_coords[2*cycle[i+1]+0]
-	// 			+ duplicate_off_x,
-	// 			chosen_points_coords[2*cycle[i+1]+1]),
-	// 		0x9e0922
-	// 		);
-	// }
+		// draw_edge(bitmap,
+		// 	dvec2(
+		// 		chosen_points_coords[2*cycle[i+0]+0]
+		// 		+ duplicate_off_x,
+		// 		chosen_points_coords[2*cycle[i+0]+1]),
+		// 	dvec2(
+		// 		chosen_points_coords[2*cycle[i+1]+0]
+		// 		+ duplicate_off_x,
+		// 		chosen_points_coords[2*cycle[i+1]+1]),
+		// 	0x9e0922
+		// 	);
+	}
 }
 
 void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {

@@ -23,7 +23,7 @@ struct bitmap_t {
 	~bitmap_t();
 
 	void load_to_texture();
-	void draw(const glm::mat4 &model_matrix);
+	void draw(const glm::mat4 &MVP_matrix);
 
 private:
 	uint8_t *content = nullptr;
@@ -37,7 +37,7 @@ private:
 	GLuint quad_uvs_buffer_id;
 
 	GLuint texture_sampler_uniform;
-	GLuint model_matrix_uniform;
+	GLuint MVP_matrix_uniform;
 
 	static constexpr GLfloat quad_positions[] {
 		-1, -1, 0,
@@ -60,9 +60,6 @@ inline uint8_t& bitmap_t::get(int y, int x, int component) {
 
 inline uint32_t bitmap_t::get(int y, int x) {
 	return
-		// (((uint32_t(get(y, x, 2)) << 0) ) & 0xff) |
-		// (((uint32_t(get(y, x, 1)) << 8) ) & 0xff) |
-		// (((uint32_t(get(y, x, 0)) << 16)) & 0xff) ;
 		(uint32_t(get(y, x, 2)) << 0) |
 		(uint32_t(get(y, x, 1)) << 8) |
 		(uint32_t(get(y, x, 0)) << 16);

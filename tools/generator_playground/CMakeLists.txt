@@ -5,6 +5,7 @@ add_executable(generator_playground
 	useful.cpp
 	shader_loader.cpp
 	bitmap.cpp
+	line.cpp
 
 	generator.cpp
 	noise.cpp

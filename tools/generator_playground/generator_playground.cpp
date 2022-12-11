@@ -15,6 +15,7 @@ using namespace glm;
 #include "settings.hpp"
 
 #include "bitmap.hpp"
+#include "line.hpp"
 #include "generator.hpp"
 
 struct callbacks_strct_t {
@@ -46,11 +47,11 @@ void key_callback(GLFWwindow* window,
 	callbacks_strct_t * const strct_ptr
 		= callbacks_strct_t::get_strct(window);
 
-	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS) {
 		PRINT_ZU(++strct_ptr->generator->debug_val);
 		strct_ptr->refresh_required = true;
 	}
-	if (key == GLFW_KEY_J && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS) {
 		if (strct_ptr->generator->debug_val != 0) {
 			PRINT_ZU(--strct_ptr->generator->debug_val);
 			strct_ptr->refresh_required = true;
@@ -126,6 +127,9 @@ int32_t main(void) {
 	generator->generate_bitmap(bitmapA, resolution_div);
 	bitmapA.load_to_texture();
 
+	line_t line;
+	double line_off = 0;
+
 	vec3 camera_pos(0, 0, 0);
 	float camera_zoom(1);
 
@@ -170,18 +174,38 @@ int32_t main(void) {
 			resolution_div += 1;
 		}
 
-		const float move_off = delta_time * 1.0 / camera_zoom;
-		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-			camera_pos.x -= move_off;
+		{
+			const float move_off = delta_time * 1.0 / camera_zoom;
+			if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+				camera_pos.x -= move_off;
+			}
+			if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+				camera_pos.x += move_off;
+			}
+			if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+				camera_pos.y -= move_off;
+			}
+			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+				camera_pos.y += move_off;
+			}
 		}
-		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-			camera_pos.x += move_off;
-		}
-		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-			camera_pos.y -= move_off;
-		}
-		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-			camera_pos.y += move_off;
+		{
+			// const float move_off = delta_time * 0.5;
+			const double move_off = delta_time * 2.0;
+			if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+				// line_pos.x -= move_off;
+				line_off -= move_off;
+			}
+			if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+				// line_pos.x += move_off;
+				line_off += move_off;
+			}
+			// if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+			// 	line_pos.y -= move_off;
+			// }
+			// if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+			// 	line_pos.y += move_off;
+			// }
 		}
 
 		// if (glfwGetKey(window, GLFW_KEY_K) == GLFW_RELEASE) {
@@ -206,27 +230,66 @@ int32_t main(void) {
 		}
 
 		glClear(GL_COLOR_BUFFER_BIT);
-		mat4 M(1);
 
-		M = scale(M, vec3(camera_zoom));
-		bool enable_dualbitmap = false;
-		M = scale(M, vec3(1, float(bitmapA.HEIGHT)/float(bitmapA.WIDTH), 1));
-		M = scale(M, vec3(1, float(window_width)/float(window_height), 1));
-		if (enable_dualbitmap) {
-			M = scale(M, vec3(0.5, 0.5, 1));
+		// Drawing the bitmap
+		{
+			mat4 MVP(1);
+			MVP = scale(MVP, vec3(camera_zoom));
+			bool enable_dualbitmap = false;
+			MVP = scale(MVP, vec3(1, float(window_width)/float(window_height), 1));
+			if (enable_dualbitmap) {
+				MVP = scale(MVP, vec3(0.5, 0.5, 1));
+			}
+			MVP = translate(MVP, -camera_pos *
+					vec3(1, float(window_width)/float(window_height), 1)
+				);
+			MVP = scale(MVP,
+					vec3(1, float(bitmapA.HEIGHT)/float(bitmapA.WIDTH), 1));
+			if (!enable_dualbitmap) {
+				bitmapA.draw(MVP);
+			} else {
+				MVP = translate(MVP, vec3(-1, 0, 0));
+				bitmapA.draw(MVP);
+
+				MVP = translate(MVP, vec3(2, 0, 0));
+				bitmapA.draw(MVP);
+			}
 		}
 
-		M = translate(M, -camera_pos *
-				vec3(1, float(window_width)/float(window_height), 1)
-			);
-		if (!enable_dualbitmap) {
-			bitmapA.draw(M);
-		} else {
-			M = translate(M, vec3(-1, 0, 0));
-			bitmapA.draw(M);
-
-			M = translate(M, vec3(2, 0, 0));
-			bitmapA.draw(M);
+		// Drawing the line (player)
+		{
+			mat4 MVP(1);
+			MVP = scale(MVP, vec3(camera_zoom));
+			MVP = scale(MVP, vec3(1, float(window_width)/float(window_height), 1));
+			MVP = translate(MVP, -camera_pos *
+					vec3(1, float(window_width)/float(window_height), 1)
+				);
+			auto [world_pos, gradient]
+				= generator_C.get_tour_path_points(line_off);
+			const float gradient_len
+				= static_cast<float>(std::sqrt(len_sq(gradient)));
+			const float gradient_sin
+				= -static_cast<float>(gradient.x) / gradient_len;
+			const float gradient_cos
+				= static_cast<float>(gradient.y) / gradient_len;
+			const mat4 rotate_mat {
+				gradient_cos, -gradient_sin, 0, 0,
+				gradient_sin, gradient_cos, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1,
+			};
+			world_pos.x /= generator_C.space_max.x;
+			world_pos.y /= generator_C.space_max.y;
+			world_pos.y = 1.0 - world_pos.y;
+			world_pos *= 2.0;
+			world_pos.x -= 1.0;
+			world_pos.y -= 1.0;
+			world_pos.y
+				= world_pos.y * generator->ratio_hw;
+			MVP = translate(MVP, vec3(static_cast<vec2>(world_pos), 0.0));
+			MVP *= rotate_mat;
+			MVP = scale(MVP, vec3(vec2(4, 1) / 400.0f, 1.0f));
+			line.draw(MVP);
 		}
 
 		// double fps_cnt;

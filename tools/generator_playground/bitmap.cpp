@@ -10,9 +10,9 @@ bitmap_t::bitmap_t() {
 
 	// Load shaders and generate shader program
 	GLuint vertex_shader_id = compile_shader(
-			SHADER_VERTEX_PATH, GL_VERTEX_SHADER);
+			SHADER_BITMAP_VERTEX_PATH, GL_VERTEX_SHADER);
 	GLuint fragment_shader_id = compile_shader(
-			SHADER_FRAGMENT_PATH, GL_FRAGMENT_SHADER);
+			SHADER_BITMAP_FRAGMENT_PATH, GL_FRAGMENT_SHADER);
 
 	program_id = link_program(2, vertex_shader_id, fragment_shader_id);
 
@@ -20,7 +20,7 @@ bitmap_t::bitmap_t() {
 	delete_shader(fragment_shader_id);
 
 	// Get uniform locations
-	model_matrix_uniform = glGetUniformLocation(program_id, "model_matrix");
+	MVP_matrix_uniform = glGetUniformLocation(program_id, "MVP_matrix");
 	texture_sampler_uniform = glGetUniformLocation(program_id,
 			"texture_sampler");
 
@@ -110,13 +110,13 @@ void bitmap_t::load_to_texture() {
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void bitmap_t::draw(const glm::mat4 &model_matrix) {
+void bitmap_t::draw(const glm::mat4 &MVP_matrix) {
 	// Shader
 	glUseProgram(program_id);
 
 	// Uniforms and texture
-	glUniformMatrix4fv(model_matrix_uniform,
-		1, GL_FALSE, &model_matrix[0][0]);
+	glUniformMatrix4fv(MVP_matrix_uniform,
+		1, GL_FALSE, &MVP_matrix[0][0]);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture_id);
