@@ -3,6 +3,7 @@
 add_executable(generator_playground
 	generator_playground.cpp
 	useful.cpp
+	geometry.cpp
 	shader_loader.cpp
 	bitmap.cpp
 	line.cpp

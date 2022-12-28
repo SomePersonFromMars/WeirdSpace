@@ -20,15 +20,27 @@ struct generator_t {
 	virtual void generate_bitmap(bitmap_t &bitmap, int resolution_div) = 0;
 
 	std::size_t debug_val = 0;
+	// 84
+	// 98
+	// 109
+	// 116
+	// 122
+	// 84
+	// 16
+	// 3
+	// 109
+	// 11
+	// 72
 
 protected:
-	const int &width, height;
+	const int &width, &height;
 public:
 	const double ratio_wh, ratio_hw;
 	const glm::dvec2 space_max {ratio_wh, 1}; // Maximum double coordinates
 protected:
 
 	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos);
+	inline glm::dvec2 bitmap_to_space_coords(glm::dvec2 pos);
 	void draw_edge(bitmap_t &bitmap, glm::dvec2 beg, glm::dvec2 end,
 			uint32_t color, bool draw_only_empty = false);
 	void draw_point(bitmap_t &bitmap, glm::dvec2 pos, double dim,
@@ -119,13 +131,12 @@ struct generator_C_t : generator_t {
 
 private:
 	void generate_continents(std::mt19937 &gen);
+	void generate_grid_intersections();
 	void draw_map(bitmap_t &bitmap, std::mt19937 &gen);
 	void draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen);
 
 	const std::function<double(const long long)> get_tour_path_point_x;
 	const std::function<double(const long long)> get_tour_path_point_y;
-	// double get_tour_path_point_x(const long long id);
-	// double get_tour_path_point_y(const long long id);
 
 	std::mt19937::result_type seed_voronoi;
 
@@ -138,13 +149,21 @@ private:
 	};
 	static constexpr uint32_t COLORS[] {
 		0x0,
-		0x3a9648, // WATER
-		0x77c4dd, // LAND
+		0x3a9648, // LAND
+		0x77c4dd, // WATER
 	};
 
 	static constexpr std::size_t voro_cnt = 240;
 	static constexpr std::size_t super_voro_cnt = std::min<std::size_t>(
 			40, voro_cnt);
+	static constexpr double GRID_BOX_DIM_ZU = CHUNK_DIM/4;
+	const double GRID_BOX_DIM_D
+		= static_cast<double>(GRID_BOX_DIM_ZU)
+		* space_max.y / static_cast<double>(height);
+	const std::size_t GRID_HEIGHT;
+	const std::size_t GRID_WIDTH;
+	// Contains intersections of grid boxes with voronoi polygons
+	std::vector<std::vector<std::vector<std::size_t>>> grid;
 	voronoi_diagram_t diagram;
 	std::vector<plate_t> plates;
 	std::vector<glm::dvec2> tour_path_points;
@@ -155,6 +174,13 @@ inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) {
 		pos.x = pos.x*double(width-1),
 		pos.x /= double(width) / double(height),
 		pos.y = pos.y*double(height-1),
+
+		pos;
+}
+inline glm::dvec2 generator_t::bitmap_to_space_coords(glm::dvec2 pos) {
+	return
+		pos.x = pos.x * space_max.x / double(width-1),
+		pos.y = pos.y * space_max.y / double(height-1),
 
 		pos;
 }

@@ -14,6 +14,7 @@
 using namespace glm;
 
 #include "useful.hpp"
+#include "geometry.hpp"
 #include "settings.hpp"
 
 #include "noise.hpp"
@@ -630,6 +631,8 @@ generator_C_t::generator_C_t()
 					static_cast<long long>(tour_path_points.size())).second;
 		return tour_path_points[point_id].y;
 	} }
+	,GRID_HEIGHT{ceil_div(static_cast<size_t>(height), GRID_BOX_DIM_ZU)}
+	,GRID_WIDTH{ceil_div(static_cast<size_t>(width/3), GRID_BOX_DIM_ZU)}
 {
 	new_seed();
 }
@@ -673,7 +676,7 @@ void generator_C_t::generate_continents(std::mt19937 &gen) {
 	// }
 
 	diagram.generate_relaxed(debug_val);
-	// diagram.generate_relaxed(0);
+	// diagram.generate_relaxed(3);
 
 	std::vector<std::size_t> super_voro_rep(
 			diagram.voronois_cnt(), INVALID_ID);
@@ -759,7 +762,87 @@ void generator_C_t::generate_continents(std::mt19937 &gen) {
 	}
 }
 
+void generator_C_t::generate_grid_intersections() {
+	using ll = long long;
+	grid.assign(GRID_HEIGHT,
+			std::vector<std::vector<std::size_t>>(GRID_WIDTH));
+	for (std::size_t voronoi_id = 0;
+			voronoi_id < diagram.voronois.size(); ++voronoi_id) {
+		const voronoi_t &voronoi = diagram.voronois[voronoi_id];
+		const std::vector<dvec2> &points = voronoi.points;
+
+		ll min_x = std::numeric_limits<ll>::max();
+		ll min_y = std::numeric_limits<ll>::max();
+		ll max_x = std::numeric_limits<ll>::min();
+		ll max_y = std::numeric_limits<ll>::min();
+		for (std::size_t i = 0; i < points.size(); ++i) {
+			const tvec2<ll, highp> p(
+					std::floor(
+						(points[i].x-space_max.x/3.0) / GRID_BOX_DIM_D),
+					std::floor(points[i].y / GRID_BOX_DIM_D)
+					);
+			min_replace(min_x, p.x);
+			max_replace(max_x, p.x);
+			min_replace(min_y, p.y);
+			max_replace(max_y, p.y);
+		}
+
+		min_x = clamp<ll>(min_x, 0, GRID_WIDTH-1);
+		max_x = clamp<ll>(max_x, 0, GRID_WIDTH-1);
+		min_y = clamp<ll>(min_y, 0, GRID_HEIGHT-1);
+		max_y = clamp<ll>(max_y, 0, GRID_HEIGHT-1);
+
+		// min_y = 0;
+		// min_x = 0;
+		// max_y = GRID_HEIGHT-1;
+		// max_x = GRID_WIDTH-1;
+
+		for (ll y = min_y; y <= max_y; ++y) {
+			for (ll x = min_x; x <= max_x; ++x) {
+				// This optimization is buggy
+				// const dvec2 p0(
+				// 		static_cast<double>(x)*GRID_BOX_DIM_D+space_max.x/3.0,
+				// 		static_cast<double>(y)*GRID_BOX_DIM_D
+				// 		);
+				// if (intersect_full_box_full_polygon(
+				// 			p0, GRID_BOX_DIM_D,
+				// 			points
+				// 			)) {
+				// 	grid[y][x].push_back(voronoi_id);
+				// }
+
+				grid[y][x].push_back(voronoi_id);
+			}
+		}
+	}
+
+}
+
 void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
+#define DRAW_GRID
+#ifdef DRAW_GRID
+	for (double x = 0; x <= space_max.x / 3.0; x += GRID_BOX_DIM_D) {
+		draw_edge(bitmap,
+				dvec2(x, 0),
+				dvec2(x, space_max.y),
+				0x424242);
+		draw_edge(bitmap,
+				dvec2(x+space_max.x/3.0, 0),
+				dvec2(x+space_max.x/3.0, space_max.y),
+				0x424242);
+		draw_edge(bitmap,
+				dvec2(x+space_max.x*2/3.0, 0),
+				dvec2(x+space_max.x*2/3.0, space_max.y),
+				0x424242);
+	}
+	for (double y = 0; y < space_max.y; y += GRID_BOX_DIM_D) {
+		draw_edge(bitmap,
+				dvec2(0, y),
+				dvec2(space_max.x, y),
+				0x424242);
+	}
+#endif
+
 // #define DRAW_RELATIONS
 #ifdef DRAW_RELATIONS
 	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
@@ -789,48 +872,69 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #endif
 #undef DRAW_RELATIONS
 
+#define PSEUDO_PARALLEL_FILL
+#ifdef PSEUDO_PARALLEL_FILL
+	for (std::size_t y = 0; y < static_cast<std::size_t>(height); ++y) {
+		for (std::size_t x = 0; x < static_cast<std::size_t>(width) / 3; ++x) {
+			const dvec2 p = bitmap_to_space_coords(dvec2(x+width/3, y));
+			const std::size_t x_grid = x / GRID_BOX_DIM_ZU;
+			const std::size_t y_grid = y / GRID_BOX_DIM_ZU;
+			const std::vector<std::size_t> vec = grid[y_grid][x_grid];
+			if (vec.size() == 0)
+				continue;
+			// assert(vec.size() > 0);
+			std::size_t closest_voro_id = vec[0];
+			double closest_dist_sq
+				= len_sq(p - diagram.voronois[vec[0]].center);
+			for (std::size_t i = 1; i < vec.size(); ++i) {
+				const double new_dist_sq
+					= len_sq(p - diagram.voronois[vec[i]].center);
+				if (new_dist_sq < closest_dist_sq) {
+					closest_voro_id = vec[i];
+					closest_dist_sq = new_dist_sq;
+				}
+			}
+			bitmap.set(y, x+width/3, COLORS[plates[closest_voro_id].type]);
+		}
+	}
+#endif
+#undef PSEUDO_PARALLEL_FILL
+
 #define DRAW_POLYGONS
 #ifdef DRAW_POLYGONS
-	auto draw_voronoi = [&] (const std::size_t id) {
+	auto draw_voronoi = [&] (
+			const std::size_t id, const uint32_t override_color = 0xffffff) {
 		const voronoi_t &voronoi = diagram.voronois[id];
-#define DRAW_NOISY
-#ifdef DRAW_NOISY
 		const uint32_t color = COLORS[static_cast<uint8_t>(plates[id].type)];
 		// const uint32_t color = 0x015e1f;
-#endif
 		// draw_convex_polygon(bitmap, voronoi.points, color);
+// #define DRAW_NOISY
 #ifndef DRAW_NOISY
 		for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
-			draw_edge(bitmap,
-					voronoi.points[j],
-					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
-					0xffffff, true);
+			// draw_edge(bitmap,
+			// 		voronoi.points[j],
+			// 		voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
+			// 		// color, true);
+			// 		override_color, false);
 
 			draw_edge(bitmap,
 					voronoi.points[j]
-					diagram.duplicate_off_vec,
-
+					- diagram.duplicate_off_vec,
 					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1]
-					diagram.duplicate_off_vec,
-
-					0xa2f9d9, true);
+					- diagram.duplicate_off_vec,
+					color, true);
+					// 0xa2f9d9, true);
 
 			draw_edge(bitmap,
 					voronoi.points[j]
 					+ diagram.duplicate_off_vec,
-
 					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1]
 					+ diagram.duplicate_off_vec,
-
-					0xa2eef9, true);
+					color, true);
+					// 0xa2eef9, true);
 		}
 #else
 		for (std::size_t j = 0; j < voronoi.al.size(); ++j) {
-			// if (j != 2)
-			// 	continue;
-			// if (j != debug_val)
-			// 	continue;
-
 			const voronoi_t::edge_t &edge = voronoi.al[j];
 			if (!edge.visible)
 				continue;
@@ -888,14 +992,25 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #endif
 #undef DRAW_NOISY
 	};
-	// draw_voronoi(23);
 	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
 		draw_voronoi(i);
 	}
+
+	// const std::size_t gy = debug_val/GRID_WIDTH;
+	// const std::size_t gx = debug_val%GRID_WIDTH;
+	// PRINT_ZU(gy);
+	// PRINT_ZU(gx);
+	// PRINT_ZU(GRID_WIDTH);
+	// for (const std::size_t i
+	// 		: grid[gy][gx]) {
+	// 	draw_voronoi(i);
+	// }
+
+	// draw_voronoi(debug_val, 0);
 #endif
 #undef DRAW_POLYGONS
 
-#define FLOOD_FILL
+// #define FLOOD_FILL
 #ifdef FLOOD_FILL
 	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
 		const voronoi_t &voronoi = diagram.voronois[i];
@@ -1343,6 +1458,20 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	PRINT_LU(seed_voronoi);
 
 	generate_continents(gen);
+	generate_grid_intersections();
+	std::size_t avg_cnt = 0;
+	std::size_t max_cnt = 0;
+	for (size_t y = 0; y < GRID_HEIGHT; ++y) {
+		for (size_t x = 0; x < GRID_WIDTH; ++x) {
+			avg_cnt += grid[y][x].size();
+			max_replace(max_cnt, grid[y][x].size());
+		}
+	}
+	avg_cnt /= GRID_HEIGHT*GRID_WIDTH;
+	PRINT_ZU(avg_cnt);
+	PRINT_ZU(max_cnt);
+	// for (const auto e : grid[1][0])
+	// 	PRINT_ZU(e);
 	draw_map(bitmap, gen);
-	draw_tour_path(bitmap, gen);
+	// draw_tour_path(bitmap, gen);
 }

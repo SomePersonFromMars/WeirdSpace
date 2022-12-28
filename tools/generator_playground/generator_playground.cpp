@@ -124,6 +124,7 @@ int32_t main(void) {
 	generator_t * const generator = &generator_C;
 	callbacksk_strct.generator = generator;
 	int resolution_div = 8;
+	generator_C.generate_bitmap(bitmapA, resolution_div);
 	generator->generate_bitmap(bitmapA, resolution_div);
 	bitmapA.load_to_texture();
 
@@ -175,7 +176,7 @@ int32_t main(void) {
 		}
 
 		{
-			const float move_off = delta_time * 1.0 / camera_zoom;
+			const float move_off = delta_time * 0.5 / camera_zoom;
 			if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
 				camera_pos.x -= move_off;
 			}
@@ -256,41 +257,42 @@ int32_t main(void) {
 			}
 		}
 
-		// Drawing the line (player)
-		{
-			mat4 MVP(1);
-			MVP = scale(MVP, vec3(camera_zoom));
-			MVP = scale(MVP, vec3(1, float(window_width)/float(window_height), 1));
-			MVP = translate(MVP, -camera_pos *
-					vec3(1, float(window_width)/float(window_height), 1)
-				);
-			auto [world_pos, gradient]
-				= generator_C.get_tour_path_points(line_off);
-			const float gradient_len
-				= static_cast<float>(std::sqrt(len_sq(gradient)));
-			const float gradient_sin
-				= -static_cast<float>(gradient.x) / gradient_len;
-			const float gradient_cos
-				= static_cast<float>(gradient.y) / gradient_len;
-			const mat4 rotate_mat {
-				gradient_cos, -gradient_sin, 0, 0,
-				gradient_sin, gradient_cos, 0, 0,
-				0, 0, 1, 0,
-				0, 0, 0, 1,
-			};
-			world_pos.x /= generator_C.space_max.x;
-			world_pos.y /= generator_C.space_max.y;
-			world_pos.y = 1.0 - world_pos.y;
-			world_pos *= 2.0;
-			world_pos.x -= 1.0;
-			world_pos.y -= 1.0;
-			world_pos.y
-				= world_pos.y * generator->ratio_hw;
-			MVP = translate(MVP, vec3(static_cast<vec2>(world_pos), 0.0));
-			MVP *= rotate_mat;
-			MVP = scale(MVP, vec3(vec2(4, 1) / 400.0f, 1.0f));
-			line.draw(MVP);
-		}
+		// // Drawing the line (player)
+		// {
+		// 	mat4 MVP(1);
+		// 	MVP = scale(MVP, vec3(camera_zoom));
+		// 	MVP
+		// 	= scale(MVP, vec3(1, float(window_width)/float(window_height), 1));
+		// 	MVP = translate(MVP, -camera_pos *
+		// 			vec3(1, float(window_width)/float(window_height), 1)
+		// 		);
+		// 	auto [world_pos, gradient]
+		// 		= generator_C.get_tour_path_points(line_off);
+		// 	const float gradient_len
+		// 		= static_cast<float>(std::sqrt(len_sq(gradient)));
+		// 	const float gradient_sin
+		// 		= -static_cast<float>(gradient.x) / gradient_len;
+		// 	const float gradient_cos
+		// 		= static_cast<float>(gradient.y) / gradient_len;
+		// 	const mat4 rotate_mat {
+		// 		gradient_cos, -gradient_sin, 0, 0,
+		// 		gradient_sin, gradient_cos, 0, 0,
+		// 		0, 0, 1, 0,
+		// 		0, 0, 0, 1,
+		// 	};
+		// 	world_pos.x /= generator_C.space_max.x;
+		// 	world_pos.y /= generator_C.space_max.y;
+		// 	world_pos.y = 1.0 - world_pos.y;
+		// 	world_pos *= 2.0;
+		// 	world_pos.x -= 1.0;
+		// 	world_pos.y -= 1.0;
+		// 	world_pos.y
+		// 		= world_pos.y * generator->ratio_hw;
+		// 	MVP = translate(MVP, vec3(static_cast<vec2>(world_pos), 0.0));
+		// 	MVP *= rotate_mat;
+		// 	MVP = scale(MVP, vec3(vec2(4, 1) / 400.0f, 1.0f));
+		// 	line.draw(MVP);
+		// }
 
 		// double fps_cnt;
 		{ // FPS cnter
