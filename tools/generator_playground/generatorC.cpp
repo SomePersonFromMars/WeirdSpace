@@ -344,92 +344,116 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 				}
 			}
 			const double closest_voronoi_dist_sq = closest_dist_sq;
+			const dvec2 closest_voro_off
+				// = (
+				// 	edge.type == voronoi_t::edge_t::TO_LEFT ?
+				// 	-diagram.duplicate_off_vec :
+				// 	edge.type == voronoi_t::edge_t::TO_RIGHT ?
+				// 	diagram.duplicate_off_vec :
+				// 	dvec2(0)
+				// )
+				// + (
+				= (
+					closest_voro_id.type == voro_id_t::LEFT ?
+					-diagram.duplicate_off_vec :
+					closest_voro_id.type == voro_id_t::RIGHT ?
+					diagram.duplicate_off_vec :
+					dvec2(0)
+				);
 
-			std::size_t closest_neighbor_id;
-			closest_dist_sq = std::numeric_limits<double>::max();
-			std::size_t closest_neighbor_edge_id;
+			std::size_t triangle_neighbor_edge_id = 0;
+			std::size_t triangle_neighbor_id
+				= diagram.voronois[closest_voro_id.id]
+				.al[triangle_neighbor_edge_id].neighbor_id;
+			// closest_dist_sq = std::numeric_limits<double>::max();
 			for (std::size_t i = 0;
 					i < diagram.voronois[closest_voro_id.id].al.size(); ++i) {
 				const voronoi_t::edge_t &edge
 					= diagram.voronois[closest_voro_id.id].al[i];
 
-				const std::size_t voro_id = edge.neighbor_id;
-				const dvec2 voro_center
-					= diagram.voronois[voro_id].center
-					+ (
-						edge.type == voronoi_t::edge_t::TO_LEFT ?
-						-diagram.duplicate_off_vec :
-						edge.type == voronoi_t::edge_t::TO_RIGHT ?
-						diagram.duplicate_off_vec :
-						dvec2(0)
-					)
-					+ (
-						closest_voro_id.type == voro_id_t::LEFT ?
-						-diagram.duplicate_off_vec :
-						closest_voro_id.type == voro_id_t::RIGHT ?
-						diagram.duplicate_off_vec :
-						dvec2(0)
-					);
+				// const std::size_t voro_id = edge.neighbor_id;
+				// const dvec2 voro_center
+				// 	= diagram.voronois[voro_id].center
+				// 	+ closest_voro_off;
 
-				const double new_dist_sq
-					= len_sq(p - voro_center);
-				if (new_dist_sq < closest_dist_sq) {
-					closest_neighbor_id = voro_id;
-					closest_dist_sq = new_dist_sq;
-					closest_neighbor_edge_id = i;
+				// beg <- p <- end
+				const dvec2 A
+					= (edge.beg + closest_voro_off) - closest_voro_center;
+				const dvec2 B = p - closest_voro_center;
+				const dvec2 C
+					= (edge.end + closest_voro_off) - closest_voro_center;
+				const double det1 = determinant(C, B);
+				const double det2 = determinant(B, A);
+				// const double det1 = determinant(A, B);
+				// const double det2 = determinant(B, C);
+
+				if (det1 <= 0 && det2 <= 0) {
+					triangle_neighbor_edge_id = i;
+					triangle_neighbor_id
+						= diagram.voronois[closest_voro_id.id]
+						.al[triangle_neighbor_edge_id].neighbor_id;
 				}
+
+				// const double new_dist_sq
+				// 	= len_sq(p - voro_center);
+				// if (new_dist_sq < closest_dist_sq) {
+				// 	triangle_neighbor_id = voro_id;
+				// 	closest_dist_sq = new_dist_sq;
+				// 	triangle_neighbor_edge_id = i;
+				// }
 			}
-			const double closest_neighbor_dist_sq = closest_dist_sq;
 
-			uint32_t color = COLORS[plates[closest_voro_id.id].type];
-			if (plates[closest_voro_id.id].type
-					!= plates[closest_neighbor_id].type) {
-				// Simple coast drawing
-				color = COLORS[plate_t::COAST];
+			uint32_t color;
+			// const double closest_neighbor_dist_sq = closest_dist_sq;
+			// color = COLORS[plates[closest_voro_id.id].type];
+			// if (plates[closest_voro_id.id].type
+			// 		!= plates[triangle_neighbor_id].type) {
+			// 	// Simple coast drawing
+			// 	color = COLORS[plate_t::COAST];
 
-				double land_dist_sq;
-				double water_dist_sq;
-				land_dist_sq = closest_voronoi_dist_sq;
-				water_dist_sq = closest_neighbor_dist_sq;
-				if (plates[closest_voro_id.id].type == plate_t::WATER)
-					std::swap(land_dist_sq, water_dist_sq);
+			// 	double land_dist_sq;
+			// 	double water_dist_sq;
+			// 	land_dist_sq = closest_voronoi_dist_sq;
+			// 	water_dist_sq = closest_neighbor_dist_sq;
+			// 	if (plates[closest_voro_id.id].type == plate_t::WATER)
+			// 		std::swap(land_dist_sq, water_dist_sq);
 
-				const double land_dist = std::sqrt(land_dist_sq);
-				const double water_dist = std::sqrt(water_dist_sq);
+			// 	const double land_dist = std::sqrt(land_dist_sq);
+			// 	const double water_dist = std::sqrt(water_dist_sq);
 
-				// Trying to calculate elevation between coast and terrain
-				// color = lerp(COLORS[plate_t::WATER], COLORS[plate_t::LAND],
-				// 		water_dist / (water_dist + land_dist));
-				color = lerp(0xff, 0,
-						water_dist / (water_dist + land_dist));
-				color = color | (color << 8) | (color << 16);
-			}
+			// 	// Trying to calculate elevation between coast and terrain
+			// 	// color = lerp(COLORS[plate_t::WATER], COLORS[plate_t::LAND],
+			// 	// 		water_dist / (water_dist + land_dist));
+			// 	color = lerp(0xff, 0,
+			// 			water_dist / (water_dist + land_dist));
+			// 	color = color | (color << 8) | (color << 16);
+			// }
 
 			// Another elevation try
-			// const voronoi_t::edge_t closest_neighbor_edge =
-			// 	diagram.voronois[closest_voro_id.id]
-			// 	.al[closest_neighbor_edge_id];
-			// const auto [casted_edge_point, casted_edge_point_exists]
-			// 	= intersect_lines(
-			// 			p, closest_voro_center,
-			// 			closest_neighbor_edge.beg, closest_neighbor_edge.end);
+			const voronoi_t::edge_t closest_neighbor_edge =
+				diagram.voronois[closest_voro_id.id]
+				.al[triangle_neighbor_edge_id];
+			const auto [casted_edge_point, casted_edge_point_exists]
+				= intersect_lines(
+						p, closest_voro_center,
+						closest_neighbor_edge.beg, closest_neighbor_edge.end);
 
-			// const double casted_point_dist
-			// 	= casted_edge_point_exists ?
-			// 	std::sqrt(len_sq(p - casted_edge_point)) :
-			// 	1.0;
-			// const double closest_voro_dist
-			// 	= std::sqrt(closest_voronoi_dist_sq);
+			const double casted_point_dist
+				= casted_edge_point_exists ?
+				std::sqrt(len_sq(p - casted_edge_point)) :
+				1.0;
+			const double closest_voro_dist
+				= std::sqrt(closest_voronoi_dist_sq);
 
-			// color = lerp(0xff, 0,
-			// 	casted_point_dist / (casted_point_dist + closest_voro_dist));
-			// color = color | (color << 8) | (color << 16);
+			color = lerp(0xff, 0,
+				casted_point_dist / (casted_point_dist + closest_voro_dist));
+			color = color | (color << 8) | (color << 16);
 
-			// Quite nice looking mosaic
-			// (use 0 key to switch between two modes)
-			color = plates[
-				(debug_vals[1] % 2) ? closest_neighbor_id : closest_voro_id.id
-			].debug_color;
+			// // Quite nice looking mosaic
+			// // (use 0 key to switch between two modes)
+			// color = plates[
+			// 	(debug_vals[1] % 2) ? triangle_neighbor_id : closest_voro_id.id
+			// ].debug_color;
 
 			bitmap.set(y, x+width/3, color);
 		}
@@ -461,7 +485,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1]
 					- diagram.duplicate_off_vec,
 					// color, true);
-					// 0xa2f9d9, true);
+					// 0xa2f9d9, false);
 					override_color, false);
 
 			draw_edge(bitmap,
@@ -470,7 +494,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1]
 					+ diagram.duplicate_off_vec,
 					// color, true);
-					// 0xa2eef9, true);
+					// 0xa2eef9, false);
 					override_color, false);
 		}
 #else
