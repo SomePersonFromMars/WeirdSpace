@@ -83,7 +83,7 @@ void generator_C_t::generate_continents(std::mt19937 &gen) {
 	// 		= diagram.voronois[i].center.y;
 	// }
 
-	diagram.generate_relaxed(debug_val);
+	diagram.generate_relaxed(debug_vals[0]);
 	// diagram.generate_relaxed(3);
 
 	std::vector<std::size_t> super_voro_rep(
@@ -230,8 +230,8 @@ void generator_C_t::generate_grid_intersections() {
 
 		if (max_x > space_max.x*2.0/3.0) {
 			max_replace(min_x, space_max.x*2.0/3.0);
-			min_x -= space_max.x*2.0/3.0;
-			max_x -= space_max.x*2.0/3.0;
+			min_x -= space_max.x*1.0/3.0;
+			max_x -= space_max.x*1.0/3.0;
 			calc_grid_constrains();
 			for (ll y = min_grid.y; y <= max_grid.y; ++y) {
 				for (ll x = min_grid.x; x <= max_grid.x; ++x) {
@@ -320,12 +320,13 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 				continue;
 			// assert(vec.size() > 0);
 
-			std::size_t closest_voro_id;
+			voro_id_t closest_voro_id;
 			double closest_dist_sq = std::numeric_limits<double>::max();
+			dvec2 closest_voro_center;
 			for (std::size_t i = 0; i < vec.size(); ++i) {
-				const std::size_t voro_id = vec[i].id;
+				const voro_id_t voro_id = vec[i];
 				const dvec2 voro_center
-					= diagram.voronois[voro_id].center
+					= diagram.voronois[voro_id.id].center
 					+ (
 						vec[i].type == voro_id_t::LEFT ?
 						-diagram.duplicate_off_vec :
@@ -339,10 +340,97 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 				if (new_dist_sq < closest_dist_sq) {
 					closest_voro_id = voro_id;
 					closest_dist_sq = new_dist_sq;
+					closest_voro_center = voro_center;
 				}
 			}
-			// const uint32_t color = COLORS[plates[closest_voro_id].type];
-			const uint32_t color = plates[closest_voro_id].debug_color;
+			const double closest_voronoi_dist_sq = closest_dist_sq;
+
+			std::size_t closest_neighbor_id;
+			closest_dist_sq = std::numeric_limits<double>::max();
+			std::size_t closest_neighbor_edge_id;
+			for (std::size_t i = 0;
+					i < diagram.voronois[closest_voro_id.id].al.size(); ++i) {
+				const voronoi_t::edge_t &edge
+					= diagram.voronois[closest_voro_id.id].al[i];
+
+				const std::size_t voro_id = edge.neighbor_id;
+				const dvec2 voro_center
+					= diagram.voronois[voro_id].center
+					+ (
+						edge.type == voronoi_t::edge_t::TO_LEFT ?
+						-diagram.duplicate_off_vec :
+						edge.type == voronoi_t::edge_t::TO_RIGHT ?
+						diagram.duplicate_off_vec :
+						dvec2(0)
+					)
+					+ (
+						closest_voro_id.type == voro_id_t::LEFT ?
+						-diagram.duplicate_off_vec :
+						closest_voro_id.type == voro_id_t::RIGHT ?
+						diagram.duplicate_off_vec :
+						dvec2(0)
+					);
+
+				const double new_dist_sq
+					= len_sq(p - voro_center);
+				if (new_dist_sq < closest_dist_sq) {
+					closest_neighbor_id = voro_id;
+					closest_dist_sq = new_dist_sq;
+					closest_neighbor_edge_id = i;
+				}
+			}
+			const double closest_neighbor_dist_sq = closest_dist_sq;
+
+			uint32_t color = COLORS[plates[closest_voro_id.id].type];
+			if (plates[closest_voro_id.id].type
+					!= plates[closest_neighbor_id].type) {
+				// Simple coast drawing
+				color = COLORS[plate_t::COAST];
+
+				double land_dist_sq;
+				double water_dist_sq;
+				land_dist_sq = closest_voronoi_dist_sq;
+				water_dist_sq = closest_neighbor_dist_sq;
+				if (plates[closest_voro_id.id].type == plate_t::WATER)
+					std::swap(land_dist_sq, water_dist_sq);
+
+				const double land_dist = std::sqrt(land_dist_sq);
+				const double water_dist = std::sqrt(water_dist_sq);
+
+				// Trying to calculate elevation between coast and terrain
+				// color = lerp(COLORS[plate_t::WATER], COLORS[plate_t::LAND],
+				// 		water_dist / (water_dist + land_dist));
+				color = lerp(0xff, 0,
+						water_dist / (water_dist + land_dist));
+				color = color | (color << 8) | (color << 16);
+			}
+
+			// Another elevation try
+			// const voronoi_t::edge_t closest_neighbor_edge =
+			// 	diagram.voronois[closest_voro_id.id]
+			// 	.al[closest_neighbor_edge_id];
+			// const auto [casted_edge_point, casted_edge_point_exists]
+			// 	= intersect_lines(
+			// 			p, closest_voro_center,
+			// 			closest_neighbor_edge.beg, closest_neighbor_edge.end);
+
+			// const double casted_point_dist
+			// 	= casted_edge_point_exists ?
+			// 	std::sqrt(len_sq(p - casted_edge_point)) :
+			// 	1.0;
+			// const double closest_voro_dist
+			// 	= std::sqrt(closest_voronoi_dist_sq);
+
+			// color = lerp(0xff, 0,
+			// 	casted_point_dist / (casted_point_dist + closest_voro_dist));
+			// color = color | (color << 8) | (color << 16);
+
+			// Quite nice looking mosaic
+			// (use 0 key to switch between two modes)
+			color = plates[
+				(debug_vals[1] % 2) ? closest_neighbor_id : closest_voro_id.id
+			].debug_color;
+
 			bitmap.set(y, x+width/3, color);
 		}
 	}
@@ -354,17 +442,18 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 	auto draw_voronoi = [&] (
 			const std::size_t id, const uint32_t override_color = 0xffffff) {
 		const voronoi_t &voronoi = diagram.voronois[id];
-		// const uint32_t color = COLORS[static_cast<uint8_t>(plates[id].type)];
+		// const uint32_t color
+		// = COLORS[static_cast<uint8_t>(plates[id].type)];
 		// const uint32_t color = 0x015e1f;
 		// draw_convex_polygon(bitmap, voronoi.points, color);
 // #define DRAW_NOISY
 #ifndef DRAW_NOISY
 		for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
-			draw_edge(bitmap,
-					voronoi.points[j],
-					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
-					// color, true);
-					override_color, false);
+			// draw_edge(bitmap,
+			// 		voronoi.points[j],
+			// 		voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
+			// 		// color, true);
+			// 		override_color, false);
 
 			draw_edge(bitmap,
 					voronoi.points[j]
@@ -447,8 +536,8 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 		draw_voronoi(i);
 	}
 
-	// const std::size_t gy = debug_val/GRID_WIDTH;
-	// const std::size_t gx = debug_val%GRID_WIDTH;
+	// const std::size_t gy = debug_vals[0]/GRID_WIDTH;
+	// const std::size_t gx = debug_vals[0]%GRID_WIDTH;
 	// PRINT_ZU(gy);
 	// PRINT_ZU(gx);
 	// PRINT_ZU(GRID_WIDTH);
@@ -457,7 +546,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 	// 	draw_voronoi(i);
 	// }
 
-	// draw_voronoi(debug_val, 0);
+	// draw_voronoi(debug_vals[0], 0);
 #endif
 #undef DRAW_POLYGONS
 
@@ -500,6 +589,7 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 
 	generate_continents(gen);
 	generate_grid_intersections();
+
 	std::size_t avg_cnt = 0;
 	std::size_t max_cnt = 0;
 	for (size_t y = 0; y < GRID_HEIGHT; ++y) {
@@ -513,6 +603,7 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	PRINT_ZU(max_cnt);
 	// for (const auto e : grid[1][0])
 	// 	PRINT_ZU(e);
+
 	draw_map(bitmap, gen);
 	// draw_tour_path(bitmap, gen);
 }

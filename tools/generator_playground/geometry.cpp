@@ -13,6 +13,31 @@ using namespace glm;
 // a = Vy
 // b = -Vx
 // c = -Vy*Px + Vx*Py
+std::pair<dvec2, bool> intersect_lines(
+		dvec2 P1, dvec2 P2, dvec2 Q1, dvec2 Q2
+		) {
+	const dvec2 P = P1;
+	const dvec2 Q = Q1;
+	const dvec2 V = P2 - P1;
+	const dvec2 W = Q2 - Q1;
+	const double a1 = V.y;
+	const double b1 = -V.x;
+	const double c1 = -V.y*P.x + V.x*P.y;
+	const double a2 = W.y;
+	const double b2 = -W.x;
+	const double c2 = -W.y*Q.x + W.x*Q.y;
+
+	const double d = (a1*b2 - a2*b1);
+	if (d == 0.0)
+		return { dvec2(std::numeric_limits<double>::infinity()), false };
+
+	dvec2 intersection(
+			(b1*c2 - b2*c1)/d,
+			(c1*a2 - c2*a1)/d);
+
+	return { intersection, true };
+}
+
 std::pair<dvec2, bool> intersect_segments(
 		dvec2 P1, dvec2 P2, dvec2 Q1, dvec2 Q2
 		) {
@@ -27,9 +52,13 @@ std::pair<dvec2, bool> intersect_segments(
 	const double b2 = -W.x;
 	const double c2 = -W.y*Q.x + W.x*Q.y;
 
+	const double d = (a1*b2 - a2*b1);
+	if (d == 0.0)
+		return { dvec2(std::numeric_limits<double>::infinity()), false };
+
 	dvec2 intersection(
-			(b1*c2 - b2*c1)/(a1*b2 - a2*b1),
-			(c1*a2 - c2*a1)/(a1*b2 - a2*b1));
+			(b1*c2 - b2*c1)/d,
+			(c1*a2 - c2*a1)/d);
 
 	return {
 		intersection,

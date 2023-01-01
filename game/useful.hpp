@@ -152,6 +152,8 @@ inline bool same_direction_knowing_same_line(
 		sign_of(v.y) == sign_of(w.y);
 }
 
+// `a`, `b` - vectors
+// `det[a, b] > 0` => directed angle between `a` and `b` is ccw
 template<class T>
 inline T determinant(
 		const glm::tvec2<T, glm::highp> &a,

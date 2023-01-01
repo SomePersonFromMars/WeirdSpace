@@ -19,7 +19,10 @@ struct generator_t {
 	virtual void new_seed() = 0;
 	virtual void generate_bitmap(bitmap_t &bitmap, int resolution_div) = 0;
 
-	std::size_t debug_val = 0;
+	std::size_t debug_vals[2] = {
+		7,
+		0
+	};
 	// 84
 	// 98
 	// 109
@@ -144,7 +147,8 @@ private:
 		enum type_t : uint8_t {
 			NONE = 0,
 			LAND,
-			WATER
+			WATER,
+			COAST,
 		} type = NONE;
 		uint32_t debug_color = 0x0;
 	};
@@ -152,6 +156,7 @@ private:
 		0x0,
 		0x3a9648, // LAND
 		0x77c4dd, // WATER
+		0xfcf04b, // COAST
 	};
 
 	static constexpr std::size_t voro_cnt = 240;

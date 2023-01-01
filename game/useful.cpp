@@ -1,7 +1,7 @@
 #include "useful.hpp"
 
 #ifdef DEBUG
-	bool enable_breakpoints = false;
+	bool enable_breakpoints = true;
 #endif
 
 int floor_div(int num, int den) {

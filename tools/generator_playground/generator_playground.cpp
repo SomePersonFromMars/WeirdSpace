@@ -48,12 +48,24 @@ void key_callback(GLFWwindow* window,
 		= callbacks_strct_t::get_strct(window);
 
 	if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS) {
-		PRINT_ZU(++strct_ptr->generator->debug_val);
+		PRINT_ZU(++strct_ptr->generator->debug_vals[0]);
 		strct_ptr->refresh_required = true;
 	}
 	if (key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS) {
-		if (strct_ptr->generator->debug_val != 0) {
-			PRINT_ZU(--strct_ptr->generator->debug_val);
+		if (strct_ptr->generator->debug_vals[0] != 0) {
+			PRINT_ZU(--strct_ptr->generator->debug_vals[0]);
+			strct_ptr->refresh_required = true;
+		}
+	}
+	if (key == GLFW_KEY_0 && action == GLFW_PRESS) {
+		// PRINT_ZU(++strct_ptr->generator->debug_vals[1]);
+		++strct_ptr->generator->debug_vals[1];
+		strct_ptr->refresh_required = true;
+	}
+	if (key == GLFW_KEY_9 && action == GLFW_PRESS) {
+		if (strct_ptr->generator->debug_vals[1] != 0) {
+			// PRINT_ZU(--strct_ptr->generator->debug_vals[1]);
+			--strct_ptr->generator->debug_vals[1];
 			strct_ptr->refresh_required = true;
 		}
 	}
@@ -168,8 +180,8 @@ int32_t main(void) {
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
-			resolution_div -= 1;
-			if (resolution_div <= 0) resolution_div = 1;
+			if (resolution_div >= 0)
+				resolution_div -= 1;
 		}
 		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
 			resolution_div += 1;
@@ -210,12 +222,12 @@ int32_t main(void) {
 		}
 
 		// if (glfwGetKey(window, GLFW_KEY_K) == GLFW_RELEASE) {
-		// 	++generator->debug_val;
-		// 	PRINT_ZU(generator->debug_val);
+		// 	++generator->debug_vals[0];
+		// 	PRINT_ZU(generator->debug_vals[0]);
 		// }
 		// if (glfwGetKey(window, GLFW_KEY_J) == GLFW_RELEASE) {
-		// 	--generator->debug_val;
-		// 	PRINT_ZU(generator->debug_val);
+		// 	--generator->debug_vals[0];
+		// 	PRINT_ZU(generator->debug_vals[0]);
 		// }
 
 		const float zoom_off = delta_time * 1.0;

@@ -22,7 +22,6 @@ struct voronoi_t {
 			TO_LEFT,
 			TO_RIGHT
 		} type = NONE;
-		// bool loop_edge = false;
 
 		// Beg and end are the edge's ends and
 		// a quadrilateral's side points.
