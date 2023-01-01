@@ -146,6 +146,7 @@ private:
 			LAND,
 			WATER
 		} type = NONE;
+		uint32_t debug_color = 0x0;
 	};
 	static constexpr uint32_t COLORS[] {
 		0x0,
@@ -163,7 +164,7 @@ private:
 	const std::size_t GRID_HEIGHT;
 	const std::size_t GRID_WIDTH;
 	// Contains intersections of grid boxes with voronoi polygons
-	std::vector<std::vector<std::vector<std::size_t>>> grid;
+	std::vector<std::vector<std::vector<voro_id_t>>> grid;
 	voronoi_diagram_t diagram;
 	std::vector<plate_t> plates;
 	std::vector<glm::dvec2> tour_path_points;

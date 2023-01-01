@@ -8,7 +8,9 @@ add_executable(generator_playground
 	bitmap.cpp
 	line.cpp
 
-	generator.cpp
+	generatorAB.cpp
+	generatorC.cpp
+	generatorC_tour.cpp
 	noise.cpp
 	voronoi.cpp
 	)

@@ -43,6 +43,14 @@ private:
 
 	friend voronoi_diagram_t;
 };
+struct voro_id_t {
+	std::size_t id;
+	enum type_t : uint8_t {
+		BASE = 0,
+		LEFT,
+		RIGHT
+	} type = BASE;
+};
 
 struct voronoi_diagram_t {
 	glm::dvec2 space_max;
