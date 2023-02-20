@@ -152,15 +152,6 @@ inline bool same_direction_knowing_same_line(
 		sign_of(v.y) == sign_of(w.y);
 }
 
-// `a`, `b` - vectors
-// `det[a, b] > 0` => directed angle between `a` and `b` is ccw
-template<class T>
-inline T determinant(
-		const glm::tvec2<T, glm::highp> &a,
-		const glm::tvec2<T, glm::highp> &b) {
-	return a.x*b.y - a.y*b.x;
-}
-
 // Warning! This gives only the length in 2D,
 // casting the vector to XY plane
 inline long long len_sq(const glm::ivec3& vec) {

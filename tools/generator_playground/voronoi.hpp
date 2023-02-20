@@ -32,13 +32,25 @@ struct voronoi_t {
 		glm::dvec2 beg;
 		glm::dvec2 end;
 
+		// Helpful variables
+		double tri_edge_len;
+		double voro_edge_len;
+		glm::dvec2 to_mid;
+		double to_mid_len;
+
 		void correct_quad();
 	};
+	// Voronoi adjacency list in clockwise order.
+	// If `clipped` is false, first and last neighbors are mutually neighbors.
+	// Ie. al is cyclic.
 	std::vector<edge_t> al;
+	// Dummy edge is sometimes useful if voronoi is clipped.
+	edge_t dummy_edge;
+	bool clipped = false;
+
 private:
 	// Polygon fully calculated
 	bool completed = false;
-	bool clipped = false;
 
 	friend voronoi_diagram_t;
 };
