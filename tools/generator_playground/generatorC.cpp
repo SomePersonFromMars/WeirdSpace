@@ -42,6 +42,10 @@ generator_C_t::generator_C_t()
 	,GRID_HEIGHT{ceil_div(static_cast<size_t>(height), GRID_BOX_DIM_ZU)}
 	,GRID_WIDTH{ceil_div(static_cast<size_t>(width/3), GRID_BOX_DIM_ZU)}
 {
+	noise.border_end = space_max.x*noise_pos_mult/3.0;
+	noise.border_beg = noise.border_end;
+	noise.border_beg -= CHUNK_DIM_F*noise_pos_mult*1.0;
+
 	new_seed();
 }
 
@@ -49,6 +53,12 @@ void generator_C_t::new_seed() {
 	seed_voronoi = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::system_clock::now().time_since_epoch()
 		).count() / 1;
+
+	noise.reseed(
+		std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now().time_since_epoch()
+		).count() / 1
+	);
 }
 
 void generator_C_t::generate_continents(std::mt19937 &gen) {
@@ -202,8 +212,8 @@ void generator_C_t::generate_grid_intersections() {
 			= [this] (const dvec2 &p) {
 				return tvec2<ll, highp>(
 						std::floor(
-							(p.x-space_max.x/3.0) / GRID_BOX_DIM_D),
-						std::floor(p.y / GRID_BOX_DIM_D)
+							(p.x-space_max.x/3.0) / GRID_BOX_DIM_F),
+						std::floor(p.y / GRID_BOX_DIM_F)
 					);
 			};
 		const auto calc_grid_constrains
@@ -256,7 +266,7 @@ void generator_C_t::generate_grid_intersections() {
 void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #define DRAW_GRID
 #ifdef DRAW_GRID
-	for (double x = 0; x <= space_max.x / 3.0; x += GRID_BOX_DIM_D) {
+	for (double x = 0; x <= space_max.x / 3.0; x += GRID_BOX_DIM_F) {
 		draw_edge(bitmap,
 				dvec2(x, 0),
 				dvec2(x, space_max.y),
@@ -270,7 +280,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 				dvec2(x+space_max.x*2/3.0, space_max.y),
 				0x424242);
 	}
-	for (double y = 0; y < space_max.y; y += GRID_BOX_DIM_D) {
+	for (double y = 0; y < space_max.y; y += GRID_BOX_DIM_F) {
 		draw_edge(bitmap,
 				dvec2(0, y),
 				dvec2(space_max.x, y),
@@ -318,7 +328,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 				= grid[y_grid][x_grid];
 			if (vec.size() == 0)
 				continue;
-			// assert(vec.size() > 0);
+			assert(vec.size() > 0);
 
 			voro_id_t closest_voro_id;
 			double closest_dist_sq = std::numeric_limits<double>::max();
@@ -346,14 +356,6 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			const voronoi_t &voro = diagram.voronois[closest_voro_id.id];
 			const double closest_voronoi_dist_sq = closest_dist_sq;
 			const dvec2 closest_voro_off
-				// = (
-				// 	edge.type == voronoi_t::edge_t::TO_LEFT ?
-				// 	-diagram.duplicate_off_vec :
-				// 	edge.type == voronoi_t::edge_t::TO_RIGHT ?
-				// 	diagram.duplicate_off_vec :
-				// 	dvec2(0)
-				// )
-				// + (
 				= (
 					closest_voro_id.type == voro_id_t::LEFT ?
 					-diagram.duplicate_off_vec :
@@ -363,16 +365,10 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 				);
 
 			std::size_t triangle_neighbor_edge_id = INVALID_ID;
-			// closest_dist_sq = std::numeric_limits<double>::max();
 			for (std::size_t i = 0;
 					i < voro.al.size(); ++i) {
 				const voronoi_t::edge_t &edge
 					= voro.al[i];
-
-				// const std::size_t voro_id = edge.neighbor_id;
-				// const dvec2 voro_center
-				// 	= diagram.voronois[voro_id].center
-				// 	+ closest_voro_off;
 
 				// beg <- p <- end
 				const dvec2 A
@@ -382,159 +378,176 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 					= (edge.end + closest_voro_off) - closest_voro_center;
 				const double det1 = determinant(C, B);
 				const double det2 = determinant(B, A);
-				// const double det1 = determinant(A, B);
-				// const double det2 = determinant(B, C);
 
 				if (det1 <= 0 && det2 <= 0) {
 					triangle_neighbor_edge_id = i;
 				}
-
-				// const double new_dist_sq
-				// 	= len_sq(p - voro_center);
-				// if (new_dist_sq < closest_dist_sq) {
-				// 	triangle_neighbor_id = voro_id;
-				// 	closest_dist_sq = new_dist_sq;
-				// 	triangle_neighbor_edge_id = i;
-				// }
 			}
 			assert(voro.clipped || triangle_neighbor_edge_id != INVALID_ID);
-			const voronoi_t::edge_t edge
-				= triangle_neighbor_edge_id == INVALID_ID
-				? voro.dummy_edge
-				: voro.al[triangle_neighbor_edge_id];
-			std::size_t triangle_neighbor_id = edge.neighbor_id;
 
-			uint32_t color;
-			// const double closest_neighbor_dist_sq = closest_dist_sq;
-			// color = COLORS[plates[closest_voro_id.id].type];
-			// if (plates[closest_voro_id.id].type
-			// 		!= plates[triangle_neighbor_id].type) {
-			// 	// Simple coast drawing
-			// 	color = COLORS[plate_t::COAST];
-
-			// 	double land_dist_sq;
-			// 	double water_dist_sq;
-			// 	land_dist_sq = closest_voronoi_dist_sq;
-			// 	water_dist_sq = closest_neighbor_dist_sq;
-			// 	if (plates[closest_voro_id.id].type == plate_t::WATER)
-			// 		std::swap(land_dist_sq, water_dist_sq);
-
-			// 	const double land_dist = std::sqrt(land_dist_sq);
-			// 	const double water_dist = std::sqrt(water_dist_sq);
-
-			// 	// Trying to calculate elevation between coast and terrain
-			// 	// color = lerp(COLORS[plate_t::WATER], COLORS[plate_t::LAND],
-			// 	// 		water_dist / (water_dist + land_dist));
-			// 	color = lerp(0xff, 0,
-			// 			water_dist / (water_dist + land_dist));
-			// 	color = color | (color << 8) | (color << 16);
-			// }
-
-			// Another elevation try
-			const auto [casted_edge_point, casted_edge_point_exists]
-				= intersect_lines(
-						p, closest_voro_center,
-						edge.beg, edge.end);
-
-			const double casted_point_dist
-				= casted_edge_point_exists ?
-				std::sqrt(len_sq(p - casted_edge_point)) :
-				1.0;
-			const double closest_voro_dist
-				= std::sqrt(closest_voronoi_dist_sq);
-
+			// Calculating elevation
 			plate_t::type_t pixel_type = plates[closest_voro_id.id].type;
 			double elevation = 0.0;
+			if (triangle_neighbor_edge_id != INVALID_ID) {
+				const voronoi_t::edge_t edge
+					= voro.al[triangle_neighbor_edge_id];
+				std::size_t triangle_neighbor_id = edge.neighbor_id;
 
-			plate_t::type_t prev_type = plate_t::NONE;
-			plate_t::type_t nxt_type  = plate_t::NONE;
-			{
-				std::size_t prev = triangle_neighbor_edge_id;
-				std::size_t nxt = triangle_neighbor_edge_id;
-				if (triangle_neighbor_edge_id == INVALID_ID) {
-					prev = voro.al.size()-1;
-					nxt = 0;
-				} else {
-					if (prev == 0) {
-						if (voro.clipped) prev = INVALID_ID;
-						else prev = voro.al.size()-1;
-					} else
-						--prev;
-					if (nxt == voro.al.size()-1) {
-						if (voro.clipped) nxt = INVALID_ID;
-						else nxt = 0;
-					} else ++nxt;
+				const auto [casted_edge_point, casted_edge_point_exists]
+					= intersect_lines(
+							p, closest_voro_center,
+							edge.beg + closest_voro_off,
+							edge.end + closest_voro_off);
+
+				const double casted_point_dist
+					= casted_edge_point_exists ?
+					std::sqrt(len_sq(p - casted_edge_point)) :
+					1.0;
+				const double closest_voro_dist
+					= std::sqrt(closest_voronoi_dist_sq);
+
+				plate_t::type_t prev_type = plate_t::NONE;
+				plate_t::type_t nxt_type  = plate_t::NONE;
+				{
+					std::size_t prev = triangle_neighbor_edge_id;
+					std::size_t nxt = triangle_neighbor_edge_id;
+					if (triangle_neighbor_edge_id == INVALID_ID) {
+						prev = voro.al.size()-1;
+						nxt = 0;
+					} else {
+						if (prev == 0) {
+							if (voro.clipped) prev = INVALID_ID;
+							else prev = voro.al.size()-1;
+						} else
+							--prev;
+						if (nxt == voro.al.size()-1) {
+							if (voro.clipped) nxt = INVALID_ID;
+							else nxt = 0;
+						} else ++nxt;
+					}
+
+					if (prev != INVALID_ID)
+						prev_type = plates[voro.al[prev].neighbor_id].type;
+					if (nxt != INVALID_ID)
+						nxt_type = plates[voro.al[nxt].neighbor_id].type;
 				}
 
-				if (prev != INVALID_ID)
-					prev_type = plates[voro.al[prev].neighbor_id].type;
-				if (nxt != INVALID_ID)
-					nxt_type = plates[voro.al[nxt].neighbor_id].type;
-			}
-
-			if (plates[closest_voro_id.id].type
+				if (plates[closest_voro_id.id].type
 					!= plates[triangle_neighbor_id].type
 					// && plates[closest_voro_id.id].type == plate_t::LAND
-			) {
-				elevation
-					= casted_point_dist
-					/ (casted_point_dist + closest_voro_dist);
-				if (elevation <= 1.0)
-					pixel_type = plate_t::COAST;
-			} else if (
+				) {
+					elevation
+						= casted_point_dist
+						/ (casted_point_dist + closest_voro_dist);
+					if (elevation <= 1.0)
+						pixel_type = plate_t::COAST;
+				} else if (
 					(prev_type != plate_t::NONE || nxt_type != plate_t::NONE)
 					// && plates[closest_voro_id.id].type == plate_t::LAND
-			) {
-				const double det = determinant(
-					edge.to_mid,
-					p - closest_voro_center);
-				elevation
-					= 1.0 - std::abs(det) * 2.0
-					/ edge.to_mid_len / edge.voro_edge_len;
-				if (
-					(
-						prev_type != plate_t::NONE &&
-						plates[closest_voro_id.id].type
-						!= prev_type &&
-						det <= 0
-					) ||
-					(
-						nxt_type != plate_t::NONE &&
-						plates[closest_voro_id.id].type
-						!= nxt_type &&
-						det >= 0
+				) {
+					const double det = determinant(
+						edge.to_mid,
+						p - closest_voro_center);
+					elevation
+						= 1.0 - std::abs(det) * 2.0
+						/ edge.to_mid_len / edge.voro_edge_len;
+					if (
+						(
+							prev_type != plate_t::NONE &&
+							plates[closest_voro_id.id].type
+							!= prev_type &&
+							det <= 0
+						) ||
+						(
+							nxt_type != plate_t::NONE &&
+							plates[closest_voro_id.id].type
+							!= nxt_type &&
+							det >= 0
+						)
 					)
-				)
-					pixel_type = plate_t::COAST;
-			}
+						pixel_type = plate_t::COAST;
+				}
 
-			if (debug_vals[1] % 2 == 1) {
-				pixel_type = plate_t::COAST;
-				elevation
-					= casted_point_dist
-					/ (casted_point_dist + closest_voro_dist);
-			}
+				if (plates[closest_voro_id.id].type == plate_t::LAND) {
+					elevation /= 2.0;
+					elevation += 0.5;
+				} else {
+					elevation = 1.0 - elevation;
+					elevation /= 2.0;
+				}
+				if (pixel_type == plate_t::COAST) {
+					constexpr double A = 0.2;
+					constexpr double B = 0.9;
+					if (elevation <= A)
+						pixel_type = plate_t::WATER;
+					if (elevation >= B)
+						pixel_type = plate_t::LAND;
+					elevation -= A;
+					elevation /= (B-A);
+				}
 
-			if (plates[closest_voro_id.id].type == plate_t::LAND) {
-				elevation /= 2.0;
-				elevation += 0.5;
+				// if (debug_vals[1] % 2 == 1) {
+				// 	pixel_type = plate_t::COAST;
+				// 	elevation
+				// 		= casted_point_dist
+				// 		/ (casted_point_dist + closest_voro_dist);
+				// }
 			} else {
-				elevation = 1.0 - elevation;
-				elevation /= 2.0;
+				elevation = 0;
 			}
-			if (pixel_type == plate_t::COAST) {
-				if (elevation <= 0.2)
-					pixel_type = plate_t::WATER;
-				if (elevation >= 0.7)
-					pixel_type = plate_t::LAND;
+
+			if (pixel_type == plate_t::WATER)
+				elevation = 0;
+			else if (pixel_type == plate_t::LAND)
+				elevation = 1;
+
+			uint32_t color;
+			double noise_val = noise.octave2D_01(
+				(p.x-space_max.x/3) * noise_pos_mult,
+				p.y * noise_pos_mult,
+				16);
+			// noise_val *= 0.5;
+			// noise_val += 0.5;
+			// elevation *= noise_val;
+
+			elevation = 0.2 + 0.8*elevation;
+			{
+				const double x = elevation;
+				const double xx = x*x;
+				const double xxx = xx*x;
+				elevation = (-3.0*xxx + 4.0*xx + x) / 2.0;
+
+				// elevation = 1.0 - elevation;
+				// elevation = elevation*elevation ; // *elevation;
+				// elevation = 1.0 - elevation;
 			}
-			if (pixel_type == plate_t::COAST) {
+			elevation = elevation * 0.5 * (1.0 + noise_val);
+
+			{
+				assert(in_between_inclusive(0.0, 1.0, elevation));
+
 				color = lerp(0, 0xff, elevation);
+				// color = lerp(0xff, 0, elevation);
 				color = color | (color << 8) | (color << 16);
-				// color = COLORS[plate_t::COAST];
-			} else {
-				color = COLORS[pixel_type];
+
+				color = hsv_to_rgb(
+					elevation * 240.0 / 360.0, 0.6, 0.8);
+
+				// color = hsv_to_rgb(
+				// 	debug_vals[0]*60.0 / 360.0, 0.5, 0.8);
 			}
+
+			// if (pixel_type == plate_t::COAST) {
+			// 	color = lerp(0xff, 0, elevation);
+			// 	color = color | (color << 8) | (color << 16);
+			// 	// color = COLORS[plate_t::COAST];
+			// } else {
+			// 	if (pixel_type == plate_t::WATER)
+			// 		color = 0xffffff;
+			// 	else
+			// 		color = 0;
+			// 	// color = COLORS[pixel_type];
+			// }
 
 			// // Quite nice looking mosaic
 			// // (use 0 key to switch between two modes)
@@ -542,7 +555,15 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			// 	(debug_vals[1] % 2) ? triangle_neighbor_id : closest_voro_id.id
 			// ].debug_color;
 
-			bitmap.set(y, x+width/3, color);
+			if (debug_vals[1] % 2 == 1) {
+				// PRINT_F(noise_val);
+				color = lerp(0xff, 0, noise_val);
+				color = color | (color << 8) | (color << 16);
+			}
+
+			bitmap.set(y, x+width*0/3, color);
+			bitmap.set(y, x+width*1/3, color);
+			bitmap.set(y, x+width*2/3, color);
 		}
 	}
 #endif
@@ -677,7 +698,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #endif
 #undef FLOOD_FILL
 
-#define DRAW_SPACE_CYCLIC_BORDER
+// #define DRAW_SPACE_CYCLIC_BORDER
 #ifdef DRAW_SPACE_CYCLIC_BORDER
 	draw_edge(bitmap,
 			dvec2(space_max.x * 1.0 / 3.0, 0),

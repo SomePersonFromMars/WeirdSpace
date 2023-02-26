@@ -627,25 +627,6 @@ void voronoi_diagram_t::generate() {
 			for (const reduced_edge_t &e : red_edges)
 				voronoi.points.push_back(e.beg);
 		}
-
-		// Add a dummy edge, if voronoi is clipped
-		if (voronoi.clipped) {
-			voronoi_t::edge_t &edge = voronoi.dummy_edge;
-			edge.neighbor_id = voronoi_id; // Edge to itself
-			edge.smaller_half_edge_id = INVALID_ID;
-			edge.visible = false;
-			edge.type = voronoi_t::edge_t::NONE;
-			edge.quad_top.x = NAN;
-			edge.quad_top.y = NAN;
-			edge.quad_bottom.x = NAN;
-			edge.quad_bottom.y = NAN;
-			edge.beg = voronoi.points.back();
-			edge.end = voronoi.points.front();
-			edge.tri_edge_len = NAN;
-			edge.voro_edge_len = std::sqrt(len_sq(edge.end - edge.beg));
-			edge.to_mid = (edge.beg + edge.end) / 2.0 - voronoi.center;
-			edge.to_mid_len = std::sqrt(len_sq(edge.to_mid));
-		}
 	}
 }
 

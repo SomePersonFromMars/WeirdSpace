@@ -163,7 +163,7 @@ private:
 	static constexpr std::size_t super_voro_cnt = std::min<std::size_t>(
 			40, voro_cnt);
 	static constexpr double GRID_BOX_DIM_ZU = CHUNK_DIM/4;
-	const double GRID_BOX_DIM_D
+	const double GRID_BOX_DIM_F
 		= static_cast<double>(GRID_BOX_DIM_ZU)
 		* space_max.y / static_cast<double>(height);
 	const std::size_t GRID_HEIGHT;
@@ -173,6 +173,12 @@ private:
 	voronoi_diagram_t diagram;
 	std::vector<plate_t> plates;
 	std::vector<glm::dvec2> tour_path_points;
+
+	const double CHUNK_DIM_F
+		= static_cast<double>(CHUNK_DIM)
+		* space_max.y / static_cast<double>(height);
+	const double noise_pos_mult = 1.0/double(CHUNK_DIM_F)*2.0;
+	cyclic_noise_t noise;
 };
 
 inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) {

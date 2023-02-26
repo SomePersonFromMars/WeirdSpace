@@ -1,5 +1,6 @@
 #include "noise.hpp"
 
+#include <cmath>
 #include "useful.hpp"
 
 double cyclic_noise_t::octave2D_01(double x, double y, int octaves,

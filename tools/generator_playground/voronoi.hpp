@@ -44,8 +44,6 @@ struct voronoi_t {
 	// If `clipped` is false, first and last neighbors are mutually neighbors.
 	// Ie. al is cyclic.
 	std::vector<edge_t> al;
-	// Dummy edge is sometimes useful if voronoi is clipped.
-	edge_t dummy_edge;
 	bool clipped = false;
 
 private:

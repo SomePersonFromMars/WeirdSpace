@@ -3,7 +3,6 @@
 #define NOISE_HPP
 
 #include <perlin_noise.hpp>
-#include <cmath>
 
 struct cyclic_noise_t {
 	using seed_type = siv::PerlinNoise::seed_type;
