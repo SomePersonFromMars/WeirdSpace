@@ -11,6 +11,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include "useful.hpp"
 #include "settings.hpp"
 
@@ -125,6 +129,26 @@ int32_t main(void) {
 	glfwSetWindowSizeCallback(window, window_size_callback);
 	glfwSetKeyCallback(window, key_callback);
 
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsLight();
+	ImGui::GetIO().FontGlobalScale = 2.0f;
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 130");
+
+	// Imgui state
+	bool show_demo_window = true;
+	bool show_another_window = false;
+	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
 	const auto background_color = color_hex_to_vec3(0);
 	glClearColor(background_color.x, background_color.y, background_color.z,
 			0.0f);
@@ -160,15 +184,62 @@ int32_t main(void) {
 		const auto frame_end_time
 			= frame_beg_time + frame_min_duration;
 
+		// Start the Dear ImGui frame
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		// 1. Show the big demo window
+		// (Most of the sample code is in ImGui::ShowDemoWindow()! You can
+		// browse its code to learn more about Dear ImGui!).
+		if (show_demo_window)
+			ImGui::ShowDemoWindow(&show_demo_window);
+
+		// 2. Show a simple window that we create ourselves.
+		// We use a Begin/End pair to create a named window.
+		{
+			static float f = 0.0f;
+			static int counter = 0;
+
+			ImGui::Begin("Hello, world!");
+
+			ImGui::Text("This is some useful text.");
+			ImGui::Checkbox("Demo Window", &show_demo_window);
+			ImGui::Checkbox("Another Window", &show_another_window);
+
+			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+			ImGui::ColorEdit3("clear color", (float*)&clear_color);
+
+			if (ImGui::Button("Button"))
+				counter++;
+			ImGui::SameLine();
+			ImGui::Text("counter = %d", counter);
+
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+					1000.0f / ImGui::GetIO().Framerate,
+					ImGui::GetIO().Framerate);
+			ImGui::End();
+		}
+
+		// 3. Show another simple window.
+		if (show_another_window)
+		{
+			ImGui::Begin("Another Window", &show_another_window);
+			ImGui::Text("Hello from another window!");
+			if (ImGui::Button("Close Me"))
+				show_another_window = false;
+			ImGui::End();
+		}
+
 		if (callbacksk_strct.refresh_required) {
 			callbacksk_strct.refresh_required = false;
 			generator->generate_bitmap(bitmapA, resolution_div);
 			bitmapA.load_to_texture();
 		}
 
-		if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
-			glfwSetWindowShouldClose(window, GLFW_TRUE);
-		}
+		// if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
+		// 	glfwSetWindowShouldClose(window, GLFW_TRUE);
+		// }
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 			generator->new_seed();
 			generator->generate_bitmap(bitmapA, resolution_div);
@@ -306,6 +377,10 @@ int32_t main(void) {
 		// 	line.draw(MVP);
 		// }
 
+		// Rendering
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 		// double fps_cnt;
 		{ // FPS cnter
 			const double now = glfwGetTime();
@@ -330,6 +405,12 @@ int32_t main(void) {
 		std::this_thread::sleep_until(frame_end_time);
 	}
 
+	// Cleanup
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	glfwDestroyWindow(window);
 	glfwTerminate();
 	return EXIT_SUCCESS;
 }

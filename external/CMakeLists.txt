@@ -12,7 +12,6 @@ add_definitions(
 )
 
 ### GLFW ###
-
 add_subdirectory (glfw-3.3.7)
 
 include_directories(
@@ -36,14 +35,12 @@ set(OPENGL_LIBRARY
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 ### GLEW ###
-
 set(GLEW_SOURCE
 	glew-1.13.0/src/glew.c
 )
 
 set(GLEW_HEADERS
 )
-
 
 add_library( GLEW_1130 STATIC
 	${GLEW_SOURCE}
@@ -58,4 +55,23 @@ target_link_libraries(GLEW_1130
 ### Delaunator-cpp ###
 add_library(delaunator-cpp STATIC
 	delaunator-cpp/src/delaunator.cpp
+)
+
+### Dear ImGui ###
+include_directories(
+	imgui/
+	imgui/backends/
+)
+add_library(imgui STATIC
+	imgui/imgui.cpp
+	imgui/imgui_demo.cpp
+	imgui/imgui_draw.cpp
+	imgui/imgui_tables.cpp
+	imgui/imgui_widgets.cpp
+	imgui/backends/imgui_impl_glfw.cpp
+	imgui/backends/imgui_impl_opengl3.cpp
+)
+target_link_libraries(imgui
+	${OPENGL_LIBRARY}
+	glfw
 )

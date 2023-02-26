@@ -22,4 +22,9 @@
 // size compared to the chunk dimensions.
 #define CHUNK_DIM 64
 
+#include <cstddef>
+
+struct settings_t {
+};
+
 #endif
