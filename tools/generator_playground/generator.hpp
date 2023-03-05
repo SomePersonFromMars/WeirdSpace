@@ -18,22 +18,9 @@ struct generator_t {
 	generator_t();
 	virtual void new_seed() = 0;
 	virtual void generate_bitmap(bitmap_t &bitmap, int resolution_div) = 0;
+	virtual void load_settings() = 0;
 
-	std::size_t debug_vals[2] = {
-		7,
-		0
-	};
-	// 84
-	// 98
-	// 109
-	// 116
-	// 122
-	// 84
-	// 16
-	// 3
-	// 109
-	// 11
-	// 72
+	std::size_t * const debug_vals = global_settings.debug_vals;
 
 protected:
 	const int &width, &height;
@@ -71,6 +58,7 @@ struct generator_A_t : generator_t {
 	virtual void new_seed() override;
 	virtual void generate_bitmap(bitmap_t &bitmap,
 			int resolution_div) override;
+	virtual void load_settings() override;
 
 private:
 
@@ -85,6 +73,7 @@ struct generator_B_t : generator_t {
 	virtual void new_seed() override;
 	virtual void generate_bitmap(bitmap_t &bitmap,
 			int resolution_div) override;
+	virtual void load_settings() override;
 
 private:
 	std::mt19937::result_type seed_voronoi;
@@ -129,6 +118,7 @@ struct generator_C_t : generator_t {
 	virtual void new_seed() override;
 	virtual void generate_bitmap(bitmap_t &bitmap,
 			int resolution_div) override;
+	virtual void load_settings() override;
 
 	std::pair<glm::dvec2, glm::dvec2> get_tour_path_points(const double off);
 
@@ -159,9 +149,8 @@ private:
 		0xfcf04b, // COAST
 	};
 
-	static constexpr std::size_t voro_cnt = 240;
-	static constexpr std::size_t super_voro_cnt = std::min<std::size_t>(
-			40, voro_cnt);
+	std::size_t voro_cnt;
+	std::size_t super_voro_cnt;
 	static constexpr double GRID_BOX_DIM_ZU = CHUNK_DIM/4;
 	const double GRID_BOX_DIM_F
 		= static_cast<double>(GRID_BOX_DIM_ZU)

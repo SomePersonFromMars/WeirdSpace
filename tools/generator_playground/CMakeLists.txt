@@ -2,6 +2,7 @@
 # World generator playground
 add_executable(generator_playground
 	generator_playground.cpp
+	settings.cpp
 	useful.cpp
 	geometry.cpp
 	shader_loader.cpp

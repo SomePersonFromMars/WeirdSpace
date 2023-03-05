@@ -24,7 +24,24 @@
 
 #include <cstddef>
 
-struct settings_t {
-};
+extern struct settings_t {
+#define FIELD(T, name, val, min, max) \
+	T name = val; \
+	static constexpr T name##_min = min; \
+	static constexpr T name##_max = max;
+
+	FIELD(std::size_t, voro_cnt       , 240, 3, 240*2)
+	FIELD(std::size_t, super_voro_cnt , 80,  3, 240*2)
+	size_t debug_vals[2] {
+		7,
+		0
+	};
+
+#undef FIELD
+
+	static constexpr char settings_file_path[] = "runtime/settings.txt";
+	void save_settings_to_file();
+	void load_settings_from_file();
+} global_settings;
 
 #endif

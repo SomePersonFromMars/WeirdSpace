@@ -61,14 +61,12 @@ void key_callback(GLFWwindow* window,
 			strct_ptr->refresh_required = true;
 		}
 	}
-	if (key == GLFW_KEY_0 && action == GLFW_PRESS) {
-		// PRINT_ZU(++strct_ptr->generator->debug_vals[1]);
+	if (key == GLFW_KEY_P && action == GLFW_PRESS) {
 		++strct_ptr->generator->debug_vals[1];
 		strct_ptr->refresh_required = true;
 	}
-	if (key == GLFW_KEY_9 && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_O && action == GLFW_PRESS) {
 		if (strct_ptr->generator->debug_vals[1] != 0) {
-			// PRINT_ZU(--strct_ptr->generator->debug_vals[1]);
 			--strct_ptr->generator->debug_vals[1];
 			strct_ptr->refresh_required = true;
 		}
@@ -137,7 +135,6 @@ int32_t main(void) {
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsLight();
 	ImGui::GetIO().FontGlobalScale = 2.0f;
 
 	// Setup Platform/Renderer backends
@@ -148,6 +145,8 @@ int32_t main(void) {
 	bool show_demo_window = true;
 	bool show_another_window = false;
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+	global_settings.load_settings_from_file();
 
 	const auto background_color = color_hex_to_vec3(0);
 	glClearColor(background_color.x, background_color.y, background_color.z,
@@ -163,6 +162,19 @@ int32_t main(void) {
 	generator_C.generate_bitmap(bitmapA, resolution_div);
 	generator->generate_bitmap(bitmapA, resolution_div);
 	bitmapA.load_to_texture();
+
+	const auto soft_reload_procedure
+		= [&generator, &bitmapA, &resolution_div]() {
+		generator->generate_bitmap(bitmapA, resolution_div);
+		bitmapA.load_to_texture();
+	};
+
+	const auto reload_procedure = [&generator, &bitmapA, &resolution_div]() {
+		generator->load_settings();
+		generator->new_seed();
+		generator->generate_bitmap(bitmapA, resolution_div);
+		bitmapA.load_to_texture();
+	};
 
 	line_t line;
 	double line_off = 0;
@@ -188,6 +200,36 @@ int32_t main(void) {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		// Debug window
+		{
+			if (ImGui::Button("Save"))
+				global_settings.save_settings_to_file();
+			if (ImGui::Button("Load"))
+				global_settings.load_settings_from_file();
+			if (ImGui::Button("Reload"))
+				reload_procedure();
+			if (ImGui::Button("Soft reload"))
+				soft_reload_procedure();
+
+			constexpr std::size_t size_t_step = 1;
+			ImGui::InputScalar("debug_vals[0]", ImGuiDataType_U64,
+				&global_settings.debug_vals[0], &size_t_step);
+			ImGui::InputScalar("debug_vals[1]", ImGuiDataType_U64,
+				&global_settings.debug_vals[1], &size_t_step);
+
+			ImGui::DragScalar("voro_cnt", ImGuiDataType_U64,
+				&global_settings.voro_cnt,
+				1.0f,
+				&global_settings.voro_cnt_min,
+				&global_settings.voro_cnt_max);
+
+			ImGui::DragScalar("super_voro_cnt", ImGuiDataType_U64,
+				&global_settings.super_voro_cnt,
+				1.0f,
+				&global_settings.super_voro_cnt_min,
+				&global_settings.super_voro_cnt_max);
+		}
 
 		// 1. Show the big demo window
 		// (Most of the sample code is in ImGui::ShowDemoWindow()! You can
@@ -233,17 +275,11 @@ int32_t main(void) {
 
 		if (callbacksk_strct.refresh_required) {
 			callbacksk_strct.refresh_required = false;
-			generator->generate_bitmap(bitmapA, resolution_div);
-			bitmapA.load_to_texture();
+			soft_reload_procedure();
 		}
 
-		// if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
-		// 	glfwSetWindowShouldClose(window, GLFW_TRUE);
-		// }
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-			generator->new_seed();
-			generator->generate_bitmap(bitmapA, resolution_div);
-			bitmapA.load_to_texture();
+			reload_procedure();
 		}
 		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
 			camera_pos = vec3(0);
@@ -409,6 +445,8 @@ int32_t main(void) {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+
+	global_settings.save_settings_to_file();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();

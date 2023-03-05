@@ -35,7 +35,11 @@ generator_A_t::generator_A_t()
 	noise.border_beg = noise.border_end;
 	noise.border_beg -= double(CHUNK_DIM)*noise_pos_mult*0.1;
 
+	load_settings();
 	new_seed();
+}
+
+void generator_A_t::load_settings() {
 }
 
 void generator_A_t::new_seed() {
@@ -133,7 +137,11 @@ void generator_A_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 generator_B_t::generator_B_t()
 	:generator_t()
 {
+	load_settings();
 	new_seed();
+}
+
+void generator_B_t::load_settings() {
 }
 
 void generator_B_t::new_seed() {

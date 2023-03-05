@@ -42,11 +42,18 @@ generator_C_t::generator_C_t()
 	,GRID_HEIGHT{ceil_div(static_cast<size_t>(height), GRID_BOX_DIM_ZU)}
 	,GRID_WIDTH{ceil_div(static_cast<size_t>(width/3), GRID_BOX_DIM_ZU)}
 {
+	load_settings();
+
 	noise.border_end = space_max.x*noise_pos_mult/3.0;
 	noise.border_beg = noise.border_end;
 	noise.border_beg -= CHUNK_DIM_F*noise_pos_mult*1.0;
 
 	new_seed();
+}
+
+void generator_C_t::load_settings() {
+	voro_cnt = global_settings.voro_cnt;
+	super_voro_cnt = std::min(voro_cnt, global_settings.super_voro_cnt);
 }
 
 void generator_C_t::new_seed() {
