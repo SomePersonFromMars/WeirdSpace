@@ -87,29 +87,29 @@ int32_t main(void) {
 		}
 	}
 	// // World end border
-	// {
-	// 	chunk_t &first_chunk = world_buffer.chunks[glm::ivec2(0, 0)];
-	// 	chunk_t &last_chunk = world_buffer.chunks[glm::ivec2(
-	// 			world_buffer.width-1, 0)];
-	// 	for (int x = 0; x < 1; ++x)
-	// 		for (int y = 60; y < chunk_t::HEIGHT; ++y)
-	// 			for (int z = 3; z < chunk_t::DEPTH; ++z) {
-	// 				int _x = x;
-	// 				if (first_chunk.content[_x][y][z] == block_type::none)
-	// 					first_chunk.content[_x][y][z] = block_type::brick;
+	{
+		chunk_t &first_chunk = world_buffer.chunks[glm::ivec2(0, 0)];
+		chunk_t &last_chunk = world_buffer.chunks[glm::ivec2(
+				world_buffer.width-1, 0)];
+		for (int x = 0; x < 1; ++x)
+			for (int y = 60; y < chunk_t::HEIGHT; ++y)
+				for (int z = 3; z < chunk_t::DEPTH; ++z) {
+					int _x = x;
+					if (first_chunk.content[_x][y][z] == block_type::none)
+						first_chunk.content[_x][y][z] = block_type::brick;
 
-	// 				_x = chunk_t::WIDTH-1-x;
-	// 				if (last_chunk.content[_x][y][z] == block_type::none)
-	// 					last_chunk.content[_x][y][z] = block_type::brick;
-	// 			}
-	// }
-	// for (int z = 1; z <= 2; ++z)
-	// 	for (int x = 142; x >= 140; --x)
-	// 		for (int y = 19; y <= 30; ++y)
-	// 			world_buffer.get(glm::ivec3(x, y, z)) = block_type::brick;
-	// for (int x = 142; x >= 140; --x)
-	// 	for (int y = 19; y <= 22; ++y)
-	// 		world_buffer.get(glm::ivec3(x, y, 0)) = block_type::brick;
+					_x = chunk_t::WIDTH-1-x;
+					if (last_chunk.content[_x][y][z] == block_type::none)
+						last_chunk.content[_x][y][z] = block_type::brick;
+				}
+	}
+	for (int z = 1; z <= 2; ++z)
+		for (int x = 142; x >= 140; --x)
+			for (int y = 19; y <= 30; ++y)
+				world_buffer.get(glm::ivec3(x, y, z)) = block_type::brick;
+	for (int x = 142; x >= 140; --x)
+		for (int y = 19; y <= 22; ++y)
+			world_buffer.get(glm::ivec3(x, y, 0)) = block_type::brick;
 
 	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
 		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
@@ -142,7 +142,8 @@ int32_t main(void) {
 	player.set_position(player.debug_position);
 	player.init();
 
-	camera_t camera(glm::vec3(34.878933, 79.936882, -19.364670),
+	// camera_t camera(glm::vec3(34.878933, 79.936882, -19.364670),
+	camera_t camera(glm::vec3(142.284409, 29.795422, -4.808842),
 			// 2*PI, 6.0f,
 			5.851774, 5.900709,
 			90.0f);
