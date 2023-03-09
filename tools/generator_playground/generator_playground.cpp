@@ -196,6 +196,54 @@ int32_t main(void) {
 		const auto frame_end_time
 			= frame_beg_time + frame_min_duration;
 
+		// Calculate MVP for bitmap
+		mat4 MVPb(1);
+		{
+			MVPb = scale(MVPb, vec3(camera_zoom));
+			MVPb = scale(
+				MVPb, vec3(1, float(window_width)/float(window_height), 1));
+
+			MVPb = translate(MVPb, -camera_pos *
+					vec3(1, float(window_width)/float(window_height), 1)
+				);
+
+			MVPb = scale(MVPb,
+					vec3(1, float(bitmapA.HEIGHT)/float(bitmapA.WIDTH), 1));
+		}
+
+		// Calculate pixel pointed by mouse cursor
+		vec3 mp;
+		{
+			double xpos, ypos;
+			glfwGetCursorPos(window, &xpos, &ypos);
+			xpos /= (double)window_width;
+			ypos /= (double)window_height;
+			// ypos = 1.0 - ypos;
+			xpos *= 2.0;
+			ypos *= 2.0;
+			xpos -= 1.0;
+			ypos -= 1.0;
+
+			mp = vec3(xpos, ypos, 0);
+			mp /= camera_zoom;
+			mp.y /= float(window_width)/float(window_height);
+			mp -= -camera_pos * vec3(1, float(window_width)/float(window_height), 1);
+			mp.y /= float(bitmapA.HEIGHT)/float(bitmapA.WIDTH);
+
+			mp.x += 1.0;
+			mp.y += 1.0;
+			mp.x /= 2.0;
+			mp.y /= 2.0;
+			mp.x *= float(bitmapA.WIDTH);
+			mp.y *= float(bitmapA.HEIGHT);
+			mp.x = max(mp.x, 0.0f);
+			mp.y = max(mp.y, 0.0f);
+			mp.x = min(mp.x, float(bitmapA.WIDTH-1));
+			mp.y = min(mp.y, float(bitmapA.HEIGHT-1));
+
+			mp.x -= float(bitmapA.WIDTH/3);
+		}
+
 		// Start the Dear ImGui frame
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -229,6 +277,26 @@ int32_t main(void) {
 				1.0f,
 				&global_settings.super_voro_cnt_min,
 				&global_settings.super_voro_cnt_max);
+
+			ImGui::Checkbox("draw_mid_polygons",
+				&global_settings.draw_mid_polygons);
+
+			ImGui::Checkbox("enable_breakpoints",
+				&enable_breakpoints);
+
+			ImGui::DragScalar("replace_seed", ImGuiDataType_U64,
+				&global_settings.replace_seed,
+				1.0f,
+				&global_settings.replace_seed_min,
+				&global_settings.replace_seed_max);
+
+			ImGui::NewLine();
+			ImGui::Separator();
+			ImGui::NewLine();
+
+			ImGui::Text("World cursor pos: {%f, %f}", mp.x, mp.y);
+			ImGui::Text("Window dimensions: {%d, %d}",
+				window_width, window_height);
 		}
 
 		// 1. Show the big demo window
@@ -353,27 +421,10 @@ int32_t main(void) {
 
 		// Drawing the bitmap
 		{
-			mat4 MVP(1);
-			MVP = scale(MVP, vec3(camera_zoom));
-			bool enable_dualbitmap = false;
-			MVP = scale(MVP, vec3(1, float(window_width)/float(window_height), 1));
-			if (enable_dualbitmap) {
-				MVP = scale(MVP, vec3(0.5, 0.5, 1));
-			}
-			MVP = translate(MVP, -camera_pos *
-					vec3(1, float(window_width)/float(window_height), 1)
-				);
-			MVP = scale(MVP,
-					vec3(1, float(bitmapA.HEIGHT)/float(bitmapA.WIDTH), 1));
-			if (!enable_dualbitmap) {
-				bitmapA.draw(MVP);
-			} else {
-				MVP = translate(MVP, vec3(-1, 0, 0));
-				bitmapA.draw(MVP);
-
-				MVP = translate(MVP, vec3(2, 0, 0));
-				bitmapA.draw(MVP);
-			}
+			// bitmapA.set(mp.y, mp.x + bitmapA.WIDTH/3, 0xff0000);
+			// bitmapA.set(85, 135 + bitmapA.WIDTH/3, 0xff0000);
+			// bitmapA.load_to_texture();
+			bitmapA.draw(MVPb);
 		}
 
 		// // Drawing the line (player)

@@ -47,7 +47,7 @@ uint32_t hsv_to_rgb(float h, float s, float v) {
 	glm::u32vec3 result {r * 255.0f, g * 255.0f, b * 255.0f};
 	result &= 0xff;
 	return
-		(result.r << 0 ) |
+		(result.b << 0 ) |
 		(result.g << 8 ) |
-		(result.b << 16);
+		(result.r << 16);
 }

@@ -57,15 +57,14 @@ void generator_C_t::load_settings() {
 }
 
 void generator_C_t::new_seed() {
-	seed_voronoi = std::chrono::duration_cast<std::chrono::milliseconds>(
+	auto nseed = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::system_clock::now().time_since_epoch()
 		).count() / 1;
+	if (global_settings.replace_seed != 0)
+		nseed = global_settings.replace_seed;
 
-	noise.reseed(
-		std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::system_clock::now().time_since_epoch()
-		).count() / 1
-	);
+	seed_voronoi = nseed;
+	noise.reseed(nseed);
 }
 
 void generator_C_t::generate_continents(std::mt19937 &gen) {
@@ -333,6 +332,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			const std::size_t y_grid = y / GRID_BOX_DIM_ZU;
 			const std::vector<voro_id_t> vec
 				= grid[y_grid][x_grid];
+
 			if (vec.size() == 0)
 				continue;
 			assert(vec.size() > 0);
@@ -395,6 +395,9 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			// Calculating elevation
 			plate_t::type_t pixel_type = plates[closest_voro_id.id].type;
 			double elevation = 0.0;
+
+			BREAKPOINT_IF(x == 135 && y == 85);
+
 			if (triangle_neighbor_edge_id != INVALID_ID) {
 				const voronoi_t::edge_t edge
 					= voro.al[triangle_neighbor_edge_id];
@@ -517,18 +520,18 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			// noise_val += 0.5;
 			// elevation *= noise_val;
 
-			elevation = 0.2 + 0.8*elevation;
-			{
-				const double x = elevation;
-				const double xx = x*x;
-				const double xxx = xx*x;
-				elevation = (-3.0*xxx + 4.0*xx + x) / 2.0;
+			// elevation = 0.2 + 0.8*elevation;
+			// {
+			// 	const double x = elevation;
+			// 	const double xx = x*x;
+			// 	const double xxx = xx*x;
+			// 	elevation = (-3.0*xxx + 4.0*xx + x) / 2.0;
 
-				// elevation = 1.0 - elevation;
-				// elevation = elevation*elevation ; // *elevation;
-				// elevation = 1.0 - elevation;
-			}
-			elevation = elevation * 0.5 * (1.0 + noise_val);
+			// 	// elevation = 1.0 - elevation;
+			// 	// elevation = elevation*elevation ; // *elevation;
+			// 	// elevation = 1.0 - elevation;
+			// }
+			// elevation = elevation * 0.5 * (1.0 + noise_val);
 
 			{
 				assert(in_between_inclusive(0.0, 1.0, elevation));
@@ -538,7 +541,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 				color = color | (color << 8) | (color << 16);
 
 				color = hsv_to_rgb(
-					elevation * 240.0 / 360.0, 0.6, 0.8);
+					(1.0 - elevation) * 240.0 / 360.0, 0.6, 0.8);
 
 				// color = hsv_to_rgb(
 				// 	debug_vals[0]*60.0 / 360.0, 0.5, 0.8);
@@ -562,11 +565,11 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			// 	(debug_vals[1] % 2) ? triangle_neighbor_id : closest_voro_id.id
 			// ].debug_color;
 
-			if (debug_vals[1] % 2 == 1) {
-				// PRINT_F(noise_val);
-				color = lerp(0xff, 0, noise_val);
-				color = color | (color << 8) | (color << 16);
-			}
+			// if (debug_vals[1] % 2 == 1) {
+			// 	// PRINT_F(noise_val);
+			// 	color = lerp(0xff, 0, noise_val);
+			// 	color = color | (color << 8) | (color << 16);
+			// }
 
 			bitmap.set(y, x+width*0/3, color);
 			bitmap.set(y, x+width*1/3, color);
@@ -588,11 +591,12 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 // #define DRAW_NOISY
 #ifndef DRAW_NOISY
 		for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
-			// draw_edge(bitmap,
-			// 		voronoi.points[j],
-			// 		voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
-			// 		// color, true);
-			// 		override_color, false);
+			if (global_settings.draw_mid_polygons)
+				draw_edge(bitmap,
+						voronoi.points[j],
+						voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
+						// color, true);
+						override_color, false);
 
 			draw_edge(bitmap,
 					voronoi.points[j]
@@ -685,7 +689,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 	// 	draw_voronoi(i);
 	// }
 
-	// draw_voronoi(debug_vals[0], 0);
+	draw_voronoi(debug_vals[1], 0);
 #endif
 #undef DRAW_POLYGONS
 

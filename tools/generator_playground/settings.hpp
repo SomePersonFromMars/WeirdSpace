@@ -23,6 +23,7 @@
 #define CHUNK_DIM 64
 
 #include <cstddef>
+#include <climits>
 
 extern struct settings_t {
 #define FIELD(T, name, val, min, max) \
@@ -30,8 +31,10 @@ extern struct settings_t {
 	static constexpr T name##_min = min; \
 	static constexpr T name##_max = max;
 
-	FIELD(std::size_t, voro_cnt       , 240, 3, 240*2)
-	FIELD(std::size_t, super_voro_cnt , 80,  3, 240*2)
+	FIELD(std::size_t, voro_cnt          , 240, 3, 240*2)
+	FIELD(std::size_t, super_voro_cnt    , 80,  3, 240*2)
+	FIELD(bool,        draw_mid_polygons , false, 0, 1)
+	FIELD(std::size_t, replace_seed      , 0,   0, ULLONG_MAX)
 	size_t debug_vals[2] {
 		7,
 		0
