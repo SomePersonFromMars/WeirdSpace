@@ -1,7 +1,7 @@
-voro_cnt 13
+voro_cnt 141
 super_voro_cnt 480
-debug_vals[0] 7
-debug_vals[1] 1
-replace_seed 1678378122336
-draw_mid_polygons 1
+debug_vals[0] 8
+debug_vals[1] 0
+replace_seed 0
+draw_mid_polygons 0
 enable_breakpoints 0

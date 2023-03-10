@@ -555,13 +555,15 @@ void voronoi_diagram_t::generate() {
 				voronoi_t::edge_t &edge = voronoi.al[j];
 				edge.beg = red_edge.beg;
 				edge.end = red_edge.end;
-				edge.correct_quad();
+
 				edge.tri_edge_len
 					= std::sqrt(len_sq(edge.quad_bottom - edge.quad_top));
 				edge.voro_edge_len
 					= std::sqrt(len_sq(edge.end - edge.beg));
 				edge.to_mid = (edge.beg + edge.end) / 2.0 - edge.quad_top;
 				edge.to_mid_len = std::sqrt(len_sq(edge.to_mid));
+
+				edge.correct_quad();
 			}
 		}
 

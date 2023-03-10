@@ -134,7 +134,8 @@ int32_t main(void) {
 	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
 	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
+	// ImGui::StyleColorsDark();
+	ImGui::StyleColorsClassic();
 	ImGui::GetIO().FontGlobalScale = 2.0f;
 
 	// Setup Platform/Renderer backends
@@ -227,7 +228,8 @@ int32_t main(void) {
 			mp = vec3(xpos, ypos, 0);
 			mp /= camera_zoom;
 			mp.y /= float(window_width)/float(window_height);
-			mp -= -camera_pos * vec3(1, float(window_width)/float(window_height), 1);
+			mp -= -camera_pos
+				* vec3(1, -float(window_width)/float(window_height), 1);
 			mp.y /= float(bitmapA.HEIGHT)/float(bitmapA.WIDTH);
 
 			mp.x += 1.0;
@@ -294,8 +296,8 @@ int32_t main(void) {
 			ImGui::Separator();
 			ImGui::NewLine();
 
-			ImGui::Text("World cursor pos: {%f, %f}", mp.x, mp.y);
-			ImGui::Text("Window dimensions: {%d, %d}",
+			ImGui::Text("mp: {%f, %f}", mp.x, mp.y);
+			ImGui::Text("win: {%d, %d}",
 				window_width, window_height);
 		}
 
@@ -422,8 +424,9 @@ int32_t main(void) {
 		// Drawing the bitmap
 		{
 			// bitmapA.set(mp.y, mp.x + bitmapA.WIDTH/3, 0xff0000);
-			// bitmapA.set(85, 135 + bitmapA.WIDTH/3, 0xff0000);
-			// bitmapA.load_to_texture();
+			// bitmapA.set(85, mp.x + bitmapA.WIDTH/3, 0xff0000);
+			// bitmapA.set(85, 135 + bitmapA.WIDTH/3, 0xffffff);
+			bitmapA.load_to_texture();
 			bitmapA.draw(MVPb);
 		}
 

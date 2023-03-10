@@ -396,7 +396,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			plate_t::type_t pixel_type = plates[closest_voro_id.id].type;
 			double elevation = 0.0;
 
-			BREAKPOINT_IF(x == 135 && y == 85);
+			// BREAKPOINT_IF(x == 135 && y == 85);
 
 			if (triangle_neighbor_edge_id != INVALID_ID) {
 				const voronoi_t::edge_t edge
@@ -418,9 +418,9 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 
 				plate_t::type_t prev_type = plate_t::NONE;
 				plate_t::type_t nxt_type  = plate_t::NONE;
+				std::size_t prev = triangle_neighbor_edge_id;
+				std::size_t nxt = triangle_neighbor_edge_id;
 				{
-					std::size_t prev = triangle_neighbor_edge_id;
-					std::size_t nxt = triangle_neighbor_edge_id;
 					if (triangle_neighbor_edge_id == INVALID_ID) {
 						prev = voro.al.size()-1;
 						nxt = 0;
@@ -440,6 +440,18 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 						prev_type = plates[voro.al[prev].neighbor_id].type;
 					if (nxt != INVALID_ID)
 						nxt_type = plates[voro.al[nxt].neighbor_id].type;
+				}
+
+				if (x == 260 && y == 28) {
+					PRINT_ZU(closest_voro_id.id);
+					PRINT_ZU(triangle_neighbor_id);
+					PRINT_ZU(triangle_neighbor_edge_id);
+					PRINT_ZU(voro.al.size());
+					for (size_t i = 0; i < voro.al.size(); ++i)
+						PRINT_ZU(voro.al[i].neighbor_id);
+					PRINT_ZU(prev);
+					PRINT_ZU(nxt);
+					BREAKPOINT;
 				}
 
 				if (plates[closest_voro_id.id].type
@@ -534,6 +546,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			// elevation = elevation * 0.5 * (1.0 + noise_val);
 
 			{
+				// elevation = clamp(elevation, 0.0, 1.0);
 				assert(in_between_inclusive(0.0, 1.0, elevation));
 
 				color = lerp(0, 0xff, elevation);
@@ -591,12 +604,17 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 // #define DRAW_NOISY
 #ifndef DRAW_NOISY
 		for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
-			if (global_settings.draw_mid_polygons)
-				draw_edge(bitmap,
-						voronoi.points[j],
-						voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
-						// color, true);
-						override_color, false);
+			// draw_edge(bitmap,
+			// 		voronoi.points[j],
+			// 		voronoi.center,
+			// 		// color, true);
+			// 		0x9c9e9d, false);
+
+			draw_edge(bitmap,
+					voronoi.points[j],
+					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
+					// color, true);
+					override_color, false);
 
 			draw_edge(bitmap,
 					voronoi.points[j]
@@ -615,6 +633,17 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 					// color, true);
 					// 0xa2eef9, false);
 					override_color, false);
+		}
+
+		for (std::size_t j = 0; j < voronoi.al.size(); ++j) {
+			// draw_edge(bitmap,
+			// 		voronoi.center + voronoi.al[j].to_mid,
+			// 		voronoi.center,
+			// 		// color, true);
+			// 		0xd6d6d6, false);
+			draw_point(bitmap,
+					voronoi.center + voronoi.al[j].to_mid,
+					0.01, 0xd6d6d6);
 		}
 #else
 		for (std::size_t j = 0; j < voronoi.al.size(); ++j) {
@@ -675,9 +704,11 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #endif
 #undef DRAW_NOISY
 	};
-	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
-		draw_voronoi(i);
-	}
+
+	if (global_settings.draw_mid_polygons)
+		for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
+			draw_voronoi(i);
+		}
 
 	// const std::size_t gy = debug_vals[0]/GRID_WIDTH;
 	// const std::size_t gx = debug_vals[0]%GRID_WIDTH;
@@ -689,7 +720,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 	// 	draw_voronoi(i);
 	// }
 
-	draw_voronoi(debug_vals[1], 0);
+	// draw_voronoi(debug_vals[1], 0xff0000);
 #endif
 #undef DRAW_POLYGONS
 
@@ -709,7 +740,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #endif
 #undef FLOOD_FILL
 
-// #define DRAW_SPACE_CYCLIC_BORDER
+#define DRAW_SPACE_CYCLIC_BORDER
 #ifdef DRAW_SPACE_CYCLIC_BORDER
 	draw_edge(bitmap,
 			dvec2(space_max.x * 1.0 / 3.0, 0),

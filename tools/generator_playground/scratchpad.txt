@@ -1,47 +1,123 @@
-https://mathworld.wolfram.com/Circumcircle.html
+# Bug 1
+debug_vals[0] = 7
+replace_seed = 1678378122336
+voro_cnt = 13
+super_voro_cnt = 480
+CHUNK_DIM = 64
+(x, y) = 135, 85
 
-a =
-det({
-{x1, y1, 1},
-{x2, y2, 1},
-{x3, y3, 1}
-}) =
-x1 (y2 - y3) + x2 (y3 - y1) + x3 (y1 - y2)
+A = closest_voro_id = 6
+B = triangle_neighbor_id = 10
+triangle_neighbor_edge_id =  5
+prev = 4
+voro.al[prev].id = 5
 
-l1 = (x1^2 + y1^2)
-l2 = (x2^2 + y2^2)
-l3 = (x3^2 + y3^2)
+voro.clipped = true
+voro.al[...].id = {1, 12, 7, 3, 5, 10}
+3 is not voro's neighbor in reality
+1 and 10 are not border neighbors
 
-bx =
--det({
-{l1, y1, 1},
-{l2, y2, 1},
-{l3, y3, 1}
-}) =
--( l1 (y2 - y3) + l2 (y3 - y1) + l3 (y1 - y2) )
--( (x1^2 + y1^2) (y2 - y3) + (x2^2 + y2^2) (y3 - y1) + (x3^2 + y3^2) (y1 - y2) )
+# Bug 2
+debug_vals[0] = 7
+replace_seed = 1678378122336
+voro_cnt = 13
+super_voro_cnt = 480
+CHUNK_DIM = 64
+(x, y) = 252, 22
 
-by =
-det({
-{l1, x1, 1},
-{l2, x2, 1},
-{l3, x3, 1}
-}) =
-l1 (x2 - x3) + l2 (x3 - x1) + l3 (x1 - x2)
-(x1^2 + y1^2) (x2 - x3) + (x2^2 + y2^2) (x3 - x1) + (x3^2 + y3^2) (x1 - x2)
+closest_voro_id.id = 5
+triangle_neighbor_id = 11
+triangle_neighbor_edge_id = 4
+voro.al.size() = 6
+voro.al[0].neighbor_id = 10
+voro.al[1].neighbor_id = 6
+voro.al[2].neighbor_id = 3
+voro.al[3].neighbor_id = 3
+voro.al[4].neighbor_id = 11
+voro.al[5].neighbor_id = 2
+prev = 3
+nxt = 5
 
-x0 = -bx/2a =
-((x1^2 + y1^2) (y2 - y3) + (x2^2 + y2^2) (y3 - y1) + (x3^2 + y3^2) (y1 - y2))/(2 (x1 (y2 - y3) + x2 (y3 - y1) + x3 (y1 - y2)))
-y0 = -by/2a =
-(-1/2 ((x1^2 + y1^2) (x2 - x3) + (x2^2 + y2^2) (x3 - x1) + (x3^2 + y3^2) (x1 - x2)))/(x1 (y2 - y3) + x2 (y3 - y1) + x3 (y1 - y2))
+# Bug 2
+debug_vals[0] = 2
+replace_seed = 1678378122336
+voro_cnt = 19
+super_voro_cnt = 480
+CHUNK_DIM = 64
+(x, y) = 313, 103
 
+closest_voro_id.id = 11
+triangle_neighbor_id = 14
+triangle_neighbor_edge_id = 3
+voro.al.size() = 6
+voro.al[0].neighbor_id = 2
+voro.al[1].neighbor_id = 3
+voro.al[2].neighbor_id = 7
+voro.al[3].neighbor_id = 14
+voro.al[4].neighbor_id = 0
+voro.al[5].neighbor_id = 9
+prev = 2
+nxt = 4
+elevation is negative starting on line 473 for some reason
 
-A 6
-B 10
-A->B 5
+# Bug 2
+debug_vals[0] = 8
+replace_seed = 1678378122336
+voro_cnt = 12
+super_voro_cnt = 480
+CHUNK_DIM = 64
+(x, y) = 267, 36
 
-MVP * x = v
-x = v / MVP
+closest_voro_id.id = 11
+triangle_neighbor_id = 5
+triangle_neighbor_edge_id = 1
+voro.al.size() = 6
+voro.al[0].neighbor_id = 2
+voro.al[1].neighbor_id = 5
+voro.al[2].neighbor_id = 3
+voro.al[3].neighbor_id = 7
+voro.al[4].neighbor_id = 0
+voro.al[5].neighbor_id = 9
+prev = 0
+nxt = 2
 
-135, 85
-135, 135 ???
+# Bug 2
+debug_vals[0] = 8
+replace_seed = 1678378122336
+voro_cnt = 11
+super_voro_cnt = 480
+CHUNK_DIM = 64
+(x, y) = 260, 28
+
+closest_voro_id.id = 11
+triangle_neighbor_id = 5
+triangle_neighbor_edge_id = 1
+voro.al.size() = 6
+voro.al[0].neighbor_id = 2
+voro.al[1].neighbor_id = 5
+voro.al[2].neighbor_id = 3
+voro.al[3].neighbor_id = 7
+voro.al[4].neighbor_id = 0
+voro.al[5].neighbor_id = 9
+prev = 0
+nxt = 2
+
+# Bug 3
+debug_vals[0] = 8
+replace_seed = 1678477637666
+voro_cnt = 90
+super_voro_cnt = 64
+CHUNK_DIM = 64
+
+# Bug 3
+debug_vals[0] = 8
+replace_seed = 1678477829901
+voro_cnt = 37
+super_voro_cnt = 64
+CHUNK_DIM = 64
+
+# Bug 3
+It is rather not a bug. Smooth transition is sometimes not smooth due to short voronoi edges obviously.
+
+# Bug 2
+Seems to be fixed. correct_quad() function was used too early.
