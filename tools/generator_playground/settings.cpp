@@ -20,6 +20,7 @@ void settings_t::save_settings_to_file() {
 	WRITE_FIELD( super_voro_cnt )
 	WRITE_FIELD( debug_vals[0] )
 	WRITE_FIELD( debug_vals[1] )
+	WRITE_FIELD( debug_vals[2] )
 	WRITE_FIELD( replace_seed )
 	WRITE_FIELD( draw_mid_polygons )
 #ifdef DEBUG
@@ -52,6 +53,7 @@ void settings_t::load_settings_from_file() {
 		READ_FIELD( super_voro_cnt )
 		READ_FIELD( debug_vals[0] )
 		READ_FIELD( debug_vals[1] )
+		READ_FIELD( debug_vals[2] )
 		READ_FIELD( replace_seed )
 		READ_FIELD( draw_mid_polygons )
 #ifdef DEBUG

@@ -197,6 +197,82 @@ int32_t main(void) {
 		const auto frame_end_time
 			= frame_beg_time + frame_min_duration;
 
+		if (callbacksk_strct.refresh_required) {
+			callbacksk_strct.refresh_required = false;
+			soft_reload_procedure();
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+			reload_procedure();
+		}
+		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+			camera_pos = vec3(0);
+			camera_zoom = 1;
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
+			if (resolution_div >= 0)
+				resolution_div -= 1;
+		}
+		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
+			resolution_div += 1;
+		}
+
+		{
+			const float move_off = delta_time * 0.5 / camera_zoom;
+			if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+				camera_pos.x -= move_off;
+			}
+			if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+				camera_pos.x += move_off;
+			}
+			if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+				camera_pos.y -= move_off;
+			}
+			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+				camera_pos.y += move_off;
+			}
+		}
+		{
+			// const float move_off = delta_time * 0.5;
+			const double move_off = delta_time * 4.0;
+			if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+				// line_pos.x -= move_off;
+				line_off -= move_off;
+			}
+			if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+				// line_pos.x += move_off;
+				line_off += move_off;
+			}
+			// if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+			// 	line_pos.y -= move_off;
+			// }
+			// if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+			// 	line_pos.y += move_off;
+			// }
+		}
+
+		// if (glfwGetKey(window, GLFW_KEY_K) == GLFW_RELEASE) {
+		// 	++generator->debug_vals[0];
+		// 	PRINT_ZU(generator->debug_vals[0]);
+		// }
+		// if (glfwGetKey(window, GLFW_KEY_J) == GLFW_RELEASE) {
+		// 	--generator->debug_vals[0];
+		// 	PRINT_ZU(generator->debug_vals[0]);
+		// }
+
+		const float zoom_off = delta_time * 1.0;
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+			camera_zoom *= 1+zoom_off;
+			// generator->generate_bitmap(bitmapA, resolution_div);
+			// bitmapA.load_to_texture();
+		}
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+			camera_zoom *= 1-zoom_off;
+			// generator->generate_bitmap(bitmapA, resolution_div);
+			// bitmapA.load_to_texture();
+		}
+
 		// Calculate MVP for bitmap
 		mat4 MVPb(1);
 		{
@@ -267,6 +343,8 @@ int32_t main(void) {
 				&global_settings.debug_vals[0], &size_t_step);
 			ImGui::InputScalar("debug_vals[1]", ImGuiDataType_U64,
 				&global_settings.debug_vals[1], &size_t_step);
+			ImGui::InputScalar("debug_vals[2]", ImGuiDataType_U64,
+				&global_settings.debug_vals[2], &size_t_step);
 
 			ImGui::DragScalar("voro_cnt", ImGuiDataType_U64,
 				&global_settings.voro_cnt,
@@ -343,82 +421,6 @@ int32_t main(void) {
 			ImGui::End();
 		}
 
-		if (callbacksk_strct.refresh_required) {
-			callbacksk_strct.refresh_required = false;
-			soft_reload_procedure();
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-			reload_procedure();
-		}
-		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-			camera_pos = vec3(0);
-			camera_zoom = 1;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
-			if (resolution_div >= 0)
-				resolution_div -= 1;
-		}
-		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
-			resolution_div += 1;
-		}
-
-		{
-			const float move_off = delta_time * 0.5 / camera_zoom;
-			if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-				camera_pos.x -= move_off;
-			}
-			if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-				camera_pos.x += move_off;
-			}
-			if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-				camera_pos.y -= move_off;
-			}
-			if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-				camera_pos.y += move_off;
-			}
-		}
-		{
-			// const float move_off = delta_time * 0.5;
-			const double move_off = delta_time * 2.0;
-			if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
-				// line_pos.x -= move_off;
-				line_off -= move_off;
-			}
-			if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-				// line_pos.x += move_off;
-				line_off += move_off;
-			}
-			// if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-			// 	line_pos.y -= move_off;
-			// }
-			// if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
-			// 	line_pos.y += move_off;
-			// }
-		}
-
-		// if (glfwGetKey(window, GLFW_KEY_K) == GLFW_RELEASE) {
-		// 	++generator->debug_vals[0];
-		// 	PRINT_ZU(generator->debug_vals[0]);
-		// }
-		// if (glfwGetKey(window, GLFW_KEY_J) == GLFW_RELEASE) {
-		// 	--generator->debug_vals[0];
-		// 	PRINT_ZU(generator->debug_vals[0]);
-		// }
-
-		const float zoom_off = delta_time * 1.0;
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-			camera_zoom *= 1+zoom_off;
-			// generator->generate_bitmap(bitmapA, resolution_div);
-			// bitmapA.load_to_texture();
-		}
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-			camera_zoom *= 1-zoom_off;
-			// generator->generate_bitmap(bitmapA, resolution_div);
-			// bitmapA.load_to_texture();
-		}
-
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Drawing the bitmap
@@ -430,42 +432,42 @@ int32_t main(void) {
 			bitmapA.draw(MVPb);
 		}
 
-		// // Drawing the line (player)
-		// {
-		// 	mat4 MVP(1);
-		// 	MVP = scale(MVP, vec3(camera_zoom));
-		// 	MVP
-		// 	= scale(MVP, vec3(1, float(window_width)/float(window_height), 1));
-		// 	MVP = translate(MVP, -camera_pos *
-		// 			vec3(1, float(window_width)/float(window_height), 1)
-		// 		);
-		// 	auto [world_pos, gradient]
-		// 		= generator_C.get_tour_path_points(line_off);
-		// 	const float gradient_len
-		// 		= static_cast<float>(std::sqrt(len_sq(gradient)));
-		// 	const float gradient_sin
-		// 		= -static_cast<float>(gradient.x) / gradient_len;
-		// 	const float gradient_cos
-		// 		= static_cast<float>(gradient.y) / gradient_len;
-		// 	const mat4 rotate_mat {
-		// 		gradient_cos, -gradient_sin, 0, 0,
-		// 		gradient_sin, gradient_cos, 0, 0,
-		// 		0, 0, 1, 0,
-		// 		0, 0, 0, 1,
-		// 	};
-		// 	world_pos.x /= generator_C.space_max.x;
-		// 	world_pos.y /= generator_C.space_max.y;
-		// 	world_pos.y = 1.0 - world_pos.y;
-		// 	world_pos *= 2.0;
-		// 	world_pos.x -= 1.0;
-		// 	world_pos.y -= 1.0;
-		// 	world_pos.y
-		// 		= world_pos.y * generator->ratio_hw;
-		// 	MVP = translate(MVP, vec3(static_cast<vec2>(world_pos), 0.0));
-		// 	MVP *= rotate_mat;
-		// 	MVP = scale(MVP, vec3(vec2(4, 1) / 400.0f, 1.0f));
-		// 	line.draw(MVP);
-		// }
+		// Drawing the line (player)
+		{
+			mat4 MVP(1);
+			MVP = scale(MVP, vec3(camera_zoom));
+			MVP
+			= scale(MVP, vec3(1, float(window_width)/float(window_height), 1));
+			MVP = translate(MVP, -camera_pos *
+					vec3(1, float(window_width)/float(window_height), 1)
+				);
+			auto [world_pos, gradient]
+				= generator_C.get_tour_path_points(line_off);
+			const float gradient_len
+				= static_cast<float>(std::sqrt(len_sq(gradient)));
+			const float gradient_sin
+				= -static_cast<float>(gradient.x) / gradient_len;
+			const float gradient_cos
+				= static_cast<float>(gradient.y) / gradient_len;
+			const mat4 rotate_mat {
+				gradient_cos, -gradient_sin, 0, 0,
+				gradient_sin, gradient_cos, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1,
+			};
+			world_pos.x /= generator_C.space_max.x;
+			world_pos.y /= generator_C.space_max.y;
+			world_pos.y = 1.0 - world_pos.y;
+			world_pos *= 2.0;
+			world_pos.x -= 1.0;
+			world_pos.y -= 1.0;
+			world_pos.y
+				= world_pos.y * generator->ratio_hw;
+			MVP = translate(MVP, vec3(static_cast<vec2>(world_pos), 0.0));
+			MVP *= rotate_mat;
+			MVP = scale(MVP, vec3(vec2(4, 1) / 400.0f, 1.0f));
+			line.draw(MVP);
+		}
 
 		// Rendering
 		ImGui::Render();

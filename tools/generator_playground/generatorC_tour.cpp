@@ -355,77 +355,77 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 				spline(t, get_tour_path_point_x),
 				spline(t, get_tour_path_point_y)),
 			0.001,
-			0x9e0922
+			0xcc99a1
 			);
 	}
 
-	for (std::size_t i = 0; ; ++i) {
-		draw_point(
-			bitmap,
-			dvec2(
-				get_tour_path_point_x(static_cast<long long>(i)
-					+ static_cast<long long>(cycle.size())),
-				get_tour_path_point_y(static_cast<long long>(i)
-					+ static_cast<long long>(cycle.size()))),
-			0.01,
-			0xef6b81
-			);
+	// for (std::size_t i = 0; ; ++i) {
+	// 	draw_point(
+	// 		bitmap,
+	// 		dvec2(
+	// 			get_tour_path_point_x(static_cast<long long>(i)
+	// 				+ static_cast<long long>(cycle.size())),
+	// 			get_tour_path_point_y(static_cast<long long>(i)
+	// 				+ static_cast<long long>(cycle.size()))),
+	// 		0.01,
+	// 		0xef6b81
+	// 		);
 
-		draw_point(
-			bitmap,
-			dvec2(
-				get_tour_path_point_x(static_cast<long long>(i)
-					- static_cast<long long>(cycle.size())),
-				get_tour_path_point_y(static_cast<long long>(i)
-					- static_cast<long long>(cycle.size()))),
-			0.01,
-			0xef6b81
-			);
+	// 	draw_point(
+	// 		bitmap,
+	// 		dvec2(
+	// 			get_tour_path_point_x(static_cast<long long>(i)
+	// 				- static_cast<long long>(cycle.size())),
+	// 			get_tour_path_point_y(static_cast<long long>(i)
+	// 				- static_cast<long long>(cycle.size()))),
+	// 		0.01,
+	// 		0xef6b81
+	// 		);
 
-		draw_point(
-			bitmap,
-			dvec2(
-				get_tour_path_point_x(static_cast<long long>(i)),
-				get_tour_path_point_y(static_cast<long long>(i))),
-			0.01,
-			0xef6b81
-			);
+	// 	draw_point(
+	// 		bitmap,
+	// 		dvec2(
+	// 			get_tour_path_point_x(static_cast<long long>(i)),
+	// 			get_tour_path_point_y(static_cast<long long>(i))),
+	// 		0.01,
+	// 		0xef6b81
+	// 		);
 
-		if (i+1 == cycle.size())
-			break;
+	// 	if (i+1 == cycle.size())
+	// 		break;
 
-		// draw_edge(bitmap,
-		// 	dvec2(
-		// 		chosen_points_coords[2*cycle[i+0]+0],
-		// 		chosen_points_coords[2*cycle[i+0]+1]),
-		// 	dvec2(
-		// 		chosen_points_coords[2*cycle[i+1]+0],
-		// 		chosen_points_coords[2*cycle[i+1]+1]),
-		// 	0x9e0922
-		// 	);
+	// 	// draw_edge(bitmap,
+	// 	// 	dvec2(
+	// 	// 		chosen_points_coords[2*cycle[i+0]+0],
+	// 	// 		chosen_points_coords[2*cycle[i+0]+1]),
+	// 	// 	dvec2(
+	// 	// 		chosen_points_coords[2*cycle[i+1]+0],
+	// 	// 		chosen_points_coords[2*cycle[i+1]+1]),
+	// 	// 	0x9e0922
+	// 	// 	);
 
-		// draw_edge(bitmap,
-		// 	dvec2(
-		// 		chosen_points_coords[2*cycle[i+0]+0]
-		// 		- duplicate_off_x,
-		// 		chosen_points_coords[2*cycle[i+0]+1]),
-		// 	dvec2(
-		// 		chosen_points_coords[2*cycle[i+1]+0]
-		// 		- duplicate_off_x,
-		// 		chosen_points_coords[2*cycle[i+1]+1]),
-		// 	0x9e0922
-		// 	);
+	// 	// draw_edge(bitmap,
+	// 	// 	dvec2(
+	// 	// 		chosen_points_coords[2*cycle[i+0]+0]
+	// 	// 		- duplicate_off_x,
+	// 	// 		chosen_points_coords[2*cycle[i+0]+1]),
+	// 	// 	dvec2(
+	// 	// 		chosen_points_coords[2*cycle[i+1]+0]
+	// 	// 		- duplicate_off_x,
+	// 	// 		chosen_points_coords[2*cycle[i+1]+1]),
+	// 	// 	0x9e0922
+	// 	// 	);
 
-		// draw_edge(bitmap,
-		// 	dvec2(
-		// 		chosen_points_coords[2*cycle[i+0]+0]
-		// 		+ duplicate_off_x,
-		// 		chosen_points_coords[2*cycle[i+0]+1]),
-		// 	dvec2(
-		// 		chosen_points_coords[2*cycle[i+1]+0]
-		// 		+ duplicate_off_x,
-		// 		chosen_points_coords[2*cycle[i+1]+1]),
-		// 	0x9e0922
-		// 	);
-	}
+	// 	// draw_edge(bitmap,
+	// 	// 	dvec2(
+	// 	// 		chosen_points_coords[2*cycle[i+0]+0]
+	// 	// 		+ duplicate_off_x,
+	// 	// 		chosen_points_coords[2*cycle[i+0]+1]),
+	// 	// 	dvec2(
+	// 	// 		chosen_points_coords[2*cycle[i+1]+0]
+	// 	// 		+ duplicate_off_x,
+	// 	// 		chosen_points_coords[2*cycle[i+1]+1]),
+	// 	// 	0x9e0922
+	// 	// 	);
+	// }
 }

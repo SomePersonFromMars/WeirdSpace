@@ -13,6 +13,12 @@ struct cyclic_noise_t {
 	double octave2D_01(double x, double y, int octaves,
 		double persistence = 0.5);
 
+	double octave2D_01_warped(double x, double y, int octaves,
+		double persistence = 0.5);
+
+	double octave2D_01_double_warped(double x, double y, int octaves,
+		double persistence = 0.5);
+
 private:
 	siv::PerlinNoise base;
 };

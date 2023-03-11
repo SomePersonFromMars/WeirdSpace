@@ -396,8 +396,6 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			plate_t::type_t pixel_type = plates[closest_voro_id.id].type;
 			double elevation = 0.0;
 
-			// BREAKPOINT_IF(x == 135 && y == 85);
-
 			if (triangle_neighbor_edge_id != INVALID_ID) {
 				const voronoi_t::edge_t edge
 					= voro.al[triangle_neighbor_edge_id];
@@ -440,18 +438,6 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 						prev_type = plates[voro.al[prev].neighbor_id].type;
 					if (nxt != INVALID_ID)
 						nxt_type = plates[voro.al[nxt].neighbor_id].type;
-				}
-
-				if (x == 260 && y == 28) {
-					PRINT_ZU(closest_voro_id.id);
-					PRINT_ZU(triangle_neighbor_id);
-					PRINT_ZU(triangle_neighbor_edge_id);
-					PRINT_ZU(voro.al.size());
-					for (size_t i = 0; i < voro.al.size(); ++i)
-						PRINT_ZU(voro.al[i].neighbor_id);
-					PRINT_ZU(prev);
-					PRINT_ZU(nxt);
-					BREAKPOINT;
 				}
 
 				if (plates[closest_voro_id.id].type
@@ -523,66 +509,43 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			else if (pixel_type == plate_t::LAND)
 				elevation = 1;
 
-			uint32_t color;
-			double noise_val = noise.octave2D_01(
+			double noise_val = noise.octave2D_01_warped(
 				(p.x-space_max.x/3) * noise_pos_mult,
 				p.y * noise_pos_mult,
-				16);
-			// noise_val *= 0.5;
-			// noise_val += 0.5;
-			// elevation *= noise_val;
-
-			// elevation = 0.2 + 0.8*elevation;
-			// {
-			// 	const double x = elevation;
-			// 	const double xx = x*x;
-			// 	const double xxx = xx*x;
-			// 	elevation = (-3.0*xxx + 4.0*xx + x) / 2.0;
-
-			// 	// elevation = 1.0 - elevation;
-			// 	// elevation = elevation*elevation ; // *elevation;
-			// 	// elevation = 1.0 - elevation;
-			// }
-			// elevation = elevation * 0.5 * (1.0 + noise_val);
+				8);
 
 			{
-				// elevation = clamp(elevation, 0.0, 1.0);
-				assert(in_between_inclusive(0.0, 1.0, elevation));
+				const double x = elevation;
+				const double xx = x*x;
+				const double xxx = xx*x;
+				elevation = (-3.0*xxx + 4.0*xx + x) / 2.0;
+			}
+			double noised_elevation
+				= -0.4 + elevation * 0.8
+				+ std::pow(noise_val, 1.3) * (0.6 + elevation * 0.0);
+			noised_elevation = max(noised_elevation, 0.0);
 
-				color = lerp(0, 0xff, elevation);
-				// color = lerp(0xff, 0, elevation);
+			uint32_t color;
+			{
+				assert(in_between_inclusive(0.0, 1.0, noised_elevation));
+
+				if (noised_elevation < 0.5)
+					noised_elevation = 0.15 + 0.25 * noised_elevation;
+				else
+					noised_elevation = 0.0 + 1.0 * noised_elevation;
+
+				color = lerp(0, 0xff, noised_elevation);
 				color = color | (color << 8) | (color << 16);
 
 				color = hsv_to_rgb(
-					(1.0 - elevation) * 240.0 / 360.0, 0.6, 0.8);
-
-				// color = hsv_to_rgb(
-				// 	debug_vals[0]*60.0 / 360.0, 0.5, 0.8);
+					(1.0 - noised_elevation) * 240.0 / 360.0, 0.6, 0.8);
 			}
 
-			// if (pixel_type == plate_t::COAST) {
-			// 	color = lerp(0xff, 0, elevation);
-			// 	color = color | (color << 8) | (color << 16);
-			// 	// color = COLORS[plate_t::COAST];
-			// } else {
-			// 	if (pixel_type == plate_t::WATER)
-			// 		color = 0xffffff;
-			// 	else
-			// 		color = 0;
-			// 	// color = COLORS[pixel_type];
-			// }
-
-			// // Quite nice looking mosaic
-			// // (use 0 key to switch between two modes)
-			// color = plates[
-			// 	(debug_vals[1] % 2) ? triangle_neighbor_id : closest_voro_id.id
-			// ].debug_color;
-
-			// if (debug_vals[1] % 2 == 1) {
-			// 	// PRINT_F(noise_val);
-			// 	color = lerp(0xff, 0, noise_val);
-			// 	color = color | (color << 8) | (color << 16);
-			// }
+			if (debug_vals[1] % 2 == 1) {
+				// PRINT_F(noise_val);
+				color = lerp(0xff, 0, noise_val);
+				color = color | (color << 8) | (color << 16);
+			}
 
 			bitmap.set(y, x+width*0/3, color);
 			bitmap.set(y, x+width*1/3, color);
@@ -740,7 +703,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #endif
 #undef FLOOD_FILL
 
-#define DRAW_SPACE_CYCLIC_BORDER
+// #define DRAW_SPACE_CYCLIC_BORDER
 #ifdef DRAW_SPACE_CYCLIC_BORDER
 	draw_edge(bitmap,
 			dvec2(space_max.x * 1.0 / 3.0, 0),
@@ -779,5 +742,5 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	// 	PRINT_ZU(e);
 
 	draw_map(bitmap, gen);
-	// draw_tour_path(bitmap, gen);
+	draw_tour_path(bitmap, gen);
 }
