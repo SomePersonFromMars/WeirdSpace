@@ -329,54 +329,82 @@ int32_t main(void) {
 
 		// Debug window
 		{
-			if (ImGui::Button("Save"))
-				global_settings.save_settings_to_file();
-			if (ImGui::Button("Load"))
-				global_settings.load_settings_from_file();
-			if (ImGui::Button("Reload"))
-				reload_procedure();
-			if (ImGui::Button("Soft reload"))
-				soft_reload_procedure();
+			if (ImGui::CollapsingHeader("General")) {
+				if (ImGui::Button("Save"))
+					global_settings.save_settings_to_file();
+				if (ImGui::Button("Load"))
+					global_settings.load_settings_from_file();
+				if (ImGui::Button("Reload"))
+					reload_procedure();
+				if (ImGui::Button("Soft reload"))
+					soft_reload_procedure();
 
-			constexpr std::size_t size_t_step = 1;
-			ImGui::InputScalar("debug_vals[0]", ImGuiDataType_U64,
-				&global_settings.debug_vals[0], &size_t_step);
-			ImGui::InputScalar("debug_vals[1]", ImGuiDataType_U64,
-				&global_settings.debug_vals[1], &size_t_step);
-			ImGui::InputScalar("debug_vals[2]", ImGuiDataType_U64,
-				&global_settings.debug_vals[2], &size_t_step);
+				constexpr std::size_t size_t_step = 1;
+				ImGui::InputScalar("debug_vals[0]", ImGuiDataType_U64,
+					&global_settings.debug_vals[0], &size_t_step);
+				ImGui::InputScalar("debug_vals[1]", ImGuiDataType_U64,
+					&global_settings.debug_vals[1], &size_t_step);
+				ImGui::InputScalar("debug_vals[2]", ImGuiDataType_U64,
+					&global_settings.debug_vals[2], &size_t_step);
 
-			ImGui::DragScalar("voro_cnt", ImGuiDataType_U64,
-				&global_settings.voro_cnt,
-				1.0f,
-				&global_settings.voro_cnt_min,
-				&global_settings.voro_cnt_max);
+				ImGui::DragScalar("voro_cnt", ImGuiDataType_U64,
+					&global_settings.voro_cnt,
+					1.0f,
+					&global_settings.voro_cnt_min,
+					&global_settings.voro_cnt_max);
 
-			ImGui::DragScalar("super_voro_cnt", ImGuiDataType_U64,
-				&global_settings.super_voro_cnt,
-				1.0f,
-				&global_settings.super_voro_cnt_min,
-				&global_settings.super_voro_cnt_max);
+				ImGui::DragScalar("super_voro_cnt", ImGuiDataType_U64,
+					&global_settings.super_voro_cnt,
+					1.0f,
+					&global_settings.super_voro_cnt_min,
+					&global_settings.super_voro_cnt_max);
 
-			ImGui::Checkbox("draw_mid_polygons",
-				&global_settings.draw_mid_polygons);
+				ImGui::Checkbox("draw_mid_polygons",
+					&global_settings.draw_mid_polygons);
 
-			ImGui::Checkbox("enable_breakpoints",
-				&enable_breakpoints);
+				ImGui::Checkbox("enable_breakpoints",
+					&enable_breakpoints);
 
-			ImGui::DragScalar("replace_seed", ImGuiDataType_U64,
-				&global_settings.replace_seed,
-				1.0f,
-				&global_settings.replace_seed_min,
-				&global_settings.replace_seed_max);
+				ImGui::DragScalar("replace_seed", ImGuiDataType_U64,
+					&global_settings.replace_seed,
+					1.0f,
+					&global_settings.replace_seed_min,
+					&global_settings.replace_seed_max);
+			}
 
-			ImGui::NewLine();
-			ImGui::Separator();
-			ImGui::NewLine();
+			if (ImGui::CollapsingHeader("Rivers")) {
+				ImGui::DragScalar("river_joints_R", ImGuiDataType_Double,
+					&global_settings.river_joints_R,
+					0.0002f,
+					&global_settings.river_joints_R_min,
+					&global_settings.river_joints_R_max);
 
-			ImGui::Text("mp: {%f, %f}", mp.x, mp.y);
-			ImGui::Text("win: {%d, %d}",
-				window_width, window_height);
+				ImGui::DragScalar("river_start_prob", ImGuiDataType_S32,
+					&global_settings.river_start_prob,
+					1.0f,
+					&global_settings.river_start_prob_min,
+					&global_settings.river_start_prob_max);
+
+				ImGui::DragScalar("river_branch_prob", ImGuiDataType_S32,
+					&global_settings.river_branch_prob,
+					1.0f,
+					&global_settings.river_branch_prob_min,
+					&global_settings.river_branch_prob_max);
+
+				{
+					static vec3 river_color_f
+						= color_hex_to_vec3(global_settings.river_color);
+					if (ImGui::ColorEdit3("river_color", (float*)&river_color_f))
+						global_settings.river_color
+							= color_vec3_to_hex(river_color_f);
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Outputs")) {
+				ImGui::Text("mp: {%f, %f}", mp.x, mp.y);
+				ImGui::Text("win: {%d, %d}",
+					window_width, window_height);
+			}
 		}
 
 		// 1. Show the big demo window
@@ -432,42 +460,42 @@ int32_t main(void) {
 			bitmapA.draw(MVPb);
 		}
 
-		// Drawing the line (player)
-		{
-			mat4 MVP(1);
-			MVP = scale(MVP, vec3(camera_zoom));
-			MVP
-			= scale(MVP, vec3(1, float(window_width)/float(window_height), 1));
-			MVP = translate(MVP, -camera_pos *
-					vec3(1, float(window_width)/float(window_height), 1)
-				);
-			auto [world_pos, gradient]
-				= generator_C.get_tour_path_points(line_off);
-			const float gradient_len
-				= static_cast<float>(std::sqrt(len_sq(gradient)));
-			const float gradient_sin
-				= -static_cast<float>(gradient.x) / gradient_len;
-			const float gradient_cos
-				= static_cast<float>(gradient.y) / gradient_len;
-			const mat4 rotate_mat {
-				gradient_cos, -gradient_sin, 0, 0,
-				gradient_sin, gradient_cos, 0, 0,
-				0, 0, 1, 0,
-				0, 0, 0, 1,
-			};
-			world_pos.x /= generator_C.space_max.x;
-			world_pos.y /= generator_C.space_max.y;
-			world_pos.y = 1.0 - world_pos.y;
-			world_pos *= 2.0;
-			world_pos.x -= 1.0;
-			world_pos.y -= 1.0;
-			world_pos.y
-				= world_pos.y * generator->ratio_hw;
-			MVP = translate(MVP, vec3(static_cast<vec2>(world_pos), 0.0));
-			MVP *= rotate_mat;
-			MVP = scale(MVP, vec3(vec2(4, 1) / 400.0f, 1.0f));
-			line.draw(MVP);
-		}
+		// // Drawing the line (player)
+		// {
+		// 	mat4 MVP(1);
+		// 	MVP = scale(MVP, vec3(camera_zoom));
+		// 	MVP
+		// 	= scale(MVP, vec3(1, float(window_width)/float(window_height), 1));
+		// 	MVP = translate(MVP, -camera_pos *
+		// 			vec3(1, float(window_width)/float(window_height), 1)
+		// 		);
+		// 	auto [world_pos, gradient]
+		// 		= generator_C.get_tour_path_points(line_off);
+		// 	const float gradient_len
+		// 		= static_cast<float>(std::sqrt(len_sq(gradient)));
+		// 	const float gradient_sin
+		// 		= -static_cast<float>(gradient.x) / gradient_len;
+		// 	const float gradient_cos
+		// 		= static_cast<float>(gradient.y) / gradient_len;
+		// 	const mat4 rotate_mat {
+		// 		gradient_cos, -gradient_sin, 0, 0,
+		// 		gradient_sin, gradient_cos, 0, 0,
+		// 		0, 0, 1, 0,
+		// 		0, 0, 0, 1,
+		// 	};
+		// 	world_pos.x /= generator_C.space_max.x;
+		// 	world_pos.y /= generator_C.space_max.y;
+		// 	world_pos.y = 1.0 - world_pos.y;
+		// 	world_pos *= 2.0;
+		// 	world_pos.x -= 1.0;
+		// 	world_pos.y -= 1.0;
+		// 	world_pos.y
+		// 		= world_pos.y * generator->ratio_hw;
+		// 	MVP = translate(MVP, vec3(static_cast<vec2>(world_pos), 0.0));
+		// 	MVP *= rotate_mat;
+		// 	MVP = scale(MVP, vec3(vec2(4, 1) / 400.0f, 1.0f));
+		// 	line.draw(MVP);
+		// }
 
 		// Rendering
 		ImGui::Render();

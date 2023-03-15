@@ -4,7 +4,7 @@
 #include "useful.hpp"
 
 double cyclic_noise_t::octave2D_01(double x, double y, int octaves,
-	double persistence) {
+	double persistence) const {
 	double a = base.octave2D_01(x, y, octaves, persistence);
 	if (x >= border_beg) {
 		const double off = x - border_beg;
@@ -18,7 +18,7 @@ double cyclic_noise_t::octave2D_01(double x, double y, int octaves,
 }
 
 double cyclic_noise_t::octave2D_01_warped(double x, double y, int octaves,
-	double persistence) {
+	double persistence) const {
 
 	double qx = octave2D_01(x, y + 123.456, octaves, persistence);
 	double qy = octave2D_01(x, y + 789.012, octaves, persistence);
@@ -37,7 +37,7 @@ double cyclic_noise_t::octave2D_01_warped(double x, double y, int octaves,
 }
 
 double cyclic_noise_t::octave2D_01_double_warped(double x, double y,
-		int octaves, double persistence) {
+		int octaves, double persistence) const {
 
 	double qx = octave2D_01_warped(x, y + 123.456, octaves, persistence);
 	double qy = octave2D_01_warped(x, y + 789.012, octaves, persistence);

@@ -20,9 +20,10 @@
 // and not its scale compared to objects dimensions.
 // For example noise features remain the same
 // size compared to the chunk dimensions.
-#define CHUNK_DIM 64
+#define CHUNK_DIM 76
 
 #include <cstddef>
+#include <cstdint>
 #include <climits>
 
 extern struct settings_t {
@@ -31,10 +32,14 @@ extern struct settings_t {
 	static constexpr T name##_min = min; \
 	static constexpr T name##_max = max;
 
-	FIELD(std::size_t, voro_cnt          , 240, 3, 240*2)
-	FIELD(std::size_t, super_voro_cnt    , 80,  3, 240*2)
-	FIELD(bool,        draw_mid_polygons , false, 0, 1)
-	FIELD(std::size_t, replace_seed      , 0,   0, ULLONG_MAX)
+	FIELD(std::size_t, voro_cnt         , 240,      3,   240*2)
+	FIELD(std::size_t, super_voro_cnt   , 80,       3,   240*2)
+	FIELD(bool       , draw_mid_polygons, false,    0,   1)
+	FIELD(std::size_t, replace_seed     , 0,        0,   ULLONG_MAX)
+	FIELD(double     , river_joints_R   , 0.015,    0.0, 1.0)
+	FIELD(int        , river_start_prob , 20,       0,   100)
+	FIELD(int        , river_branch_prob, 20,       0,   100)
+	FIELD(uint32_t   , river_color      , 0x477199, 0,   0xffffff)
 	size_t debug_vals[3] {
 		7,
 		0,

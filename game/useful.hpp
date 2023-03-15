@@ -33,7 +33,6 @@
 	#define BREAKPOINT_IF(expr)
 #endif
 
-constexpr double PI = 3.14159265358979323846;
 constexpr std::size_t INVALID_ID = std::numeric_limits<std::size_t>::max();
 
 #define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
@@ -119,6 +118,13 @@ inline glm::vec3 color_hex_to_vec3(uint32_t hex) {
 		static_cast<double>( (hex & 0x00ff00u) >> 8  ) / 255.0,
 		static_cast<double>( (hex & 0x0000ffu) >> 0 ) / 255.0
 	);
+}
+
+inline uint32_t color_vec3_to_hex(const glm::vec3 v) {
+	return
+		static_cast<uint32_t>(v.r * 255.0) << 16 |
+		static_cast<uint32_t>(v.g * 255.0) << 8  |
+		static_cast<uint32_t>(v.b * 255.0) << 0;
 }
 
 inline glm::u8vec3 color_hex_to_u8vec3(uint32_t hex) {

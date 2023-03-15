@@ -27,10 +27,13 @@ protected:
 public:
 	const double ratio_wh, ratio_hw;
 	const glm::dvec2 space_max {ratio_wh, 1}; // Maximum double coordinates
+	const double space_max_x_duplicate_off = space_max.x * 1.0 / 3.0;
+	const glm::dvec2 space_max_duplicate_off_vec {
+		space_max_x_duplicate_off, 0};
 protected:
 
-	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos);
-	inline glm::dvec2 bitmap_to_space_coords(glm::dvec2 pos);
+	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos) const;
+	inline glm::dvec2 bitmap_to_space_coords(glm::dvec2 pos) const;
 	void draw_edge(bitmap_t &bitmap, glm::dvec2 beg, glm::dvec2 end,
 			uint32_t color, bool draw_only_empty = false);
 	void draw_point(bitmap_t &bitmap, glm::dvec2 pos, double dim,
@@ -125,8 +128,15 @@ struct generator_C_t : generator_t {
 private:
 	void generate_continents(std::mt19937 &gen);
 	void generate_grid_intersections();
+	void generate_river_joints(std::mt19937 &gen, bitmap_t &bitmap);
+	void generate_rivers(std::mt19937 &gen, bitmap_t &bitmap);
 	void draw_map(bitmap_t &bitmap, std::mt19937 &gen);
 	void draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen);
+
+	double get_elevation_A(const glm::dvec2 &p) const;
+
+	inline glm::tvec2<long long, glm::highp> space_to_grid_coords(
+		const glm::dvec2 &p) const;
 
 	const std::function<double(const long long)> get_tour_path_point_x;
 	const std::function<double(const long long)> get_tour_path_point_y;
@@ -151,7 +161,7 @@ private:
 
 	std::size_t voro_cnt;
 	std::size_t super_voro_cnt;
-	static constexpr double GRID_BOX_DIM_ZU = CHUNK_DIM/4;
+	static constexpr std::size_t GRID_BOX_DIM_ZU = CHUNK_DIM/4;
 	const double GRID_BOX_DIM_F
 		= static_cast<double>(GRID_BOX_DIM_ZU)
 		* space_max.y / static_cast<double>(height);
@@ -162,6 +172,7 @@ private:
 	voronoi_diagram_t diagram;
 	std::vector<plate_t> plates;
 	std::vector<glm::dvec2> tour_path_points;
+	std::vector<glm::dvec2> river_joints;
 
 	const double CHUNK_DIM_F
 		= static_cast<double>(CHUNK_DIM)
@@ -170,7 +181,7 @@ private:
 	cyclic_noise_t noise;
 };
 
-inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) {
+inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) const {
 	return
 		pos.x = pos.x*double(width-1),
 		pos.x /= double(width) / double(height),
@@ -178,12 +189,21 @@ inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) {
 
 		pos;
 }
-inline glm::dvec2 generator_t::bitmap_to_space_coords(glm::dvec2 pos) {
+inline glm::dvec2 generator_t::bitmap_to_space_coords(glm::dvec2 pos) const {
 	return
 		pos.x = pos.x * space_max.x / double(width-1),
 		pos.y = pos.y * space_max.y / double(height-1),
 
 		pos;
+}
+
+inline glm::tvec2<long long, glm::highp> generator_C_t::space_to_grid_coords(
+	const glm::dvec2 &p) const {
+	return glm::tvec2<long long, glm::highp>(
+			std::floor(
+				(p.x-space_max.x/3.0) / GRID_BOX_DIM_F),
+			std::floor(p.y / GRID_BOX_DIM_F)
+		);
 }
 
 #endif

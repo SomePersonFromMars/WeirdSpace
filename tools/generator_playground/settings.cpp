@@ -23,6 +23,10 @@ void settings_t::save_settings_to_file() {
 	WRITE_FIELD( debug_vals[2] )
 	WRITE_FIELD( replace_seed )
 	WRITE_FIELD( draw_mid_polygons )
+	WRITE_FIELD( river_joints_R )
+	WRITE_FIELD( river_start_prob )
+	WRITE_FIELD( river_branch_prob )
+	WRITE_FIELD( river_color )
 #ifdef DEBUG
 	WRITE_FIELD( enable_breakpoints )
 #endif
@@ -56,6 +60,10 @@ void settings_t::load_settings_from_file() {
 		READ_FIELD( debug_vals[2] )
 		READ_FIELD( replace_seed )
 		READ_FIELD( draw_mid_polygons )
+		READ_FIELD( river_joints_R )
+		READ_FIELD( river_start_prob )
+		READ_FIELD( river_branch_prob )
+		READ_FIELD( river_color )
 #ifdef DEBUG
 		READ_FIELD( enable_breakpoints )
 #endif
