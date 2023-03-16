@@ -262,7 +262,7 @@ void generator_C_t::generate_grid_intersections() {
 
 // https://github.com/dandrino/terrain-erosion-3-ways/tree/master
 // https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
-void generator_C_t::generate_river_joints(
+void generator_C_t::generate_joints(
 		std::mt19937 &gen, bitmap_t &bitmap) {
 	using ll = long long;
 	const double R = global_settings.river_joints_R;
@@ -276,10 +276,10 @@ void generator_C_t::generate_river_joints(
 	std::uniform_real_distribution<double> alpha_distrib(0.0, 2.0*M_PI);
 	std::uniform_real_distribution<double> r_distrib(R, 2*R);
 
-	river_joints.clear();
-	river_joints.reserve(BG_GRID_WIDTH*BG_GRID_HEIGHT);
+	joints.clear();
+	joints.reserve(BG_GRID_WIDTH*BG_GRID_HEIGHT);
 	std::vector<std::size_t> active_list;
-	active_list.reserve(river_joints.capacity());
+	active_list.reserve(joints.capacity());
 	std::vector<std::vector<std::size_t>> bg_grid(
 		BG_GRID_HEIGHT, std::vector<std::size_t>(
 			BG_GRID_WIDTH, INVALID_ID));
@@ -340,16 +340,16 @@ void generator_C_t::generate_river_joints(
 				}
 				assert(in_between_inclusive(0ll, (ll)BG_GRID_WIDTH-1, x));
 				if (bg_grid[y][x] != INVALID_ID) {
-					const dvec2 &q = river_joints[bg_grid[y][x]];
+					const dvec2 &q = joints[bg_grid[y][x]];
 					if (len_sq(q+off-p) <= RR)
 						distant = false;
 				}
 			}
 		}
 		if (distant) {
-			active_list.push_back(river_joints.size());
-			bg_grid[grid_p.y][grid_p.x] = river_joints.size();
-			river_joints.push_back(p);
+			active_list.push_back(joints.size());
+			bg_grid[grid_p.y][grid_p.x] = joints.size();
+			joints.push_back(p);
 		}
 		return distant;
 	};
@@ -362,7 +362,7 @@ void generator_C_t::generate_river_joints(
 	while (not active_list.empty()) {
 		const std::size_t id_list = std::uniform_int_distribution<std::size_t>(
 			0, active_list.size()-1)(gen);
-		const dvec2 &p = river_joints[active_list[id_list]];
+		const dvec2 &p = joints[active_list[id_list]];
 
 		constexpr std::size_t MAX_ITERATIONS = 30;
 		std::size_t i = 0;
@@ -382,7 +382,7 @@ void generator_C_t::generate_river_joints(
 		}
 	}
 
-	// for (const dvec2 &p : river_joints) {
+	// for (const dvec2 &p : joints) {
 	// 	draw_point(bitmap, p, 0.001, 0x4f4f4f);
 	// 	draw_point(bitmap, p + space_max_duplicate_off_vec, 0.001, 0x4f4f4f);
 	// }
@@ -391,38 +391,40 @@ void generator_C_t::generate_river_joints(
 void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 	const double R = global_settings.river_joints_R;
 	const double RR = R*R;
-	const std::size_t river_joints_cnt = river_joints.size();
+	const std::size_t joints_cnt = joints.size();
 	std::uniform_int_distribution<int> probability_distrib(1, 100);
+	al.assign(joints_cnt, {  });
+	joints_humidity.assign(joints_cnt, GREATEST_WATER_DIST);
 
-	std::vector<double> river_joints_coords(river_joints_cnt * 2 * 3);
-	for (std::size_t i = 0; i < river_joints_cnt; ++i) {
-		river_joints_coords[2*i+0 + 0*river_joints_cnt] = river_joints[i].x
+	std::vector<double> joints_coords(joints_cnt * 2 * 3);
+	for (std::size_t i = 0; i < joints_cnt; ++i) {
+		joints_coords[2*i+0 + 0*joints_cnt] = joints[i].x
 			+ 1.0*space_max.x/3.0;
-		river_joints_coords[2*i+1 + 0*river_joints_cnt] = river_joints[i].y;
+		joints_coords[2*i+1 + 0*joints_cnt] = joints[i].y;
 
-		river_joints_coords[2*i+0 + 2*river_joints_cnt] = river_joints[i].x;
-		river_joints_coords[2*i+1 + 2*river_joints_cnt] = river_joints[i].y;
+		joints_coords[2*i+0 + 2*joints_cnt] = joints[i].x;
+		joints_coords[2*i+1 + 2*joints_cnt] = joints[i].y;
 
-		river_joints_coords[2*i+0 + 4*river_joints_cnt] = river_joints[i].x
+		joints_coords[2*i+0 + 4*joints_cnt] = joints[i].x
 			+ 2.0*space_max.x/3.0;
-		river_joints_coords[2*i+1 + 4*river_joints_cnt] = river_joints[i].y;
+		joints_coords[2*i+1 + 4*joints_cnt] = joints[i].y;
 	}
-	const delaunator::Delaunator d(river_joints_coords);
-	struct edge_t {
-		std::size_t dest;
-		enum type_t : uint8_t {
-			USUAL = 0,
-			TO_LEFT,
-			TO_RIGHT
-		} type;
-		bool river = false;
-	};
-	std::vector<std::vector<edge_t>> al(river_joints_cnt);
+	const delaunator::Delaunator d(joints_coords);
+	// struct edge_t {
+	// 	std::size_t dest;
+	// 	enum type_t : uint8_t {
+	// 		USUAL = 0,
+	// 		TO_LEFT,
+	// 		TO_RIGHT
+	// 	} type;
+	// 	bool river = false;
+	// };
+	// std::vector<std::vector<edge_t>> al(joints_cnt);
 
 	for (std::size_t half_edge = 0;
 			half_edge < d.triangles.size();
 			++half_edge) {
-		assert(d.triangles[half_edge] < 3*river_joints_cnt);
+		assert(d.triangles[half_edge] < 3*joints_cnt);
 		const std::size_t next_half_edge
 			= (half_edge % 3 == 2) ? half_edge - 2 : half_edge + 1;
 
@@ -434,7 +436,7 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 			continue;
 
 		// Omit duplicated `p` points
-		if (p >= river_joints_cnt)
+		if (p >= joints_cnt)
 			continue;
 
 		// Omit duplicated edges
@@ -444,31 +446,31 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 		// Omit very long edges
 		{
 			dvec2 v {
-				river_joints_coords[2*p+0],
-				river_joints_coords[2*p+1]
+				joints_coords[2*p+0],
+				joints_coords[2*p+1]
 			};
 			v -= dvec2(
-				river_joints_coords[2*q+0],
-				river_joints_coords[2*q+1]
+				joints_coords[2*q+0],
+				joints_coords[2*q+1]
 			);
 			if (len_sq(v) > 3*3*RR)
 				continue;
 		}
 
-		edge_t e1, e2;
-		if (q >= river_joints_cnt) {
-			q -= river_joints_cnt;
-			if (q >= river_joints_cnt) {
-				q -= river_joints_cnt;
-				e1 = {q, edge_t::TO_RIGHT};
-				e2 = {p, edge_t::TO_LEFT};
+		joint_edge_t e1, e2;
+		if (q >= joints_cnt) {
+			q -= joints_cnt;
+			if (q >= joints_cnt) {
+				q -= joints_cnt;
+				e1 = {q, joint_edge_t::TO_RIGHT};
+				e2 = {p, joint_edge_t::TO_LEFT};
 			} else {
-				e1 = {q, edge_t::TO_LEFT};
-				e2 = {p, edge_t::TO_RIGHT};
+				e1 = {q, joint_edge_t::TO_LEFT};
+				e2 = {p, joint_edge_t::TO_RIGHT};
 			}
 		} else {
-			e1 = {q, edge_t::USUAL};
-			e2 = {p, edge_t::USUAL};
+			e1 = {q, joint_edge_t::USUAL};
+			e2 = {p, joint_edge_t::USUAL};
 		}
 		al[p].push_back(e1);
 		al[q].push_back(e2);
@@ -477,27 +479,29 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 	const int river_start_prob = global_settings.river_start_prob;
 	const int river_branch_prob = global_settings.river_branch_prob;
 	std::queue<std::size_t> next_v;
-	std::vector<std::size_t> parent(river_joints_cnt, INVALID_ID);
-	std::vector<dvec2> parent_edge(river_joints_cnt);
-	for (std::size_t i = 0; i < river_joints_cnt; ++i) {
-		const dvec2 &p = river_joints[i] + space_max_duplicate_off_vec;
+	std::vector<std::size_t> parent(joints_cnt, INVALID_ID);
+	std::vector<dvec2> parent_edge(joints_cnt);
+	for (std::size_t i = 0; i < joints_cnt; ++i) {
+		const dvec2 &p = joints[i] + space_max_duplicate_off_vec;
 		const double A = get_elevation_A(p);
 		if (A >= 0.5) continue;
 		parent[i] = i;
-		for (edge_t &e : al[i]) {
+		for (joint_edge_t &e : al[i]) {
 			if (parent[e.dest] != INVALID_ID) continue;
-			dvec2 q = river_joints[e.dest] + space_max_duplicate_off_vec;
+			dvec2 q = joints[e.dest] + space_max_duplicate_off_vec;
 			const double B = get_elevation_A(q);
 			if (B < 0.5) continue;
 			if (not (probability_distrib(gen) <= river_start_prob)) continue;
 
-			if (e.type == edge_t::TO_LEFT)
+			if (e.type == joint_edge_t::TO_LEFT)
 				q -= space_max_duplicate_off_vec;
-			else if (e.type == edge_t::TO_RIGHT)
+			else if (e.type == joint_edge_t::TO_RIGHT)
 				q += space_max_duplicate_off_vec;
 			parent[e.dest] = i;
 			parent_edge[e.dest] = p-q;
 			e.river = true;
+			joints_humidity[i] = 0;
+			joints_humidity[e.dest] = 0;
 			next_v.push(e.dest);
 		}
 	}
@@ -505,20 +509,20 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 	while (not next_v.empty()) {
 		const std::size_t v = next_v.front();
 		next_v.pop();
-		const dvec2 &p = river_joints[v] + space_max_duplicate_off_vec;
+		const dvec2 &p = joints[v] + space_max_duplicate_off_vec;
 		const double A = get_elevation_A(p);
 		bool first_child = true;
-		for (edge_t &e : al[v]) {
+		for (joint_edge_t &e : al[v]) {
 			if (parent[e.dest] != INVALID_ID) continue;
-			dvec2 q = river_joints[e.dest] + space_max_duplicate_off_vec;
+			dvec2 q = joints[e.dest] + space_max_duplicate_off_vec;
 			const double B = get_elevation_A(q);
 			if (not (A < B + 0.03) || B < 0.5) continue;
 			if ( not first_child &&
 				not (probability_distrib(gen) <= river_branch_prob)) continue;
 			{
-				if (e.type == edge_t::TO_LEFT)
+				if (e.type == joint_edge_t::TO_LEFT)
 					q -= space_max_duplicate_off_vec;
-				else if (e.type == edge_t::TO_RIGHT)
+				else if (e.type == joint_edge_t::TO_RIGHT)
 					q += space_max_duplicate_off_vec;
 				const dvec2 a = q-p;
 				const dvec2 &b = parent_edge[v];
@@ -533,6 +537,7 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 			parent_edge[e.dest] = p-q;
 			first_child = false;
 			e.river = true;
+			joints_humidity[e.dest] = 0;
 			next_v.push(e.dest);
 		}
 	}
@@ -540,12 +545,12 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 	const uint32_t river_color = global_settings.river_color;
 	// constn uint32_t river_color = 0x51CCC2;
 	// constn uint32_t river_color = 0x477199;
-	for (std::size_t i = 0; i < river_joints_cnt; ++i) {
-		const dvec2 A = space_max_duplicate_off_vec + river_joints[i];
-		for (const edge_t &e : al[i]) {
+	for (std::size_t i = 0; i < joints_cnt; ++i) {
+		const dvec2 A = space_max_duplicate_off_vec + joints[i];
+		for (const joint_edge_t &e : al[i]) {
 			if (not e.river) continue;
-			const dvec2 B = space_max_duplicate_off_vec + river_joints[e.dest];
-			if (e.type == edge_t::USUAL)
+			const dvec2 B = space_max_duplicate_off_vec + joints[e.dest];
+			if (e.type == joint_edge_t::USUAL)
 				draw_edge(bitmap,
 					A,
 					B,
@@ -558,12 +563,12 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 					A + space_max_duplicate_off_vec,
 					B + space_max_duplicate_off_vec,
 					river_color);
-			// else if (e.type == edge_t::TO_LEFT)
+			// else if (e.type == joint_edge_t::TO_LEFT)
 			// 	draw_edge(bitmap,
 			// 		A,
 			// 		B - space_max_duplicate_off_vec,
 			// 		river_color);
-			else if (e.type == edge_t::TO_RIGHT)
+			else if (e.type == joint_edge_t::TO_RIGHT)
 				draw_edge(bitmap,
 					A,
 					B + space_max_duplicate_off_vec,
@@ -575,12 +580,66 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 		}
 	}
 
-	// for (std::size_t i = 0; i < river_joints_cnt; ++i) {
-	// 	const dvec2 A = space_max_duplicate_off_vec + river_joints[i];
+	// for (std::size_t i = 0; i < joints_cnt; ++i) {
+	// 	const dvec2 A = space_max_duplicate_off_vec + joints[i];
 	// 	draw_point(bitmap, A, 0.01, 0xe2a3b5);
 	// 	draw_point(bitmap, A - space_max_duplicate_off_vec, 0.01, 0xe2a3b5);
 	// 	draw_point(bitmap, A + space_max_duplicate_off_vec, 0.01, 0xe2a3b5);
 	// }
+}
+
+double generator_C_t::get_temperature(const glm::dvec2 &p) const {
+	double elevation = get_elevation_A(p);
+	double temperature = std::abs(space_max.y/2.0 - p.y) / (space_max.y/2.0);
+	temperature = 1.0 - temperature;
+	temperature = 1.0 - std::pow(1.0 - temperature,
+			global_settings.temperature_exp);
+
+	temperature = 0.6 * temperature + 0.4;
+	elevation = (clamp(elevation, 0.5, 1.0) - 0.5) * 2.0;
+	temperature -= elevation * 0.4;
+
+	temperature = clamp(temperature, 0.0, 1.0);
+	return temperature;
+}
+
+void generator_C_t::calculate_climate(bitmap_t &bitmap) {
+	const std::size_t joints_cnt = joints.size();
+	const int humidity_scale = global_settings.humidity_scale;
+
+	std::queue<std::size_t> next_v;
+	for (std::size_t v = 0; v < joints_cnt; ++v) {
+		const dvec2 p = joints[v] + space_max_duplicate_off_vec;
+		const double elevation = get_elevation_A(p);
+		if (elevation < 0.5 || joints_humidity[v] == 0) {
+			joints_humidity[v] = 0;
+			next_v.push(v);
+		}
+	}
+
+	while (not next_v.empty()) {
+		const std::size_t v = next_v.front();
+		next_v.pop();
+		for (const joint_edge_t &e : al[v]) {
+			if (!min_replace(joints_humidity[e.dest], joints_humidity[v]+1))
+				continue;
+			next_v.push(e.dest);
+		}
+	}
+
+	for (std::size_t v = 0; v < joints_cnt; ++v) {
+		const dvec2 p = joints[v] + space_max_duplicate_off_vec;
+
+		float humidity = (float)joints_humidity[v] / (float)humidity_scale;
+		min_replace(humidity, 1.0f);
+		const double temperature = get_temperature(p);
+
+		// const double hue = humidity * 120.0 / 360.0 + 240.0 / 360.0;
+		const double hue = (1.0 - temperature) * 300.0 / 360.0;
+
+		const uint32_t color = hsv_to_rgb(hue, 0.67f, 0.86f);
+		draw_point(bitmap, p, 0.03, color);
+	}
 }
 
 double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
@@ -868,7 +927,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			// }
 
 			bitmap.set(y, x+width*0/3, color);
-			bitmap.set(y, x+width*1/3, color);
+			// bitmap.set(y, x+width*1/3, color);
 			bitmap.set(y, x+width*2/3, color);
 		}
 	}
@@ -1064,6 +1123,7 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap, int resolution_div) {
 	draw_map(bitmap, gen);
 	// draw_tour_path(bitmap, gen);
 
-	generate_river_joints(gen, bitmap);
+	generate_joints(gen, bitmap);
 	generate_rivers(gen, bitmap);
+	calculate_climate(bitmap);
 }

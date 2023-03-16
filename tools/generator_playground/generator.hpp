@@ -128,11 +128,13 @@ struct generator_C_t : generator_t {
 private:
 	void generate_continents(std::mt19937 &gen);
 	void generate_grid_intersections();
-	void generate_river_joints(std::mt19937 &gen, bitmap_t &bitmap);
+	void generate_joints(std::mt19937 &gen, bitmap_t &bitmap);
 	void generate_rivers(std::mt19937 &gen, bitmap_t &bitmap);
+	void calculate_climate(bitmap_t &bitmap);
 	void draw_map(bitmap_t &bitmap, std::mt19937 &gen);
 	void draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen);
 
+	double get_temperature(const glm::dvec2 &p) const;
 	double get_elevation_A(const glm::dvec2 &p) const;
 
 	inline glm::tvec2<long long, glm::highp> space_to_grid_coords(
@@ -158,6 +160,15 @@ private:
 		0x77c4dd, // WATER
 		0xfcf04b, // COAST
 	};
+	struct joint_edge_t {
+		std::size_t dest;
+		enum type_t : uint8_t {
+			USUAL = 0,
+			TO_LEFT,
+			TO_RIGHT
+		} type;
+		bool river = false;
+	};
 
 	std::size_t voro_cnt;
 	std::size_t super_voro_cnt;
@@ -172,7 +183,10 @@ private:
 	voronoi_diagram_t diagram;
 	std::vector<plate_t> plates;
 	std::vector<glm::dvec2> tour_path_points;
-	std::vector<glm::dvec2> river_joints;
+	std::vector<glm::dvec2> joints;
+	std::vector<std::vector<joint_edge_t>> al;
+	static constexpr int GREATEST_WATER_DIST = std::numeric_limits<int>::max();
+	std::vector<int> joints_humidity;
 
 	const double CHUNK_DIM_F
 		= static_cast<double>(CHUNK_DIM)

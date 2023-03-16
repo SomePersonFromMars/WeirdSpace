@@ -372,7 +372,7 @@ int32_t main(void) {
 					&global_settings.replace_seed_max);
 			}
 
-			if (ImGui::CollapsingHeader("Rivers")) {
+			if (ImGui::CollapsingHeader("Rivers and climate")) {
 				ImGui::DragScalar("river_joints_R", ImGuiDataType_Double,
 					&global_settings.river_joints_R,
 					0.0002f,
@@ -394,10 +394,23 @@ int32_t main(void) {
 				{
 					static vec3 river_color_f
 						= color_hex_to_vec3(global_settings.river_color);
-					if (ImGui::ColorEdit3("river_color", (float*)&river_color_f))
+					if (ImGui::ColorEdit3("river_color",
+								(float*)&river_color_f))
 						global_settings.river_color
 							= color_vec3_to_hex(river_color_f);
 				}
+
+				ImGui::DragScalar("humidity_scale", ImGuiDataType_S32,
+					&global_settings.humidity_scale,
+					1.0f,
+					&global_settings.humidity_scale_min,
+					&global_settings.humidity_scale_max);
+
+				ImGui::DragScalar("temperature_exp", ImGuiDataType_Double,
+					&global_settings.temperature_exp,
+					0.0002f,
+					&global_settings.temperature_exp_min,
+					&global_settings.temperature_exp_max);
 			}
 
 			if (ImGui::CollapsingHeader("Outputs")) {
