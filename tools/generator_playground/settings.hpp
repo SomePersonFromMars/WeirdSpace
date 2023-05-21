@@ -15,12 +15,15 @@
 #define SHADER_LINE_VERTEX_PATH "runtime/shader_line_vertex.glsl"
 #define SHADER_LINE_FRAGMENT_PATH "runtime/shader_line_fragment.glsl"
 
+#define SHADER_GENERATOR_D_COMPUTE_PATH \
+	"runtime/shader_generator_D_compute.glsl"
+
 // Chunk dimension in the actual game is 512.
 // This constant only changes the chunk resolution
 // and not its scale compared to objects dimensions.
 // For example noise features remain the same
 // size compared to the chunk dimensions.
-#define CHUNK_DIM 76
+#define CHUNK_DIM 64
 
 #include <cstddef>
 #include <cstdint>

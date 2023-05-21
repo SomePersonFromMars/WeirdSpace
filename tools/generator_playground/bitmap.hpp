@@ -19,10 +19,12 @@ struct bitmap_t {
 	void set(int y, int x, glm::u8vec3 color);
 	void clear();
 
-	bitmap_t();
+	bitmap_t() = default;
+	void init();
 	~bitmap_t();
 
 	void load_to_texture();
+	inline GLuint get_texture_id() const;
 	void draw(const glm::mat4 &MVP_matrix);
 
 private:
@@ -63,6 +65,10 @@ inline uint32_t bitmap_t::get(int y, int x) {
 		(uint32_t(get(y, x, 2)) << 0) |
 		(uint32_t(get(y, x, 1)) << 8) |
 		(uint32_t(get(y, x, 0)) << 16);
+}
+
+inline GLuint bitmap_t::get_texture_id() const {
+	return texture_id;
 }
 
 #endif

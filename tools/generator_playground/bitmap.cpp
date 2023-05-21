@@ -1,10 +1,12 @@
 #include "bitmap.hpp"
 
+#include <cstdio>
+
 #include "settings.hpp"
 #include "useful.hpp"
 #include "shader_loader.hpp"
 
-bitmap_t::bitmap_t() {
+void bitmap_t::init() {
 	// Allocate content buffer
 	content = new uint8_t[WIDTH*HEIGHT*3];
 
@@ -108,6 +110,8 @@ void bitmap_t::load_to_texture() {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0,
 			GL_RGB, GL_UNSIGNED_BYTE, content);
 	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// PRINT_U(glGetError());
 }
 
 void bitmap_t::draw(const glm::mat4 &MVP_matrix) {

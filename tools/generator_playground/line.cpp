@@ -3,7 +3,7 @@
 #include "settings.hpp"
 #include "shader_loader.hpp"
 
-line_t::line_t() {
+void line_t::init() {
 	// Load shaders and generate shader program
 	GLuint vertex_shader_id = compile_shader(
 			SHADER_LINE_VERTEX_PATH, GL_VERTEX_SHADER);

@@ -7,6 +7,7 @@
 #define DEBUG
 #ifdef DEBUG
 	#define PRINT_D(var) printf(#var " = %d\n", var)
+	#define PRINT_LD(var) printf(#var " = %ld\n", var)
 	#define PRINT_U(var) printf(#var " = %u\n", var)
 	#define PRINT_LU(var) printf(#var " = %lu\n", var)
 	#define PRINT_ZU(var) printf(#var " = %zu\n", var)

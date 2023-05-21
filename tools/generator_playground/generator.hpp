@@ -16,8 +16,9 @@ double spline_gradient(
 
 struct generator_t {
 	generator_t();
+	virtual void init() = 0;
 	virtual void new_seed() = 0;
-	virtual void generate_bitmap(bitmap_t &bitmap, int resolution_div) = 0;
+	virtual void generate_bitmap(bitmap_t &bitmap) = 0;
 	virtual void load_settings() = 0;
 
 	std::size_t * const debug_vals = global_settings.debug_vals;
@@ -55,96 +56,20 @@ protected:
 			const uint32_t color);
 };
 
-struct generator_A_t : generator_t {
-	generator_A_t();
-
-	virtual void new_seed() override;
-	virtual void generate_bitmap(bitmap_t &bitmap,
-			int resolution_div) override;
-	virtual void load_settings() override;
-
-private:
-
-	const double noise_pos_mult = 1.0/double(CHUNK_DIM)*3.0;
-	glm::u8vec3 get(glm::ivec2 ipos);
-	cyclic_noise_t noise;
-};
-
-struct generator_B_t : generator_t {
-	generator_B_t();
-
-	virtual void new_seed() override;
-	virtual void generate_bitmap(bitmap_t &bitmap,
-			int resolution_div) override;
-	virtual void load_settings() override;
-
-private:
-	std::mt19937::result_type seed_voronoi;
-	noise_t coast_noise;
-
-	// edge_color is a border color
-	void fill(bitmap_t &bitmap, glm::dvec2 origin,
-			uint32_t edge_color, uint32_t fill_color);
-
-	struct tile_t {
-		uint32_t type = 0;
-		// int coast_dist = 0;
-		int perturbtion = 0;
-		glm::ivec2 coast_origin;
-		double tmp;
-
-		static constexpr uint32_t WATER_BIT = 1;
-		static constexpr uint32_t COAST_BIT = 4;
-		static constexpr uint32_t LAND_BIT = 2;
-
-		static constexpr int COAST_DEPTH = 16;
-		static constexpr long long COAST_DEPTH_SQ =
-			static_cast<long long>(COAST_DEPTH) *
-			static_cast<long long>(COAST_DEPTH);
-	};
-
-	struct fractal_grid_t {
-		glm::ivec2 size;
-		int voronois_cnt;
-		double land_probability;
-		std::vector<std::vector<tile_t>> grid;
-		void generate_grid(std::mt19937::result_type seed_voronoi,
-				noise_t &noise);
-	};
-
-	std::array<fractal_grid_t, 1> grids; // Fractal grids
-};
-
 struct generator_C_t : generator_t {
+	// Public functions
 	generator_C_t();
 
+	virtual void init() override;
 	virtual void new_seed() override;
-	virtual void generate_bitmap(bitmap_t &bitmap,
-			int resolution_div) override;
 	virtual void load_settings() override;
+
+	virtual void generate_bitmap(bitmap_t &bitmap) override;
 
 	std::pair<glm::dvec2, glm::dvec2> get_tour_path_points(const double off);
 
 private:
-	void generate_continents(std::mt19937 &gen);
-	void generate_grid_intersections();
-	void generate_joints(std::mt19937 &gen, bitmap_t &bitmap);
-	void generate_rivers(std::mt19937 &gen, bitmap_t &bitmap);
-	void calculate_climate(bitmap_t &bitmap);
-	void draw_map(bitmap_t &bitmap, std::mt19937 &gen);
-	void draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen);
-
-	double get_temperature(const glm::dvec2 &p) const;
-	double get_elevation_A(const glm::dvec2 &p) const;
-
-	inline glm::tvec2<long long, glm::highp> space_to_grid_coords(
-		const glm::dvec2 &p) const;
-
-	const std::function<double(const long long)> get_tour_path_point_x;
-	const std::function<double(const long long)> get_tour_path_point_y;
-
-	std::mt19937::result_type seed_voronoi;
-
+	// Private structures
 	struct plate_t {
 		enum type_t : uint8_t {
 			NONE = 0,
@@ -170,30 +95,56 @@ private:
 		bool river = false;
 	};
 
-	std::size_t voro_cnt;
-	std::size_t super_voro_cnt;
+	// Private functions
+	void generate_continents(std::mt19937 &gen);
+	void generate_grid_intersections();
+	void generate_joints(std::mt19937 &gen, bitmap_t &bitmap);
+	void generate_rivers(std::mt19937 &gen, bitmap_t &bitmap);
+	void calculate_climate(bitmap_t &bitmap);
+	void draw_map(bitmap_t &bitmap, std::mt19937 &gen);
+	void draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen);
+
+	double get_temperature(const glm::dvec2 &p) const;
+	double get_elevation_A(const glm::dvec2 &p) const;
+
+	inline glm::tvec2<long long, glm::highp> space_to_grid_coords(
+		const glm::dvec2 &p) const;
+
+	// Private data
+	// Constants
 	static constexpr std::size_t GRID_BOX_DIM_ZU = CHUNK_DIM/4;
 	const double GRID_BOX_DIM_F
 		= static_cast<double>(GRID_BOX_DIM_ZU)
 		* space_max.y / static_cast<double>(height);
 	const std::size_t GRID_HEIGHT;
 	const std::size_t GRID_WIDTH;
-	// Contains intersections of grid boxes with voronoi polygons
-	std::vector<std::vector<std::vector<voro_id_t>>> grid;
-	voronoi_diagram_t diagram;
-	std::vector<plate_t> plates;
-	std::vector<glm::dvec2> tour_path_points;
-	std::vector<glm::dvec2> joints;
-	std::vector<std::vector<joint_edge_t>> al;
 	static constexpr int GREATEST_WATER_DIST = std::numeric_limits<int>::max();
-	std::vector<int> joints_humidity;
-
 	const double CHUNK_DIM_F
 		= static_cast<double>(CHUNK_DIM)
 		* space_max.y / static_cast<double>(height);
 	const double noise_pos_mult = 1.0/double(CHUNK_DIM_F)*2.0;
+
+	// Small variables
+	const std::function<double(const long long)> get_tour_path_point_x;
+	const std::function<double(const long long)> get_tour_path_point_y;
+	std::mt19937::result_type seed_voronoi;
 	cyclic_noise_t noise;
+
+	// Voronoi diagram
+	std::size_t voro_cnt;
+	std::size_t super_voro_cnt;
+	// Contains intersections of grid boxes with voronoi polygons
+	std::vector<std::vector<std::vector<voro_id_t>>> grid;
+	voronoi_diagram_t diagram;
+	std::vector<plate_t> plates;
+
+	// Joints etc.
+	std::vector<glm::dvec2> tour_path_points;
+	std::vector<glm::dvec2> joints;
+	std::vector<std::vector<joint_edge_t>> al;
+	std::vector<int> joints_humidity;
 };
+
 
 inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) const {
 	return
@@ -219,5 +170,19 @@ inline glm::tvec2<long long, glm::highp> generator_C_t::space_to_grid_coords(
 			std::floor(p.y / GRID_BOX_DIM_F)
 		);
 }
+
+struct generator_D_t : generator_t {
+	// Public functions
+	generator_D_t();
+
+	virtual void init() override;
+	virtual void new_seed() override;
+	virtual void load_settings() override;
+
+	virtual void generate_bitmap(bitmap_t &bitmap) override;
+
+private:
+	GLuint program_id;
+};
 
 #endif

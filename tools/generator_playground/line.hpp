@@ -8,7 +8,8 @@
 
 class line_t {
 public:
-	line_t();
+	line_t() = default;
+	void init();
 	~line_t();
 	void draw(const glm::mat4 &MVP_matrix);
 

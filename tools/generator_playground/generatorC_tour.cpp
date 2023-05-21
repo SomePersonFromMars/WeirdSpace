@@ -170,7 +170,7 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 	cyclic_edge.a = INVALID_ID;
 	cyclic_edge.b = INVALID_ID;
 	cyclic_edge.len_sq = std::numeric_limits<double>::infinity();
-	std::vector<std::vector<std::size_t>> al(path_points_cnt);
+	std::vector<std::vector<std::size_t>> al_tour(path_points_cnt);
 
 	for (std::size_t half_edge = 0;
 			half_edge < d.triangles.size();
@@ -248,12 +248,12 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 			continue;
 
 		fau.union_(e.a, e.b);
-		al[e.a].push_back(e.b);
-		al[e.b].push_back(e.a);
+		al_tour[e.a].push_back(e.b);
+		al_tour[e.b].push_back(e.a);
 	}
 
 	// for (std::size_t v = 0; v < path_points_cnt; ++v) {
-	// 	for (const std::size_t w : al[v]) {
+	// 	for (const std::size_t w : al_tour[v]) {
 	// 		draw_edge(bitmap,
 	// 			dvec2(
 	// 				chosen_points_coords[2*v+0],
@@ -328,7 +328,7 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 		}
 
 		next_event.push_back(INVALID_ID);
-		for (const std::size_t w : al[v]) {
+		for (const std::size_t w : al_tour[v]) {
 			if (!cycle.empty() && cycle.back() == w)
 				continue;
 			next_event.push_back(w);
