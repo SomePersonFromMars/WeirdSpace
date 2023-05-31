@@ -1,13 +1,26 @@
 #include "app.hpp"
 
+#include "useful.hpp"
+
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 
 void app_t::init_generator() {
 	callbacks_strct.generator = generator;
-	bitmap_A.init();
-	line.init();
 
+	// WHERE; PRINT_U(glGetError());
+	PRINT_U(GL_NO_ERROR);
+	PRINT_U(GL_INVALID_ENUM);
+	PRINT_U(GL_INVALID_VALUE);
+	PRINT_U(GL_INVALID_OPERATION);
+	PRINT_U(GL_INVALID_FRAMEBUFFER_OPERATION);
+	PRINT_U(GL_OUT_OF_MEMORY);
+	PRINT_U(GL_STACK_UNDERFLOW);
+	PRINT_U(GL_STACK_OVERFLOW);
+
+	bitmap_A.init();
+	generator->init();
+	line.init();
 	soft_reload_procedure();
 }
 
@@ -15,10 +28,6 @@ void app_t::init_generator() {
 void app_t::loop_generator() {
 	// Drawing the bitmap
 	{
-		// bitmap_A.set(mp.y, mp.x + bitmap_A.WIDTH/3, 0xff0000);
-		// bitmap_A.set(85, mp.x + bitmap_A.WIDTH/3, 0xff0000);
-		// bitmap_A.set(85, 135 + bitmap_A.WIDTH/3, 0xffffff);
-		bitmap_A.load_to_texture();
 		bitmap_A.draw(MVPb);
 	}
 
@@ -64,7 +73,7 @@ void app_t::loop_generator() {
 // Actions
 void app_t::soft_reload_procedure() {
 	generator->generate_bitmap(bitmap_A);
-	bitmap_A.load_to_texture();
+	// bitmap_A.load_to_texture();
 };
 
 void app_t::reload_procedure() {

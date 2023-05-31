@@ -183,6 +183,7 @@ struct generator_D_t : generator_t {
 
 private:
 	GLuint program_id;
+	GLuint t_uniform;
 };
 
 #endif

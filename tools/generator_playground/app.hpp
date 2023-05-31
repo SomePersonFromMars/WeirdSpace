@@ -60,8 +60,8 @@ private:
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 	bitmap_t bitmap_A;
-	generator_C_t generator_C;
-	generator_t *generator = &generator_C;
+	generator_D_t generator_D;
+	generator_t *generator = &generator_D;
 	line_t line;
 	double line_off = 0;
 	glm::vec3 camera_pos = {0, 0, 0};

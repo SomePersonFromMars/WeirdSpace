@@ -46,11 +46,11 @@ void app_t::loop() {
 		loop_generator();
 		loop_imgui();
 
-		// double fps_cnt;
+		double fps_cnt;
 		{ // FPS cnter
 			const double now = glfwGetTime();
 			delta_time = now - timer_fps_cnter;
-			// fps_cnt = 1.0 / delta_time;
+			fps_cnt = 1.0 / delta_time;
 			timer_fps_cnter = now;
 		}
 		{ // Debug output
@@ -60,7 +60,7 @@ void app_t::loop() {
 			if (delta_time_n >= 500ms) {
 				timer_logging = now;
 
-				// fprintf(stderr, "fps_cnt=%f\n", fps_cnt);
+				fprintf(stderr, "fps_cnt=%f\n", fps_cnt);
 			}
 		}
 
@@ -121,6 +121,7 @@ void app_t::init_opengl_etc() {
 		glfwTerminate();
 		exit(-1);
 	}
+	glGetError();
 
 	// glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 	glfwSetWindowUserPointer(window,

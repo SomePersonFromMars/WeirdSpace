@@ -59,6 +59,9 @@ void bitmap_t::init() {
 	// Generate texture
 	glGenTextures(1, &texture_id);
 	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0,
+			GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	// glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, WIDTH, HEIGHT);
 
 	// Set the texture wrapping/filtering options
 	// (on the currently bound texture object)
@@ -68,9 +71,11 @@ void bitmap_t::init() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
 			// GL_NEAREST_MIPMAP_NEAREST);
 			// GL_NEAREST);
-			GL_LINEAR_MIPMAP_LINEAR);
+			GL_LINEAR);
+			// GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
 			GL_NEAREST);
+
 }
 
 bitmap_t::~bitmap_t() {
@@ -106,12 +111,10 @@ void bitmap_t::clear() {
 
 void bitmap_t::load_to_texture() {
 	glBindTexture(GL_TEXTURE_2D, texture_id);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIDTH, HEIGHT, 0,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0,
 			GL_RGB, GL_UNSIGNED_BYTE, content);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	// PRINT_U(glGetError());
+	// glGenerateMipmap(GL_TEXTURE_2D);
+	// WHERE; PRINT_U(glGetError());
 }
 
 void bitmap_t::draw(const glm::mat4 &MVP_matrix) {

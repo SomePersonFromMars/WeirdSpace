@@ -18,7 +18,7 @@
 		printf(#vec " = (%f, %f, %f)\n", vec.x, vec.y, vec.z)
 	#define PRINT_VEC4(vec) \
 		printf(#vec " = (%f, %f, %f, %f)\n", vec.x, vec.y, vec.z, vec.w)
-	#define WHERE printf("%s:%d\n", __func__, __LINE__)
+	#define WHERE printf("%s:%d\n", __FILE__, __LINE__)
 	#include <csignal>
 	extern bool enable_breakpoints;
 	#define BREAKPOINT (enable_breakpoints) ? std::raise(SIGINT) : 0
