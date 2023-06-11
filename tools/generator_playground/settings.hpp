@@ -18,6 +18,11 @@
 #define SHADER_GENERATOR_D_COMPUTE_PATH \
 	"runtime/shader_generator_D_compute.glsl"
 
+#define SHADER_GENERATOR_D_VERRTEX_PATH \
+	"runtime/shader_generator_D_vertex.glsl"
+#define SHADER_GENERATOR_D_FRAGMENT_PATH \
+	"runtime/shader_generator_D_fragment.glsl"
+
 // Chunk dimension in the actual game is 512.
 // This constant only changes the chunk resolution
 // and not its scale compared to objects dimensions.

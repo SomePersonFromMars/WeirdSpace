@@ -15,15 +15,17 @@ double spline_gradient(
 		double t, const std::function<double(const long long)> &f);
 
 struct generator_t {
-	generator_t();
+	generator_t(bitmap_t * const bitmap);
 	virtual void init() = 0;
+	virtual void deinit();
 	virtual void new_seed() = 0;
-	virtual void generate_bitmap(bitmap_t &bitmap) = 0;
+	virtual void generate_bitmap() = 0;
 	virtual void load_settings() = 0;
 
 	std::size_t * const debug_vals = global_settings.debug_vals;
 
 protected:
+	bitmap_t * const bitmap;
 	const int &width, &height;
 public:
 	const double ratio_wh, ratio_hw;
@@ -35,17 +37,17 @@ protected:
 
 	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos) const;
 	inline glm::dvec2 bitmap_to_space_coords(glm::dvec2 pos) const;
-	void draw_edge(bitmap_t &bitmap, glm::dvec2 beg, glm::dvec2 end,
+	void draw_edge(glm::dvec2 beg, glm::dvec2 end,
 			uint32_t color, bool draw_only_empty = false);
-	void draw_point(bitmap_t &bitmap, glm::dvec2 pos, double dim,
+	void draw_point(glm::dvec2 pos, double dim,
 			uint32_t color);
 	// Fills whole consistent black space starting at origin
-	void fill(bitmap_t &bitmap, glm::dvec2 origin,
+	void fill(glm::dvec2 origin,
 			uint32_t fill_color);
-	void draw_convex_polygon(bitmap_t &bitmap,
+	void draw_convex_polygon(
 			const std::vector<glm::dvec2> _points,
 			const uint32_t color);
-	void draw_noisy_edge(bitmap_t &bitmap,
+	void draw_noisy_edge(
 			std::mt19937 &gen,
 			const std::size_t level,
 			const double amplitude,
@@ -58,13 +60,13 @@ protected:
 
 struct generator_C_t : generator_t {
 	// Public functions
-	generator_C_t();
+	generator_C_t(bitmap_t * const bitmap);
 
 	virtual void init() override;
 	virtual void new_seed() override;
 	virtual void load_settings() override;
 
-	virtual void generate_bitmap(bitmap_t &bitmap) override;
+	virtual void generate_bitmap() override;
 
 	std::pair<glm::dvec2, glm::dvec2> get_tour_path_points(const double off);
 
@@ -98,11 +100,11 @@ private:
 	// Private functions
 	void generate_continents(std::mt19937 &gen);
 	void generate_grid_intersections();
-	void generate_joints(std::mt19937 &gen, bitmap_t &bitmap);
-	void generate_rivers(std::mt19937 &gen, bitmap_t &bitmap);
-	void calculate_climate(bitmap_t &bitmap);
-	void draw_map(bitmap_t &bitmap, std::mt19937 &gen);
-	void draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen);
+	void generate_joints(std::mt19937 &gen);
+	void generate_rivers(std::mt19937 &gen);
+	void calculate_climate();
+	void draw_map(std::mt19937 &gen);
+	void draw_tour_path(std::mt19937 &gen);
 
 	double get_temperature(const glm::dvec2 &p) const;
 	double get_elevation_A(const glm::dvec2 &p) const;
@@ -173,17 +175,23 @@ inline glm::tvec2<long long, glm::highp> generator_C_t::space_to_grid_coords(
 
 struct generator_D_t : generator_t {
 	// Public functions
-	generator_D_t();
+	generator_D_t(bitmap_t * const bitmap);
 
 	virtual void init() override;
+	virtual void deinit() override;
 	virtual void new_seed() override;
 	virtual void load_settings() override;
 
-	virtual void generate_bitmap(bitmap_t &bitmap) override;
+	virtual void generate_bitmap() override;
 
 private:
-	GLuint program_id;
+	GLuint program1;
+	GLuint program2;
 	GLuint t_uniform;
+	GLuint fbo;
+	GLuint continents_vao;
+	GLuint continents_triangle_pos_buf;
+	GLuint continents_type_buf;
 };
 
 #endif

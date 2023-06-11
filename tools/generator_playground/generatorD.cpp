@@ -6,20 +6,80 @@
 
 #include <chrono>
 
-generator_D_t::generator_D_t() {
+generator_D_t::generator_D_t(bitmap_t * const bitmap)
+	:generator_t(bitmap)
+{
 }
 
 void generator_D_t::init() {
-	// Load shaders and generate shader program
+	// Load shaders and generate shader programs
 	GLuint compute_shader_id = compile_shader(
 			SHADER_GENERATOR_D_COMPUTE_PATH, GL_COMPUTE_SHADER);
-
-	program_id = link_program(1, compute_shader_id);
-
+	program1 = link_program(1, compute_shader_id);
 	delete_shader(compute_shader_id);
 
+	GLuint vertex_shader_id = compile_shader(
+			SHADER_GENERATOR_D_VERRTEX_PATH, GL_VERTEX_SHADER);
+	GLuint fragment_shader_id = compile_shader(
+			SHADER_GENERATOR_D_FRAGMENT_PATH, GL_FRAGMENT_SHADER);
+	program2 = link_program(2, vertex_shader_id, fragment_shader_id);
+	delete_shader(vertex_shader_id);
+	delete_shader(fragment_shader_id);
+
 	// Uniforms
-	t_uniform = glGetUniformLocation(program_id, "t");
+	t_uniform = glGetUniformLocation(program1, "t");
+
+	// Create FBO etc.
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			bitmap->get_texture_id(), 0);
+	static const GLenum draw_buffers[] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, draw_buffers);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Continents vao etc.
+	glGenVertexArrays(1, &continents_vao);
+	glBindVertexArray(continents_vao);
+
+	// Buffers
+	static constexpr float vertices_pos[] {
+		-0.5, -0.5,
+		0.0,  0.5,
+		0.5, -0.5,
+	};
+	static constexpr uint8_t types[] {
+		2
+	};
+	glGenBuffers(1, &continents_triangle_pos_buf);
+	glGenBuffers(1, &continents_type_buf);
+
+	glBindBuffer(GL_ARRAY_BUFFER, continents_triangle_pos_buf);
+	glBufferData(GL_ARRAY_BUFFER,
+			sizeof(vertices_pos),
+			vertices_pos,
+			GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, continents_type_buf);
+	glBufferData(GL_ARRAY_BUFFER,
+			sizeof(types),
+			types,
+			GL_STATIC_DRAW);
+	glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 0, NULL);
+	glVertexAttribDivisor(1, 1);
+	glEnableVertexAttribArray(1);
+
+	glBindVertexArray(0);
+}
+
+void generator_D_t::deinit() {
+	glDeleteProgram(program1);
+	glDeleteProgram(program2);
+	glDeleteFramebuffers(1, &fbo);
+	glDeleteVertexArrays(1, &continents_vao);
+
 }
 
 void generator_D_t::new_seed() {
@@ -28,35 +88,22 @@ void generator_D_t::new_seed() {
 void generator_D_t::load_settings() {
 }
 
-void generator_D_t::generate_bitmap(bitmap_t &bitmap) {
-	// WHERE;
-	// PRINT_U(glGetError());
-
-	// Shader
-	glUseProgram(program_id);
+void generator_D_t::generate_bitmap() {
+#define PROG 1
+#if PROG == 1
+	// Shader program
+	glUseProgram(program1);
 
 	// Uniforms and texture
 	glBindImageTexture(
 			0,
-			bitmap.get_texture_id(),
+			bitmap->get_texture_id(),
 			0,
 			GL_FALSE,
 			0,
 			GL_WRITE_ONLY,
 			GL_RGBA8
 			);
-	// glActiveTexture(GL_TEXTURE0);
-	// glBindTexture(GL_TEXTURE_2D, bitmap.get_texture_id());
-	// glUniform1i(texture_sampler_uniform,
-	//		0);
-	// glBindImageTexture(
-	//		0,
-	//		bitmap.get_texture_id(),
-	//		0,
-	//		GL_FALSE,
-	//		0,
-	//		GL_WRITE_ONLY,
-	//		)
 
 	const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::high_resolution_clock::now().time_since_epoch()
@@ -69,11 +116,24 @@ void generator_D_t::generate_bitmap(bitmap_t &bitmap) {
 	glUniform1f(t_uniform, t);
 
 	// Execute shader
-	// WHERE; PRINT_U(glGetError());
-	glDispatchCompute(bitmap.WIDTH/3, bitmap.HEIGHT, 1);
+	glDispatchCompute(bitmap->WIDTH/3, bitmap->HEIGHT, 1);
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	// glFinish();
 
-	// WHERE; PRINT_U(glGetError());
+#elif PROG == 2
+	glUseProgram(program2);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glBindVertexArray(continents_vao);
+
+	glViewport(0, 0, width, height);
+	static const GLfloat blue[] = { 0.0f, 0.0f, 0.3f, 1.0f };
+	glClearBufferfv(GL_COLOR, 0, blue);
+
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindVertexArray(0);
+	// GL_GET_ERROR;
+#endif
 }

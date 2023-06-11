@@ -84,7 +84,7 @@ generator_C_t::get_tour_path_points(const double off) {
 	return { pos, gradient };
 }
 
-void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
+void generator_C_t::draw_tour_path(std::mt19937 &gen) {
 	const double duplicate_off_x = diagram.space_max_x_duplicate_off;
 
 	std::size_t land_voronois_cnt = 0;
@@ -350,7 +350,6 @@ void generator_C_t::draw_tour_path(bitmap_t &bitmap, std::mt19937 &gen) {
 		t += 0.01)
 	{
 		draw_point(
-			bitmap,
 			dvec2(
 				spline(t, get_tour_path_point_x),
 				spline(t, get_tour_path_point_y)),

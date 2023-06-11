@@ -19,6 +19,7 @@
 	#define PRINT_VEC4(vec) \
 		printf(#vec " = (%f, %f, %f, %f)\n", vec.x, vec.y, vec.z, vec.w)
 	#define WHERE printf("%s:%d\n", __FILE__, __LINE__)
+	#define GL_GET_ERROR WHERE; PRINT_U(glGetError())
 	#include <csignal>
 	extern bool enable_breakpoints;
 	#define BREAKPOINT (enable_breakpoints) ? std::raise(SIGINT) : 0
@@ -30,6 +31,7 @@
 	#define PRINT_ZU(var)
 	#define PRINT_F(var)
 	#define WHERE
+	#define GL_GET_ERROR
 	#define BREAKPOINT
 	#define BREAKPOINT_IF(expr)
 #endif

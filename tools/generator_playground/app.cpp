@@ -11,6 +11,7 @@ using namespace glm;
 // App
 app_t::app_t()
 	:callbacks_strct(window_width, window_height)
+	,generator_D(&bitmap_A)
 { }
 
 // Init
@@ -40,9 +41,10 @@ void app_t::loop() {
 			soft_reload_procedure();
 		}
 
-		glClear(GL_COLOR_BUFFER_BIT);
-
 		loop_input();
+
+		glClear(GL_COLOR_BUFFER_BIT);
+		glViewport(0, 0, window_width, window_height);
 		loop_generator();
 		loop_imgui();
 
@@ -60,7 +62,9 @@ void app_t::loop() {
 			if (delta_time_n >= 500ms) {
 				timer_logging = now;
 
+				WHERE;
 				fprintf(stderr, "fps_cnt=%f\n", fps_cnt);
+				PRINT_U(glGetError());
 			}
 		}
 
@@ -73,12 +77,15 @@ void app_t::loop() {
 
 // Deinit
 void app_t::deinit() {
+	generator->deinit();
 	deinit_imgui();
 
 	global_settings.save_settings_to_file();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
+
+	GL_GET_ERROR;
 }
 
 
@@ -258,7 +265,12 @@ void window_size_callback(GLFWwindow* window, int width, int height) {
 
 static void framebuffer_size_callback(
 		GLFWwindow* window, int width, int height) {
-	glViewport(0, 0, width, height);
+	callbacks_strct_t * const strct_ptr
+		= callbacks_strct_t::get_strct(window);
+	strct_ptr->window_width = width;
+	strct_ptr->window_height = height;
+
+	// glViewport(0, 0, width, height);
 }
 
 static void key_callback(GLFWwindow* window,

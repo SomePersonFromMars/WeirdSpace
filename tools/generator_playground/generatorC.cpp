@@ -20,8 +20,9 @@ using namespace glm;
 #include "noise.hpp"
 #include <delaunator.hpp>
 
-generator_t::generator_t()
-	:width{bitmap_t::WIDTH}
+generator_t::generator_t(bitmap_t * const bitmap)
+	:bitmap{bitmap}
+	,width{bitmap_t::WIDTH}
 	,height{bitmap_t::HEIGHT}
 	,ratio_wh{double(width)/double(height)}
 	,ratio_hw{double(height)/double(width)}
@@ -29,7 +30,10 @@ generator_t::generator_t()
 	// new_seed();
 }
 
-void generator_t::draw_edge(bitmap_t &bitmap, dvec2 beg, dvec2 end,
+void generator_t::deinit() {
+}
+
+void generator_t::draw_edge(dvec2 beg, dvec2 end,
 		uint32_t color, bool draw_only_empty) {
 	beg = space_to_bitmap_coords(beg);
 	end = space_to_bitmap_coords(end);
@@ -48,12 +52,12 @@ void generator_t::draw_edge(bitmap_t &bitmap, dvec2 beg, dvec2 end,
 		if (pos.x < 0 || pos.x >= double(width)
 				|| pos.y < 0 || pos.y >= double(height))
 			continue;
-		if (!draw_only_empty || bitmap.get(pos.y, pos.x) == 0x0)
-			bitmap.set(pos.y, pos.x, color);
+		if (!draw_only_empty || bitmap->get(pos.y, pos.x) == 0x0)
+			bitmap->set(pos.y, pos.x, color);
 	}
 }
 
-void generator_t::draw_point(bitmap_t &bitmap, glm::dvec2 pos, double dim,
+void generator_t::draw_point(glm::dvec2 pos, double dim,
 		uint32_t color) {
 
 	ivec2 beg, end;
@@ -67,12 +71,12 @@ void generator_t::draw_point(bitmap_t &bitmap, glm::dvec2 pos, double dim,
 
 		for (int y = beg.y; y <= end.y; ++y) {
 			if (y < 0 || y >= height) continue;
-			bitmap.set(y, x, color);
+			bitmap->set(y, x, color);
 		}
 	}
 }
 
-void generator_t::fill(bitmap_t &bitmap, glm::dvec2 origin,
+void generator_t::fill(glm::dvec2 origin,
 		uint32_t fill_color) {
 	origin = space_to_bitmap_coords(origin);
 
@@ -93,7 +97,7 @@ void generator_t::fill(bitmap_t &bitmap, glm::dvec2 origin,
 
 	std::queue<ivec2> next_pixel;
 	next_pixel.push(first_pixel);
-	bitmap.set(first_pixel.y, first_pixel.x, fill_color);
+	bitmap->set(first_pixel.y, first_pixel.x, fill_color);
 
 	while (!next_pixel.empty()) {
 		ivec2 pixel = next_pixel.front();
@@ -107,17 +111,17 @@ void generator_t::fill(bitmap_t &bitmap, glm::dvec2 origin,
 			if (p.y < 0 || p.y >= height)
 				continue;
 
-			const uint32_t cur_color = bitmap.get(p.y, p.x);
+			const uint32_t cur_color = bitmap->get(p.y, p.x);
 			if (cur_color != 0x000000)
 				continue;
 
 			next_pixel.push(p);
-			bitmap.set(p.y, p.x, fill_color);
+			bitmap->set(p.y, p.x, fill_color);
 		}
 	}
 }
 
-void generator_t::draw_convex_polygon(bitmap_t &bitmap,
+void generator_t::draw_convex_polygon(
 		const std::vector<glm::dvec2> _points,
 		const uint32_t color) {
 	if (_points.size() == 0)
@@ -153,8 +157,8 @@ void generator_t::draw_convex_polygon(bitmap_t &bitmap,
 					break;
 				}
 			}
-			if (inside && bitmap.get(y, x) == 0x0)
-				bitmap.set(y, x, color);
+			if (inside && bitmap->get(y, x) == 0x0)
+				bitmap->set(y, x, color);
 		}
 	}
 }
@@ -197,7 +201,7 @@ void generator_t::draw_convex_polygon(bitmap_t &bitmap,
 // 	}
 // }
 
-void generator_t::draw_noisy_edge(bitmap_t &bitmap,
+void generator_t::draw_noisy_edge(
 		std::mt19937 &gen,
 		const std::size_t level,
 		const double amplitude,
@@ -207,14 +211,13 @@ void generator_t::draw_noisy_edge(bitmap_t &bitmap,
 		const glm::dvec2 Y,
 		const uint32_t color) {
 	if (level == 0) {
-		draw_edge(bitmap, A, B, color);
+		draw_edge(A, B, color);
 	} else {
 		std::uniform_real_distribution<double> distrib(
 				0.5-amplitude, 0.5+amplitude);
 		const dvec2 P = lerp(X, Y, distrib(gen));
 		// const dvec2 P = lerp(X, Y, 1.0);
 		draw_noisy_edge(
-				bitmap,
 				gen,
 
 				level-1,
@@ -226,7 +229,6 @@ void generator_t::draw_noisy_edge(bitmap_t &bitmap,
 				color
 				);
 		draw_noisy_edge(
-				bitmap,
 				gen,
 
 				level-1,
@@ -240,8 +242,8 @@ void generator_t::draw_noisy_edge(bitmap_t &bitmap,
 	}
 }
 
-generator_C_t::generator_C_t()
-	:generator_t()
+generator_C_t::generator_C_t(bitmap_t * const bitmap)
+	:generator_t(bitmap)
 	,GRID_HEIGHT{ceil_div(static_cast<size_t>(height), GRID_BOX_DIM_ZU)}
 	,GRID_WIDTH{ceil_div(static_cast<size_t>(width/3), GRID_BOX_DIM_ZU)}
 	,get_tour_path_point_x { [this] (const long long id) -> double {
@@ -486,7 +488,7 @@ void generator_C_t::generate_grid_intersections() {
 // https://github.com/dandrino/terrain-erosion-3-ways/tree/master
 // https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
 void generator_C_t::generate_joints(
-		std::mt19937 &gen, bitmap_t &bitmap) {
+		std::mt19937 &gen) {
 	using ll = long long;
 	const double R = global_settings.river_joints_R;
 	const double RR = R*R;
@@ -611,7 +613,7 @@ void generator_C_t::generate_joints(
 	// }
 }
 
-void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
+void generator_C_t::generate_rivers(std::mt19937 &gen) {
 	const double R = global_settings.river_joints_R;
 	const double RR = R*R;
 	const std::size_t joints_cnt = joints.size();
@@ -774,15 +776,15 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 			if (not e.river) continue;
 			const dvec2 B = space_max_duplicate_off_vec + joints[e.dest];
 			if (e.type == joint_edge_t::USUAL)
-				draw_edge(bitmap,
+				draw_edge(
 					A,
 					B,
 					river_color),
-				draw_edge(bitmap,
+				draw_edge(
 					A - space_max_duplicate_off_vec,
 					B - space_max_duplicate_off_vec,
 					river_color),
-				draw_edge(bitmap,
+				draw_edge(
 					A + space_max_duplicate_off_vec,
 					B + space_max_duplicate_off_vec,
 					river_color);
@@ -792,11 +794,11 @@ void generator_C_t::generate_rivers(std::mt19937 &gen, bitmap_t &bitmap) {
 			// 		B - space_max_duplicate_off_vec,
 			// 		river_color);
 			else if (e.type == joint_edge_t::TO_RIGHT)
-				draw_edge(bitmap,
+				draw_edge(
 					A,
 					B + space_max_duplicate_off_vec,
 					river_color),
-				draw_edge(bitmap,
+				draw_edge(
 					A - space_max_duplicate_off_vec,
 					B,
 					river_color);
@@ -826,7 +828,7 @@ double generator_C_t::get_temperature(const glm::dvec2 &p) const {
 	return temperature;
 }
 
-void generator_C_t::calculate_climate(bitmap_t &bitmap) {
+void generator_C_t::calculate_climate() {
 	const std::size_t joints_cnt = joints.size();
 	const int humidity_scale = global_settings.humidity_scale;
 
@@ -861,7 +863,7 @@ void generator_C_t::calculate_climate(bitmap_t &bitmap) {
 		const double hue = (1.0 - temperature) * 300.0 / 360.0;
 
 		const uint32_t color = hsv_to_rgb(hue, 0.67f, 0.86f);
-		draw_point(bitmap, p, 0.03, color);
+		draw_point(p, 0.03, color);
 	}
 }
 
@@ -1065,7 +1067,7 @@ double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
 	return noised_elevation;
 }
 
-void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
+void generator_C_t::draw_map(std::mt19937 &gen) {
 // #define DRAW_GRID
 #ifdef DRAW_GRID
 	for (double x = 0; x <= space_max.x / 3.0; x += GRID_BOX_DIM_F) {
@@ -1152,9 +1154,9 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			// 	color = color | (color << 8) | (color << 16);
 			// }
 
-			bitmap.set(y, x+width*0/3, color);
+			bitmap->set(y, x+width*0/3, color);
 			// bitmap.set(y, x+width*1/3, color);
-			bitmap.set(y, x+width*2/3, color);
+			bitmap->set(y, x+width*2/3, color);
 		}
 	}
 	const auto diff = clock.now() - timer_start;
@@ -1182,13 +1184,13 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			// 		// color, true);
 			// 		0x9c9e9d, false);
 
-			draw_edge(bitmap,
+			draw_edge(
 					voronoi.points[j],
 					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1],
 					// color, true);
 					override_color, false);
 
-			draw_edge(bitmap,
+			draw_edge(
 					voronoi.points[j]
 					- diagram.duplicate_off_vec,
 					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1]
@@ -1197,7 +1199,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 					// 0xa2f9d9, false);
 					override_color, false);
 
-			draw_edge(bitmap,
+			draw_edge(
 					voronoi.points[j]
 					+ diagram.duplicate_off_vec,
 					voronoi.points[j+1 == voronoi.points.size() ? 0 : j+1]
@@ -1213,7 +1215,7 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			// 		voronoi.center,
 			// 		// color, true);
 			// 		0xd6d6d6, false);
-			draw_point(bitmap,
+			draw_point(
 					voronoi.center + voronoi.al[j].to_mid,
 					0.01, 0xd6d6d6);
 		}
@@ -1229,7 +1231,6 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			std::mt19937 gen_copy = gen;
 			if (edge.type == edge.USUAL || edge.type == edge.TO_RIGHT)
 				draw_noisy_edge(
-						bitmap,
 						gen_copy,
 
 						5,
@@ -1246,7 +1247,6 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 			gen_copy = gen;
 			if (edge.type == edge.USUAL)
 				draw_noisy_edge(
-						bitmap,
 						gen_copy,
 
 						5,
@@ -1260,7 +1260,6 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 						);
 
 			draw_noisy_edge(
-					bitmap,
 					gen,
 
 					5,
@@ -1300,13 +1299,13 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #ifdef FLOOD_FILL
 	for (std::size_t i = 0; i < diagram.voronois_cnt(); ++i) {
 		const voronoi_t &voronoi = diagram.voronois[i];
-		fill(bitmap, voronoi.center, COLORS[
+		fill(voronoi.center, COLORS[
 				static_cast<uint8_t>(plates[i].type)]);
 
-		fill(bitmap, voronoi.center + diagram.duplicate_off_vec, COLORS[
+		fill(voronoi.center + diagram.duplicate_off_vec, COLORS[
 				static_cast<uint8_t>(plates[i].type)]);
 
-		fill(bitmap, voronoi.center - diagram.duplicate_off_vec, COLORS[
+		fill(voronoi.center - diagram.duplicate_off_vec, COLORS[
 				static_cast<uint8_t>(plates[i].type)]);
 	}
 #endif
@@ -1314,11 +1313,11 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 
 // #define DRAW_SPACE_CYCLIC_BORDER
 #ifdef DRAW_SPACE_CYCLIC_BORDER
-	draw_edge(bitmap,
+	draw_edge(
 			dvec2(space_max.x * 1.0 / 3.0, 0),
 			dvec2(space_max.x * 1.0 / 3.0, space_max.y),
 			0x7c7c7c);
-	draw_edge(bitmap,
+	draw_edge(
 			dvec2(space_max.x * 2.0 / 3.0, 0),
 			dvec2(space_max.x * 2.0 / 3.0, space_max.y),
 			0x7c7c7c);
@@ -1326,8 +1325,8 @@ void generator_C_t::draw_map(bitmap_t &bitmap, std::mt19937 &gen) {
 #undef DRAW_SPACE_CYCLIC_BORDER
 }
 
-void generator_C_t::generate_bitmap(bitmap_t &bitmap) {
-	bitmap.clear();
+void generator_C_t::generate_bitmap() {
+	bitmap->clear();
 	printf("\n");
 
 	std::mt19937 gen(seed_voronoi);
@@ -1350,10 +1349,12 @@ void generator_C_t::generate_bitmap(bitmap_t &bitmap) {
 	// for (const auto e : grid[1][0])
 	// 	PRINT_ZU(e);
 
-	draw_map(bitmap, gen);
+	draw_map(gen);
 	// draw_tour_path(bitmap, gen);
 
-	generate_joints(gen, bitmap);
-	generate_rivers(gen, bitmap);
-	calculate_climate(bitmap);
+	generate_joints(gen);
+	generate_rivers(gen);
+	calculate_climate();
+
+	bitmap->load_to_texture();
 }

@@ -75,7 +75,7 @@ void bitmap_t::init() {
 			// GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
 			GL_NEAREST);
-
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 bitmap_t::~bitmap_t() {
@@ -115,6 +115,7 @@ void bitmap_t::load_to_texture() {
 			GL_RGB, GL_UNSIGNED_BYTE, content);
 	// glGenerateMipmap(GL_TEXTURE_2D);
 	// WHERE; PRINT_U(glGetError());
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void bitmap_t::draw(const glm::mat4 &MVP_matrix) {
@@ -135,5 +136,6 @@ void bitmap_t::draw(const glm::mat4 &MVP_matrix) {
 	// glDrawArrays(GL_TRIANGLE_STRIP,
 	glDrawArrays(GL_TRIANGLE_STRIP,
 		0, 4);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindVertexArray(0);
 }

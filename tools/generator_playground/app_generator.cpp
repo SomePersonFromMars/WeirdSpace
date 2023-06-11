@@ -8,7 +8,7 @@ using namespace glm;
 void app_t::init_generator() {
 	callbacks_strct.generator = generator;
 
-	// WHERE; PRINT_U(glGetError());
+	// GL_GET_ERROR
 	PRINT_U(GL_NO_ERROR);
 	PRINT_U(GL_INVALID_ENUM);
 	PRINT_U(GL_INVALID_VALUE);
@@ -72,7 +72,7 @@ void app_t::loop_generator() {
 
 // Actions
 void app_t::soft_reload_procedure() {
-	generator->generate_bitmap(bitmap_A);
+	generator->generate_bitmap();
 	// bitmap_A.load_to_texture();
 };
 
