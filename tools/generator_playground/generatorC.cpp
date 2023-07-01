@@ -20,20 +20,17 @@ using namespace glm;
 #include "noise.hpp"
 #include <delaunator.hpp>
 
-generator_t::generator_t(bitmap_t * const bitmap)
-	:bitmap{bitmap}
-	,width{bitmap_t::WIDTH}
-	,height{bitmap_t::HEIGHT}
-	,ratio_wh{double(width)/double(height)}
-	,ratio_hw{double(height)/double(width)}
-{
-	// new_seed();
-}
+// generator_t::generator_t(bitmap_t * const bitmap)
+// 	:bitmap{bitmap}
+// 	,width{bitmap_t::WIDTH}
+// 	,height{bitmap_t::HEIGHT}
+// 	,ratio_wh{double(width)/double(height)}
+// 	,ratio_hw{double(height)/double(width)}
+// {
+// 	// new_seed();
+// }
 
-void generator_t::deinit() {
-}
-
-void generator_t::draw_edge(dvec2 beg, dvec2 end,
+void generator_C_t::draw_edge(dvec2 beg, dvec2 end,
 		uint32_t color, bool draw_only_empty) {
 	beg = space_to_bitmap_coords(beg);
 	end = space_to_bitmap_coords(end);
@@ -57,7 +54,7 @@ void generator_t::draw_edge(dvec2 beg, dvec2 end,
 	}
 }
 
-void generator_t::draw_point(glm::dvec2 pos, double dim,
+void generator_C_t::draw_point(glm::dvec2 pos, double dim,
 		uint32_t color) {
 
 	ivec2 beg, end;
@@ -76,7 +73,7 @@ void generator_t::draw_point(glm::dvec2 pos, double dim,
 	}
 }
 
-void generator_t::fill(glm::dvec2 origin,
+void generator_C_t::fill(glm::dvec2 origin,
 		uint32_t fill_color) {
 	origin = space_to_bitmap_coords(origin);
 
@@ -121,7 +118,7 @@ void generator_t::fill(glm::dvec2 origin,
 	}
 }
 
-void generator_t::draw_convex_polygon(
+void generator_C_t::draw_convex_polygon(
 		const std::vector<glm::dvec2> _points,
 		const uint32_t color) {
 	if (_points.size() == 0)
@@ -201,7 +198,7 @@ void generator_t::draw_convex_polygon(
 // 	}
 // }
 
-void generator_t::draw_noisy_edge(
+void generator_C_t::draw_noisy_edge(
 		std::mt19937 &gen,
 		const std::size_t level,
 		const double amplitude,
@@ -243,7 +240,11 @@ void generator_t::draw_noisy_edge(
 }
 
 generator_C_t::generator_C_t(bitmap_t * const bitmap)
-	:generator_t(bitmap)
+	:bitmap{bitmap}
+	,width{bitmap_t::WIDTH}
+	,height{bitmap_t::HEIGHT}
+	,ratio_wh{double(width)/double(height)}
+	,ratio_hw{double(height)/double(width)}
 	,GRID_HEIGHT{ceil_div(static_cast<size_t>(height), GRID_BOX_DIM_ZU)}
 	,GRID_WIDTH{ceil_div(static_cast<size_t>(width/3), GRID_BOX_DIM_ZU)}
 	,get_tour_path_point_x { [this] (const long long id) -> double {
@@ -271,9 +272,6 @@ generator_C_t::generator_C_t(bitmap_t * const bitmap)
 	noise.border_beg -= CHUNK_DIM_F*noise_pos_mult*1.0;
 
 	new_seed();
-}
-
-void generator_C_t::init() {
 }
 
 void generator_C_t::load_settings() {
@@ -1067,25 +1065,25 @@ double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
 	return noised_elevation;
 }
 
-void generator_C_t::draw_map(std::mt19937 &gen) {
+void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 // #define DRAW_GRID
 #ifdef DRAW_GRID
 	for (double x = 0; x <= space_max.x / 3.0; x += GRID_BOX_DIM_F) {
-		draw_edge(bitmap,
+		draw_edge(
 				dvec2(x, 0),
 				dvec2(x, space_max.y),
 				0x424242);
-		draw_edge(bitmap,
+		draw_edge(
 				dvec2(x+space_max.x/3.0, 0),
 				dvec2(x+space_max.x/3.0, space_max.y),
 				0x424242);
-		draw_edge(bitmap,
+		draw_edge(
 				dvec2(x+space_max.x*2/3.0, 0),
 				dvec2(x+space_max.x*2/3.0, space_max.y),
 				0x424242);
 	}
 	for (double y = 0; y < space_max.y; y += GRID_BOX_DIM_F) {
-		draw_edge(bitmap,
+		draw_edge(
 				dvec2(0, y),
 				dvec2(space_max.x, y),
 				0x424242);
@@ -1333,28 +1331,36 @@ void generator_C_t::generate_bitmap() {
 	PRINT_LU(seed_voronoi);
 
 	generate_continents(gen);
+#ifndef GENERATE_WITH_GPU
 	generate_grid_intersections();
 
-	std::size_t avg_cnt = 0;
-	std::size_t max_cnt = 0;
-	for (size_t y = 0; y < GRID_HEIGHT; ++y) {
-		for (size_t x = 0; x < GRID_WIDTH; ++x) {
-			avg_cnt += grid[y][x].size();
-			max_replace(max_cnt, grid[y][x].size());
-		}
-	}
-	avg_cnt /= GRID_HEIGHT*GRID_WIDTH;
-	PRINT_ZU(avg_cnt);
-	PRINT_ZU(max_cnt);
-	// for (const auto e : grid[1][0])
-	// 	PRINT_ZU(e);
+	// std::size_t avg_cnt = 0;
+	// std::size_t max_cnt = 0;
+	// for (size_t y = 0; y < GRID_HEIGHT; ++y) {
+	// 	for (size_t x = 0; x < GRID_WIDTH; ++x) {
+	// 		avg_cnt += grid[y][x].size();
+	// 		max_replace(max_cnt, grid[y][x].size());
+	// 	}
+	// }
+	// avg_cnt /= GRID_HEIGHT*GRID_WIDTH;
+	// PRINT_ZU(avg_cnt);
+	// PRINT_ZU(max_cnt);
+	// // for (const auto e : grid[1][0])
+	// // 	PRINT_ZU(e);
+#endif
 
-	draw_map(gen);
+#ifndef GENERATE_WITH_GPU
+	draw_map_cpu(gen);
+#else
+	draw_map_gpu();
+#endif
 	// draw_tour_path(bitmap, gen);
 
+#ifndef GENERATE_WITH_GPU
 	generate_joints(gen);
 	generate_rivers(gen);
 	calculate_climate();
 
 	bitmap->load_to_texture();
+#endif
 }

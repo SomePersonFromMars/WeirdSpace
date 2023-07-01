@@ -6,7 +6,7 @@
 using namespace glm;
 
 void app_t::init_generator() {
-	callbacks_strct.generator = generator;
+	callbacks_strct.generator_C = &generator_C;
 
 	// GL_GET_ERROR
 	PRINT_U(GL_NO_ERROR);
@@ -19,7 +19,7 @@ void app_t::init_generator() {
 	PRINT_U(GL_STACK_OVERFLOW);
 
 	bitmap_A.init();
-	generator->init();
+	generator_C.init();
 	line.init();
 	soft_reload_procedure();
 }
@@ -61,7 +61,7 @@ void app_t::loop_generator() {
 	// 	world_pos.x -= 1.0;
 	// 	world_pos.y -= 1.0;
 	// 	world_pos.y
-	// 		= world_pos.y * generator->ratio_hw;
+	// 		= world_pos.y * generator_C.ratio_hw;
 	// 	MVP = translate(MVP, vec3(static_cast<vec2>(world_pos), 0.0));
 	// 	MVP *= rotate_mat;
 	// 	MVP = scale(MVP, vec3(vec2(4, 1) / 400.0f, 1.0f));
@@ -72,13 +72,12 @@ void app_t::loop_generator() {
 
 // Actions
 void app_t::soft_reload_procedure() {
-	generator->generate_bitmap();
-	// bitmap_A.load_to_texture();
+	generator_C.generate_bitmap();
 };
 
 void app_t::reload_procedure() {
-	generator->load_settings();
-	generator->new_seed();
+	generator_C.load_settings();
+	generator_C.new_seed();
 
 	soft_reload_procedure();
 };

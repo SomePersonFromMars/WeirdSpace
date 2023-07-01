@@ -4,9 +4,9 @@
 
 // Minimal frame duration in ms
 // #define FRAME_MIN_DURATION 1
-#define FRAME_MIN_DURATION 16 // 60fps
+// #define FRAME_MIN_DURATION 16 // 60fps
 // #define FRAME_MIN_DURATION 33 // 30fps
-// #define FRAME_MIN_DURATION 46 // 20fps
+#define FRAME_MIN_DURATION 46 // 20fps
 // #define FRAME_MIN_DURATION 120
 
 #define SHADER_BITMAP_VERTEX_PATH "runtime/shader_bitmap_vertex.glsl"

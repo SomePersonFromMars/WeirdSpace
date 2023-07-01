@@ -6,12 +6,8 @@
 
 #include <chrono>
 
-generator_D_t::generator_D_t(bitmap_t * const bitmap)
-	:generator_t(bitmap)
-{
-}
-
-void generator_D_t::init() {
+void generator_C_t::init() {
+#ifdef GENERATE_WITH_GPU
 	// Load shaders and generate shader programs
 	GLuint compute_shader_id = compile_shader(
 			SHADER_GENERATOR_D_COMPUTE_PATH, GL_COMPUTE_SHADER);
@@ -72,23 +68,21 @@ void generator_D_t::init() {
 	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
+#endif
 }
 
-void generator_D_t::deinit() {
+void generator_C_t::deinit() {
+#ifdef GENERATE_WITH_GPU
 	glDeleteProgram(program1);
 	glDeleteProgram(program2);
 	glDeleteFramebuffers(1, &fbo);
 	glDeleteVertexArrays(1, &continents_vao);
-
+#endif
 }
 
-void generator_D_t::new_seed() {
-}
 
-void generator_D_t::load_settings() {
-}
-
-void generator_D_t::generate_bitmap() {
+void generator_C_t::draw_map_gpu() {
+#ifdef GENERATE_WITH_GPU
 #define PROG 1
 #if PROG == 1
 	// Shader program
@@ -135,5 +129,6 @@ void generator_D_t::generate_bitmap() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindVertexArray(0);
 	// GL_GET_ERROR;
+#endif
 #endif
 }

@@ -9,66 +9,27 @@
 #include <random>
 #include <functional>
 
+// #define GENERATE_WITH_GPU
+
 // Catmull–Rom spline
 double spline(double t, const std::function<double(const long long)> &f);
 double spline_gradient(
 		double t, const std::function<double(const long long)> &f);
 
-struct generator_t {
-	generator_t(bitmap_t * const bitmap);
-	virtual void init() = 0;
-	virtual void deinit();
-	virtual void new_seed() = 0;
-	virtual void generate_bitmap() = 0;
-	virtual void load_settings() = 0;
-
-	std::size_t * const debug_vals = global_settings.debug_vals;
-
-protected:
-	bitmap_t * const bitmap;
-	const int &width, &height;
-public:
-	const double ratio_wh, ratio_hw;
-	const glm::dvec2 space_max {ratio_wh, 1}; // Maximum double coordinates
-	const double space_max_x_duplicate_off = space_max.x * 1.0 / 3.0;
-	const glm::dvec2 space_max_duplicate_off_vec {
-		space_max_x_duplicate_off, 0};
-protected:
-
-	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos) const;
-	inline glm::dvec2 bitmap_to_space_coords(glm::dvec2 pos) const;
-	void draw_edge(glm::dvec2 beg, glm::dvec2 end,
-			uint32_t color, bool draw_only_empty = false);
-	void draw_point(glm::dvec2 pos, double dim,
-			uint32_t color);
-	// Fills whole consistent black space starting at origin
-	void fill(glm::dvec2 origin,
-			uint32_t fill_color);
-	void draw_convex_polygon(
-			const std::vector<glm::dvec2> _points,
-			const uint32_t color);
-	void draw_noisy_edge(
-			std::mt19937 &gen,
-			const std::size_t level,
-			const double amplitude,
-			const glm::dvec2 A,
-			const glm::dvec2 B,
-			const glm::dvec2 X,
-			const glm::dvec2 Y,
-			const uint32_t color);
-};
-
-struct generator_C_t : generator_t {
+struct generator_C_t {
 	// Public functions
 	generator_C_t(bitmap_t * const bitmap);
 
-	virtual void init() override;
-	virtual void new_seed() override;
-	virtual void load_settings() override;
+	void init();
+	void deinit();
+	void new_seed();
+	void load_settings();
 
-	virtual void generate_bitmap() override;
+	void generate_bitmap();
 
 	std::pair<glm::dvec2, glm::dvec2> get_tour_path_points(const double off);
+
+	std::size_t * const debug_vals = global_settings.debug_vals;
 
 private:
 	// Private structures
@@ -98,12 +59,35 @@ private:
 	};
 
 	// Private functions
+	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos) const;
+	inline glm::dvec2 bitmap_to_space_coords(glm::dvec2 pos) const;
+	void draw_edge(glm::dvec2 beg, glm::dvec2 end,
+			uint32_t color, bool draw_only_empty = false);
+	void draw_point(glm::dvec2 pos, double dim,
+			uint32_t color);
+	// Fills whole consistent black space starting at origin
+	void fill(glm::dvec2 origin,
+			uint32_t fill_color);
+	void draw_convex_polygon(
+			const std::vector<glm::dvec2> _points,
+			const uint32_t color);
+	void draw_noisy_edge(
+			std::mt19937 &gen,
+			const std::size_t level,
+			const double amplitude,
+			const glm::dvec2 A,
+			const glm::dvec2 B,
+			const glm::dvec2 X,
+			const glm::dvec2 Y,
+			const uint32_t color);
+
 	void generate_continents(std::mt19937 &gen);
 	void generate_grid_intersections();
 	void generate_joints(std::mt19937 &gen);
 	void generate_rivers(std::mt19937 &gen);
 	void calculate_climate();
-	void draw_map(std::mt19937 &gen);
+	void draw_map_cpu(std::mt19937 &gen);
+	void draw_map_gpu();
 	void draw_tour_path(std::mt19937 &gen);
 
 	double get_temperature(const glm::dvec2 &p) const;
@@ -113,13 +97,24 @@ private:
 		const glm::dvec2 &p) const;
 
 	// Private data
+	// Bitmap
+	bitmap_t * const bitmap;
 	// Constants
 	static constexpr std::size_t GRID_BOX_DIM_ZU = CHUNK_DIM/4;
+
+	const int &width, &height;
+	const double ratio_wh, ratio_hw;
+	const glm::dvec2 space_max {ratio_wh, 1}; // Maximum double coordinates
+	const double space_max_x_duplicate_off = space_max.x * 1.0 / 3.0;
+	const glm::dvec2 space_max_duplicate_off_vec {
+		space_max_x_duplicate_off, 0};
+
+	const std::size_t GRID_HEIGHT;
+	const std::size_t GRID_WIDTH;
+
 	const double GRID_BOX_DIM_F
 		= static_cast<double>(GRID_BOX_DIM_ZU)
 		* space_max.y / static_cast<double>(height);
-	const std::size_t GRID_HEIGHT;
-	const std::size_t GRID_WIDTH;
 	static constexpr int GREATEST_WATER_DIST = std::numeric_limits<int>::max();
 	const double CHUNK_DIM_F
 		= static_cast<double>(CHUNK_DIM)
@@ -145,10 +140,22 @@ private:
 	std::vector<glm::dvec2> joints;
 	std::vector<std::vector<joint_edge_t>> al;
 	std::vector<int> joints_humidity;
+
+	// OpenGL names
+	GLuint program1;
+	GLuint program2;
+	GLuint t_uniform;
+	GLuint fbo;
+	GLuint continents_vao;
+	GLuint continents_triangle_pos_buf;
+	GLuint continents_type_buf;
+
+	// OpenGL buffers helpers
+	std::vector<glm::vec2> continents_tiangle_pos;
 };
 
 
-inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) const {
+inline glm::dvec2 generator_C_t::space_to_bitmap_coords(glm::dvec2 pos) const {
 	return
 		pos.x = pos.x*double(width-1),
 		pos.x /= double(width) / double(height),
@@ -156,7 +163,7 @@ inline glm::dvec2 generator_t::space_to_bitmap_coords(glm::dvec2 pos) const {
 
 		pos;
 }
-inline glm::dvec2 generator_t::bitmap_to_space_coords(glm::dvec2 pos) const {
+inline glm::dvec2 generator_C_t::bitmap_to_space_coords(glm::dvec2 pos) const {
 	return
 		pos.x = pos.x * space_max.x / double(width-1),
 		pos.y = pos.y * space_max.y / double(height-1),
@@ -172,26 +179,5 @@ inline glm::tvec2<long long, glm::highp> generator_C_t::space_to_grid_coords(
 			std::floor(p.y / GRID_BOX_DIM_F)
 		);
 }
-
-struct generator_D_t : generator_t {
-	// Public functions
-	generator_D_t(bitmap_t * const bitmap);
-
-	virtual void init() override;
-	virtual void deinit() override;
-	virtual void new_seed() override;
-	virtual void load_settings() override;
-
-	virtual void generate_bitmap() override;
-
-private:
-	GLuint program1;
-	GLuint program2;
-	GLuint t_uniform;
-	GLuint fbo;
-	GLuint continents_vao;
-	GLuint continents_triangle_pos_buf;
-	GLuint continents_type_buf;
-};
 
 #endif

@@ -20,7 +20,7 @@ add_executable(generator_playground
 
 	generatorC.cpp
 	generatorC_tour.cpp
-	generatorD.cpp
+	generatorC_GPU.cpp
 	noise.cpp
 	voronoi.cpp
 	)

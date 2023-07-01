@@ -17,7 +17,7 @@
 struct callbacks_strct_t {
 	callbacks_strct_t(GLint &window_width, GLint &window_height);
 	GLint &window_width, &window_height;
-	generator_t *generator = nullptr;
+	generator_C_t *generator_C = nullptr;
 	bool refresh_required = false;
 
 	static inline callbacks_strct_t* get_strct(GLFWwindow *window) {
@@ -60,8 +60,7 @@ private:
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 	bitmap_t bitmap_A;
-	generator_D_t generator_D;
-	generator_t *generator = &generator_D;
+	generator_C_t generator_C;
 	line_t line;
 	double line_off = 0;
 	glm::vec3 camera_pos = {0, 0, 0};

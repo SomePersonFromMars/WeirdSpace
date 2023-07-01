@@ -84,7 +84,7 @@ generator_C_t::get_tour_path_points(const double off) {
 	return { pos, gradient };
 }
 
-void generator_C_t::draw_tour_path(std::mt19937 &gen) {
+void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	const double duplicate_off_x = diagram.space_max_x_duplicate_off;
 
 	std::size_t land_voronois_cnt = 0;

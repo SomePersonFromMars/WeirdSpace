@@ -11,7 +11,7 @@ using namespace glm;
 // App
 app_t::app_t()
 	:callbacks_strct(window_width, window_height)
-	,generator_D(&bitmap_A)
+	,generator_C(&bitmap_A)
 { }
 
 // Init
@@ -77,7 +77,7 @@ void app_t::loop() {
 
 // Deinit
 void app_t::deinit() {
-	generator->deinit();
+	generator_C.deinit();
 	deinit_imgui();
 
 	global_settings.save_settings_to_file();
@@ -274,27 +274,28 @@ static void framebuffer_size_callback(
 }
 
 static void key_callback(GLFWwindow* window,
-		int key, int scancode, int action, int mods) {
+		int key, [[maybe_unused]] int scancode,
+		int action, [[maybe_unused]] int mods) {
 	callbacks_strct_t * const strct_ptr
 		= callbacks_strct_t::get_strct(window);
 
 	if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS) {
-		PRINT_ZU(++strct_ptr->generator->debug_vals[0]);
+		PRINT_ZU(++strct_ptr->generator_C->debug_vals[0]);
 		strct_ptr->refresh_required = true;
 	}
 	if (key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS) {
-		if (strct_ptr->generator->debug_vals[0] != 0) {
-			PRINT_ZU(--strct_ptr->generator->debug_vals[0]);
+		if (strct_ptr->generator_C->debug_vals[0] != 0) {
+			PRINT_ZU(--strct_ptr->generator_C->debug_vals[0]);
 			strct_ptr->refresh_required = true;
 		}
 	}
 	if (key == GLFW_KEY_P && action == GLFW_PRESS) {
-		++strct_ptr->generator->debug_vals[1];
+		++strct_ptr->generator_C->debug_vals[1];
 		strct_ptr->refresh_required = true;
 	}
 	if (key == GLFW_KEY_O && action == GLFW_PRESS) {
-		if (strct_ptr->generator->debug_vals[1] != 0) {
-			--strct_ptr->generator->debug_vals[1];
+		if (strct_ptr->generator_C->debug_vals[1] != 0) {
+			--strct_ptr->generator_C->debug_vals[1];
 			strct_ptr->refresh_required = true;
 		}
 	}
