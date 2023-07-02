@@ -7,6 +7,6 @@ else
 	subproject=$1
 fi
 
-gnome-terminal --tab -- bash -c "bash --rcfile <(echo '. ~/.bashrc; cd ~/Dev/WeirdSpace/${subproject}; vim -S')"
+gnome-terminal --tab -- bash -c "bash --rcfile <(echo '. ~/.bashrc; cd ~/Dev/WeirdSpace/${subproject};')"
 gnome-terminal --tab -- bash -c "bash --rcfile <(echo '. ~/.bashrc; cd ~/Dev/WeirdSpace/build/${subproject}')"
 gnome-terminal --tab -- bash -c "bash --rcfile <(echo '. ~/.bashrc; cd ~/Dev/WeirdSpace/${subproject}; git status')"

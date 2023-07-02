@@ -9,7 +9,7 @@
 #include <random>
 #include <functional>
 
-// #define GENERATE_WITH_GPU
+#define GENERATE_WITH_GPU
 
 // Catmull–Rom spline
 double spline(double t, const std::function<double(const long long)> &f);
@@ -145,13 +145,15 @@ private:
 	GLuint program1;
 	GLuint program2;
 	GLuint t_uniform;
+	GLuint space_max_uniform;
 	GLuint fbo;
 	GLuint continents_vao;
-	GLuint continents_triangle_pos_buf;
+	GLuint continents_tiangles_pos_buf;
 	GLuint continents_type_buf;
 
 	// OpenGL buffers helpers
-	std::vector<glm::vec2> continents_tiangle_pos;
+	std::vector<glm::vec2> continents_triangles_pos;
+	std::vector<uint8_t> continents_type;
 };
 
 
