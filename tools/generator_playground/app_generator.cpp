@@ -72,11 +72,13 @@ void app_t::loop_generator() {
 
 // Actions
 void app_t::soft_reload_procedure() {
+	bitmap_A.load_settings();
+	generator_C.load_settings();
+
 	generator_C.generate_bitmap();
 };
 
 void app_t::reload_procedure() {
-	generator_C.load_settings();
 	generator_C.new_seed();
 
 	soft_reload_procedure();

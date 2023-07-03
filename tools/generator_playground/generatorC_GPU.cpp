@@ -25,8 +25,6 @@ void generator_C_t::init() {
 	// Uniforms
 	t_uniform = glGetUniformLocation(program1, "t");
 	space_max_uniform = glGetUniformLocation(program2, "space_max");
-	glUseProgram(program2);
-	glUniform2f(space_max_uniform, space_max.x, space_max.y);
 
 	// Create FBO etc.
 	glGenFramebuffers(1, &fbo);
@@ -55,6 +53,8 @@ void generator_C_t::init() {
 
 	glBindVertexArray(0);
 #endif
+
+	load_settings();
 }
 
 void generator_C_t::deinit() {
@@ -96,7 +96,7 @@ void generator_C_t::draw_map_gpu() {
 	glUniform1f(t_uniform, t);
 
 	// Execute shader
-	glDispatchCompute(bitmap->WIDTH/3, bitmap->HEIGHT, 1);
+	glDispatchCompute(bitmap->width/3, bitmap->height, 1);
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	// glFinish();

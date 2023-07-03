@@ -211,7 +211,7 @@ void app_t::loop_input() {
 			);
 
 		MVPb = scale(MVPb,
-				vec3(1, float(bitmap_A.HEIGHT)/float(bitmap_A.WIDTH), 1));
+				vec3(1, float(bitmap_A.height)/float(bitmap_A.width), 1));
 	}
 
 	// Calculate pixel pointed by mouse cursor
@@ -231,20 +231,20 @@ void app_t::loop_input() {
 		mp.y /= float(window_width)/float(window_height);
 		mp -= -camera_pos
 			* vec3(1, -float(window_width)/float(window_height), 1);
-		mp.y /= float(bitmap_A.HEIGHT)/float(bitmap_A.WIDTH);
+		mp.y /= float(bitmap_A.height)/float(bitmap_A.width);
 
 		mp.x += 1.0;
 		mp.y += 1.0;
 		mp.x /= 2.0;
 		mp.y /= 2.0;
-		mp.x *= float(bitmap_A.WIDTH);
-		mp.y *= float(bitmap_A.HEIGHT);
+		mp.x *= float(bitmap_A.width);
+		mp.y *= float(bitmap_A.height);
 		mp.x = max(mp.x, 0.0f);
 		mp.y = max(mp.y, 0.0f);
-		mp.x = min(mp.x, float(bitmap_A.WIDTH-1));
-		mp.y = min(mp.y, float(bitmap_A.HEIGHT-1));
+		mp.x = min(mp.x, float(bitmap_A.width-1));
+		mp.y = min(mp.y, float(bitmap_A.height-1));
 
-		mp.x -= float(bitmap_A.WIDTH/3);
+		mp.x -= float(bitmap_A.width/3);
 	}
 }
 

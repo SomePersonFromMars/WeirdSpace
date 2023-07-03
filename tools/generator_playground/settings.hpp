@@ -23,13 +23,6 @@
 #define SHADER_GENERATOR_D_FRAGMENT_PATH \
 	"runtime/shader_generator_D_fragment.glsl"
 
-// Chunk dimension in the actual game is 512.
-// This constant only changes the chunk resolution
-// and not its scale compared to objects dimensions.
-// For example noise features remain the same
-// size compared to the chunk dimensions.
-#define CHUNK_DIM 100
-
 #include <cstddef>
 #include <cstdint>
 #include <climits>
@@ -50,7 +43,12 @@ extern struct settings_t {
 	FIELD(uint32_t   , river_color      , 0x477199, 0,    0xffffff)
 	FIELD(int        , humidity_scale   , 5,        0,    200)
 	FIELD(double     , temperature_exp  , 4.0,      0.01, 100.0)
-	FIELD(int        , chunk_dim        , 64,       1,   4096)
+	// Chunk dimension in the actual game is 512.
+	// This constant only changes the chunk resolution
+	// and not its scale compared to objects dimensions.
+	// For example noise features remain the same
+	// size compared to the chunk dimensions.
+	FIELD(int        , chunk_dim        , 64,       1,    4096)
 	size_t debug_vals[3] {
 		7,
 		0,

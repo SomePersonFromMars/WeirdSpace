@@ -1,6 +1,6 @@
 voro_cnt 217
 super_voro_cnt 43
-debug_vals[0] 15
+debug_vals[0] 18
 debug_vals[1] 5
 debug_vals[2] 0
 replace_seed 0

@@ -24,6 +24,7 @@ struct generator_C_t {
 	void deinit();
 	void new_seed();
 	void load_settings();
+	void calculate_constants();
 
 	void generate_bitmap();
 
@@ -100,26 +101,21 @@ private:
 	// Bitmap
 	bitmap_t * const bitmap;
 	// Constants
-	static constexpr std::size_t GRID_BOX_DIM_ZU = CHUNK_DIM/4;
+	std::size_t grid_box_dim_zu;
 
 	const int &width, &height;
-	const double ratio_wh, ratio_hw;
-	const glm::dvec2 space_max {ratio_wh, 1}; // Maximum double coordinates
-	const double space_max_x_duplicate_off = space_max.x * 1.0 / 3.0;
-	const glm::dvec2 space_max_duplicate_off_vec {
-		space_max_x_duplicate_off, 0};
+	double ratio_wh, ratio_hw;
+	glm::dvec2 space_max; // Maximum double coordinates
+	double space_max_x_duplicate_off;
+	glm::dvec2 space_max_duplicate_off_vec;
 
-	const std::size_t GRID_HEIGHT;
-	const std::size_t GRID_WIDTH;
+	std::size_t grid_height;
+	std::size_t grid_width;
 
-	const double GRID_BOX_DIM_F
-		= static_cast<double>(GRID_BOX_DIM_ZU)
-		* space_max.y / static_cast<double>(height);
+	double grid_box_dim_f;
 	static constexpr int GREATEST_WATER_DIST = std::numeric_limits<int>::max();
-	const double CHUNK_DIM_F
-		= static_cast<double>(CHUNK_DIM)
-		* space_max.y / static_cast<double>(height);
-	const double noise_pos_mult = 1.0/double(CHUNK_DIM_F)*2.0;
+	double chunk_dim_f;
+	double noise_pos_mult;
 
 	// Small variables
 	const std::function<double(const long long)> get_tour_path_point_x;
@@ -177,8 +173,8 @@ inline glm::tvec2<long long, glm::highp> generator_C_t::space_to_grid_coords(
 	const glm::dvec2 &p) const {
 	return glm::tvec2<long long, glm::highp>(
 			std::floor(
-				(p.x-space_max.x/3.0) / GRID_BOX_DIM_F),
-			std::floor(p.y / GRID_BOX_DIM_F)
+				(p.x-space_max.x/3.0) / grid_box_dim_f),
+			std::floor(p.y / grid_box_dim_f)
 		);
 }
 

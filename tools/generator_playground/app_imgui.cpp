@@ -56,6 +56,12 @@ void app_t::loop_imgui() {
 			ImGui::InputScalar("debug_vals[2]", ImGuiDataType_U64,
 				&global_settings.debug_vals[2], &size_t_step);
 
+			ImGui::DragScalar("chunk_dim", ImGuiDataType_S32,
+				&global_settings.chunk_dim,
+				1.0f,
+				&global_settings.chunk_dim_min,
+				&global_settings.chunk_dim_max);
+
 			ImGui::DragScalar("voro_cnt", ImGuiDataType_U64,
 				&global_settings.voro_cnt,
 				1.0f,

@@ -9,19 +9,20 @@
 #include "settings.hpp"
 
 struct bitmap_t {
-	// static constexpr int WIDTH = 256;
-	// static constexpr int HEIGHT = 32*5;
-	static constexpr int WIDTH = CHUNK_DIM*6 * 3;
-	static constexpr int HEIGHT = CHUNK_DIM*3;
-	// uint8_t content[HEIGHT][WIDTH][3] { };
+	// static constexpr int width = CHUNK_DIM*6 * 3;
+	// static constexpr int height = CHUNK_DIM*3;
+	int width;
+	int height;
 	inline uint32_t get(int y, int x);
 	void set(int y, int x, uint32_t color);
 	void set(int y, int x, glm::u8vec3 color);
 	void clear();
 
-	bitmap_t() = default;
+	bitmap_t();
 	void init();
 	~bitmap_t();
+	void reallocate();
+	void load_settings();
 
 	void load_to_texture();
 	inline GLuint get_texture_id() const;
@@ -57,7 +58,7 @@ private:
 };
 
 inline uint8_t& bitmap_t::get(int y, int x, int component) {
-	return content[y*WIDTH*3 + x*3 + component];
+	return content[y*width*3 + x*3 + component];
 }
 
 inline uint32_t bitmap_t::get(int y, int x) {

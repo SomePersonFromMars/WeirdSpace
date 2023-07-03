@@ -6,10 +6,34 @@
 #include "useful.hpp"
 #include "shader_loader.hpp"
 
-void bitmap_t::init() {
-	// Allocate content buffer
-	content = new uint8_t[WIDTH*HEIGHT*3];
+bitmap_t::bitmap_t() {
+	load_settings();
+}
 
+void bitmap_t::load_settings() {
+	width = global_settings.chunk_dim*6 * 3;
+	height = global_settings.chunk_dim*3;
+
+	static int prev_chunk_dim = global_settings.chunk_dim;
+	if (global_settings.chunk_dim != prev_chunk_dim)
+		reallocate();
+	prev_chunk_dim = global_settings.chunk_dim;
+}
+
+void bitmap_t::reallocate() {
+	if (content)
+		delete[] content;
+	content = new uint8_t[width*height*3];
+
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	GL_GET_ERROR;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
+			GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	// glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+	GL_GET_ERROR;
+}
+
+void bitmap_t::init() {
 	// Load shaders and generate shader program
 	GLuint vertex_shader_id = compile_shader(
 			SHADER_BITMAP_VERTEX_PATH, GL_VERTEX_SHADER);
@@ -59,9 +83,9 @@ void bitmap_t::init() {
 	// Generate texture
 	glGenTextures(1, &texture_id);
 	glBindTexture(GL_TEXTURE_2D, texture_id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0,
-			GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	// glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, WIDTH, HEIGHT);
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
+	// 		GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	// // glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
 
 	// Set the texture wrapping/filtering options
 	// (on the currently bound texture object)
@@ -76,6 +100,8 @@ void bitmap_t::init() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
 			GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	reallocate();
 }
 
 bitmap_t::~bitmap_t() {
@@ -102,8 +128,8 @@ void bitmap_t::set(int y, int x, glm::u8vec3 color) {
 
 void bitmap_t::clear() {
 	// Clear bitmap
-	for (int x = 0; x < WIDTH; ++x) {
-		for (int y = 0; y < HEIGHT; ++y) {
+	for (int x = 0; x < width; ++x) {
+		for (int y = 0; y < height; ++y) {
 			set(y, x, 0);
 		}
 	}
@@ -111,7 +137,7 @@ void bitmap_t::clear() {
 
 void bitmap_t::load_to_texture() {
 	glBindTexture(GL_TEXTURE_2D, texture_id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, WIDTH, HEIGHT, 0,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
 			GL_RGB, GL_UNSIGNED_BYTE, content);
 	// glGenerateMipmap(GL_TEXTURE_2D);
 	// WHERE; PRINT_U(glGetError());

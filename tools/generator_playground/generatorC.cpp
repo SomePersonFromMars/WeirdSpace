@@ -22,8 +22,8 @@ using namespace glm;
 
 // generator_t::generator_t(bitmap_t * const bitmap)
 // 	:bitmap{bitmap}
-// 	,width{bitmap_t::WIDTH}
-// 	,height{bitmap_t::HEIGHT}
+// 	,width{bitmap_t::width}
+// 	,height{bitmap_t::height}
 // 	,ratio_wh{double(width)/double(height)}
 // 	,ratio_hw{double(height)/double(width)}
 // {
@@ -239,14 +239,11 @@ void generator_C_t::draw_noisy_edge(
 	}
 }
 
+// Constructor
 generator_C_t::generator_C_t(bitmap_t * const bitmap)
 	:bitmap{bitmap}
-	,width{bitmap_t::WIDTH}
-	,height{bitmap_t::HEIGHT}
-	,ratio_wh{double(width)/double(height)}
-	,ratio_hw{double(height)/double(width)}
-	,GRID_HEIGHT{ceil_div(static_cast<size_t>(height), GRID_BOX_DIM_ZU)}
-	,GRID_WIDTH{ceil_div(static_cast<size_t>(width/3), GRID_BOX_DIM_ZU)}
+	,width{bitmap->width}
+	,height{bitmap->height}
 	,get_tour_path_point_x { [this] (const long long id) -> double {
 		const double duplicate_off_x = diagram.space_max_x_duplicate_off;
 		const auto [plane_id, point_id]
@@ -265,18 +262,43 @@ generator_C_t::generator_C_t(bitmap_t * const bitmap)
 		return tour_path_points[point_id].y;
 	} }
 {
-	load_settings();
-
-	noise.border_end = space_max.x*noise_pos_mult/3.0;
-	noise.border_beg = noise.border_end;
-	noise.border_beg -= CHUNK_DIM_F*noise_pos_mult*1.0;
-
 	new_seed();
 }
 
 void generator_C_t::load_settings() {
 	voro_cnt = global_settings.voro_cnt;
 	super_voro_cnt = std::min(voro_cnt, global_settings.super_voro_cnt);
+#ifdef GENERATE_WITH_GPU
+	glUseProgram(program2);
+	glUniform2f(space_max_uniform, space_max.x, space_max.y);
+#endif
+
+	calculate_constants();
+}
+
+void generator_C_t::calculate_constants() {
+	grid_box_dim_zu = global_settings.chunk_dim/4;
+
+	ratio_wh = double(width)/double(height);
+	ratio_hw = double(height)/double(width);
+	space_max = {ratio_wh, 1};
+	space_max_x_duplicate_off = space_max.x * 1.0 / 3.0;
+	space_max_duplicate_off_vec = {space_max_x_duplicate_off, 0};
+
+	grid_height = ceil_div(static_cast<size_t>(height), grid_box_dim_zu);
+	grid_width = ceil_div(static_cast<size_t>(width/3), grid_box_dim_zu);
+
+	grid_box_dim_f
+		= static_cast<double>(grid_box_dim_zu)
+		* space_max.y / static_cast<double>(height);
+	chunk_dim_f
+		= static_cast<double>(global_settings.chunk_dim)
+		* space_max.y / static_cast<double>(height);
+	noise_pos_mult = 1.0/double(chunk_dim_f)*2.0;
+
+	noise.border_end = space_max.x*noise_pos_mult/3.0;
+	noise.border_beg = noise.border_end;
+	noise.border_beg -= chunk_dim_f*noise_pos_mult*1.0;
 }
 
 void generator_C_t::new_seed() {
@@ -419,8 +441,8 @@ void generator_C_t::generate_continents(std::mt19937 &gen) {
 
 void generator_C_t::generate_grid_intersections() {
 	using ll = long long;
-	grid.assign(GRID_HEIGHT,
-		std::vector<std::vector<voro_id_t>>(GRID_WIDTH));
+	grid.assign(grid_height,
+		std::vector<std::vector<voro_id_t>>(grid_width));
 	for (std::size_t voronoi_id = 0;
 			voronoi_id < diagram.voronois.size(); ++voronoi_id) {
 		const voronoi_t &voronoi = diagram.voronois[voronoi_id];
@@ -446,10 +468,10 @@ void generator_C_t::generate_grid_intersections() {
 			] {
 				min_grid = space_to_grid_coords({min_x, min_y});
 				max_grid = space_to_grid_coords({max_x, max_y});
-				min_grid.x = clamp<ll>(min_grid.x, 0, GRID_WIDTH-1);
-				max_grid.x = clamp<ll>(max_grid.x, 0, GRID_WIDTH-1);
-				min_grid.y = clamp<ll>(min_grid.y, 0, GRID_HEIGHT-1);
-				max_grid.y = clamp<ll>(max_grid.y, 0, GRID_HEIGHT-1);
+				min_grid.x = clamp<ll>(min_grid.x, 0, grid_width-1);
+				max_grid.x = clamp<ll>(max_grid.x, 0, grid_width-1);
+				min_grid.y = clamp<ll>(min_grid.y, 0, grid_height-1);
+				max_grid.y = clamp<ll>(max_grid.y, 0, grid_height-1);
 			};
 
 		calc_grid_constrains();
@@ -867,8 +889,8 @@ void generator_C_t::calculate_climate() {
 
 double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
 	auto grid_p = space_to_grid_coords(p);
-	min_replace<long long>(grid_p.x, GRID_WIDTH-1);
-	min_replace<long long>(grid_p.y, GRID_HEIGHT-1);
+	min_replace<long long>(grid_p.x, grid_width-1);
+	min_replace<long long>(grid_p.y, grid_height-1);
 	const std::vector<voro_id_t> &vec
 		= grid[grid_p.y][grid_p.x];
 
@@ -1068,7 +1090,7 @@ double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
 void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 // #define DRAW_GRID
 #ifdef DRAW_GRID
-	for (double x = 0; x <= space_max.x / 3.0; x += GRID_BOX_DIM_F) {
+	for (double x = 0; x <= space_max.x / 3.0; x += grid_box_dim_f) {
 		draw_edge(
 				dvec2(x, 0),
 				dvec2(x, space_max.y),
@@ -1082,7 +1104,7 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 				dvec2(x+space_max.x*2/3.0, space_max.y),
 				0x424242);
 	}
-	for (double y = 0; y < space_max.y; y += GRID_BOX_DIM_F) {
+	for (double y = 0; y < space_max.y; y += grid_box_dim_f) {
 		draw_edge(
 				dvec2(0, y),
 				dvec2(space_max.x, y),
@@ -1279,11 +1301,11 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 			draw_voronoi(i);
 		}
 
-	// const std::size_t gy = debug_vals[0]/GRID_WIDTH;
-	// const std::size_t gx = debug_vals[0]%GRID_WIDTH;
+	// const std::size_t gy = debug_vals[0]/grid_width;
+	// const std::size_t gx = debug_vals[0]%grid_width;
 	// PRINT_ZU(gy);
 	// PRINT_ZU(gx);
-	// PRINT_ZU(GRID_WIDTH);
+	// PRINT_ZU(grid_width);
 	// for (const std::size_t i
 	// 		: grid[gy][gx]) {
 	// 	draw_voronoi(i);
@@ -1336,13 +1358,13 @@ void generator_C_t::generate_bitmap() {
 
 	// std::size_t avg_cnt = 0;
 	// std::size_t max_cnt = 0;
-	// for (size_t y = 0; y < GRID_HEIGHT; ++y) {
-	// 	for (size_t x = 0; x < GRID_WIDTH; ++x) {
+	// for (size_t y = 0; y < grid_height; ++y) {
+	// 	for (size_t x = 0; x < grid_width; ++x) {
 	// 		avg_cnt += grid[y][x].size();
 	// 		max_replace(max_cnt, grid[y][x].size());
 	// 	}
 	// }
-	// avg_cnt /= GRID_HEIGHT*GRID_WIDTH;
+	// avg_cnt /= grid_height*grid_width;
 	// PRINT_ZU(avg_cnt);
 	// PRINT_ZU(max_cnt);
 	// // for (const auto e : grid[1][0])
