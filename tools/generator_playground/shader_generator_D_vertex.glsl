@@ -4,12 +4,13 @@ layout (location = 0) in vec2 pos;
 layout (location = 1) in uint type;
 
 uniform vec2 space_max;
-// vec2 space_max = vec2(6.000000, 1.000000);
 
 const vec3[] COLORS = vec3[](
-	vec3(0.0,0.0,0.0),
-	vec3(0.227,0.588,0.282), // LAND
-	vec3(0.467,0.769,0.867) // WATER
+	vec3(0.0, 0.0, 0.0),
+	// vec3(0.227,0.588,0.282), // LAND
+	// vec3(0.467,0.769,0.867) // WATER
+	vec3(1.0, 1.0, 1.0),
+	vec3(0.0, 0.0, 0.0)
 );
 
 out VS_OUT {

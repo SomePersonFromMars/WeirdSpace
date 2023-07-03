@@ -29,6 +29,7 @@ void settings_t::save_settings_to_file() {
 	WRITE_FIELD( river_color )
 	WRITE_FIELD( humidity_scale )
 	WRITE_FIELD( temperature_exp )
+	WRITE_FIELD( chunk_dim )
 #ifdef DEBUG
 	WRITE_FIELD( enable_breakpoints )
 #endif
@@ -68,6 +69,7 @@ void settings_t::load_settings_from_file() {
 		READ_FIELD( river_color )
 		READ_FIELD( humidity_scale )
 		READ_FIELD( temperature_exp )
+		READ_FIELD( chunk_dim )
 #ifdef DEBUG
 		READ_FIELD( enable_breakpoints )
 #endif

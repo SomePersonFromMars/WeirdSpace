@@ -11,4 +11,5 @@ river_branch_prob 100
 river_color 3768720
 humidity_scale 15
 temperature_exp 1.5
+chunk_dim 64
 enable_breakpoints 0

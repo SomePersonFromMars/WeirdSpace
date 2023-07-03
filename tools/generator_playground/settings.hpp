@@ -50,12 +50,12 @@ extern struct settings_t {
 	FIELD(uint32_t   , river_color      , 0x477199, 0,    0xffffff)
 	FIELD(int        , humidity_scale   , 5,        0,    200)
 	FIELD(double     , temperature_exp  , 4.0,      0.01, 100.0)
+	FIELD(int        , chunk_dim        , 64,       1,   4096)
 	size_t debug_vals[3] {
 		7,
 		0,
 		0
 	};
-
 #undef FIELD
 
 	static constexpr char settings_file_path[] = "runtime/settings.txt";
