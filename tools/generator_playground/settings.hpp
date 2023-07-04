@@ -49,6 +49,7 @@ extern struct settings_t {
 	// For example noise features remain the same
 	// size compared to the chunk dimensions.
 	FIELD(int        , chunk_dim        , 64,       1,    4096)
+	FIELD(bool       , generate_with_gpu, false,    0,    1)
 	size_t debug_vals[3] {
 		7,
 		0,

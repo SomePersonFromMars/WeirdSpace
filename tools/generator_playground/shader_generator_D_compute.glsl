@@ -4,71 +4,16 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(binding = 0) writeonly uniform image2D image_out;
 uniform float t;
 
-// // License : Copyright (C) 2011 Ashima Arts. All rights reserved.
-// //           Distributed under the MIT License. See LICENSE file.
-// //           https://github.com/ashima/webgl-noise
-// //           https://github.com/stegu/webgl-noise
-// vec3 mod289(vec3 x) {
-// 	return x - floor(x * (1.0 / 289.0)) * 289.0;
-// }
+// Description : Array and textureless GLSL 2D/3D/4D simplex
+//               noise functions.
+//      Author : Ian McEwan, Ashima Arts.
+//  Maintainer : stegu
+//     Lastmod : 20201014 (stegu)
+//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.
+//               Distributed under the MIT License. See LICENSE file.
+//               https://github.com/ashima/webgl-noise
+//               https://github.com/stegu/webgl-noise
 //
-// vec2 mod289(vec2 x) {
-// 	return x - floor(x * (1.0 / 289.0)) * 289.0;
-// }
-//
-// vec3 permute(vec3 x) {
-// 	return mod289(((x*34.0)+10.0)*x);
-// }
-//
-// float snoise(vec2 v)
-// {
-// 	const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
-// 			0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
-// 			-0.577350269189626,  // -1.0 + 2.0 * C.x
-// 			0.024390243902439); // 1.0 / 41.0
-// 								// First corner
-// 	vec2 i  = floor(v + dot(v, C.yy) );
-// 	vec2 x0 = v -   i + dot(i, C.xx);
-//
-// 	// Other corners
-// 	vec2 i1;
-// 	//i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0
-// 	//i1.y = 1.0 - i1.x;
-// 	i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-// 	// x0 = x0 - 0.0 + 0.0 * C.xx ;
-// 	// x1 = x0 - i1 + 1.0 * C.xx ;
-// 	// x2 = x0 - 1.0 + 2.0 * C.xx ;
-// 	vec4 x12 = x0.xyxy + C.xxzz;
-// 	x12.xy -= i1;
-//
-// 	// Permutations
-// 	i = mod289(i); // Avoid truncation effects in permutation
-// 	vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
-// 			+ i.x + vec3(0.0, i1.x, 1.0 ));
-//
-// 	vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-// 	m = m*m ;
-// 	m = m*m ;
-//
-// 	// Gradients: 41 points uniformly over a line, mapped onto a diamond.
-// 	// The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)
-//
-// 	vec3 x = 2.0 * fract(p * C.www) - 1.0;
-// 	vec3 h = abs(x) - 0.5;
-// 	vec3 ox = floor(x + 0.5);
-// 	vec3 a0 = x - ox;
-//
-// 	// Normalise gradients implicitly by scaling m
-// 	// Approximation of: m *= inversesqrt( a0*a0 + h*h );
-// 	m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-//
-// 	// Compute final noise value at P
-// 	vec3 g;
-// 	g.x  = a0.x  * x0.x  + h.x  * x0.y;
-// 	g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-// 	return 130.0 * dot(m, g);
-// }
-
 vec3 mod289(vec3 x) {
 	return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
@@ -81,13 +26,11 @@ vec4 permute(vec4 x) {
 	return mod289(((x*34.0)+10.0)*x);
 }
 
-vec4 taylorInvSqrt(vec4 r)
-{
+vec4 taylorInvSqrt(vec4 r) {
 	return 1.79284291400159 - 0.85373472095314 * r;
 }
 
-float snoise(vec3 v)
-{
+float snoise(vec3 v) {
 	const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
 	const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
 
@@ -184,8 +127,8 @@ float fbm_warped(in vec3 st) {
 	return fbm(st + vec3(x, y, 0.0) * 0.7);
 }
 
-// Source: https://github.com/hughsk/glsl-hsv2rgb
-vec3 hsv2rgb(vec3 c) {
+// Source: https://github.com/hughsk/glsl-hsv_to_rgb
+vec3 hsv_to_rgb(vec3 c) {
 	vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
 	vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
 	return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
@@ -215,7 +158,7 @@ void main(void) {
 	noise = noise * 110.0 / 360.0 + 160.0 / 360.0;
 
 	// color = vec4(noise);
-	color = vec4(hsv2rgb(vec3(noise, 0.7, 1.0)), 0.0);
+	color = vec4(hsv_to_rgb(vec3(noise, 0.7, 1.0)), 0.0);
 
 	imageStore(image_out, P, color);
 	imageStore(image_out, P + ivec2(gl_NumWorkGroups.x, 0), color);

@@ -268,10 +268,8 @@ generator_C_t::generator_C_t(bitmap_t * const bitmap)
 void generator_C_t::load_settings() {
 	voro_cnt = global_settings.voro_cnt;
 	super_voro_cnt = std::min(voro_cnt, global_settings.super_voro_cnt);
-#ifdef GENERATE_WITH_GPU
 	glUseProgram(program2);
 	glUniform2f(space_max_uniform, space_max.x, space_max.y);
-#endif
 
 	calculate_constants();
 }
@@ -1001,7 +999,6 @@ double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
 
 		if (plates[closest_voro_id.id].type
 			!= plates[triangle_neighbor_id].type
-			// && plates[closest_voro_id.id].type == plate_t::LAND
 		) {
 			elevation
 				= casted_point_dist
@@ -1010,7 +1007,6 @@ double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
 				pixel_type = plate_t::COAST;
 		} else if (
 			(prev_type != plate_t::NONE || nxt_type != plate_t::NONE)
-			// && plates[closest_voro_id.id].type == plate_t::LAND
 		) {
 			const double det = determinant(
 				edge.to_mid,
@@ -1161,8 +1157,8 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 				else
 					elevation_A = 0.0 + 1.0 * elevation_A;
 
-				color = lerp(0, 0xff, elevation_A);
-				color = color | (color << 8) | (color << 16);
+				// color = lerp(0, 0xff, elevation_A);
+				// color = color | (color << 8) | (color << 16);
 
 				color = hsv_to_rgb(
 					(1.0 - elevation_A) * 240.0 / 360.0, 0.6, 0.8);
@@ -1175,7 +1171,7 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 			// }
 
 			bitmap->set(y, x+width*0/3, color);
-			// bitmap.set(y, x+width*1/3, color);
+			bitmap->set(y, x+width*1/3, color);
 			bitmap->set(y, x+width*2/3, color);
 		}
 	}
@@ -1353,36 +1349,35 @@ void generator_C_t::generate_bitmap() {
 	PRINT_LU(seed_voronoi);
 
 	generate_continents(gen);
-#ifndef GENERATE_WITH_GPU
-	generate_grid_intersections();
+	if (not global_settings.generate_with_gpu) {
+		generate_grid_intersections();
 
-	// std::size_t avg_cnt = 0;
-	// std::size_t max_cnt = 0;
-	// for (size_t y = 0; y < grid_height; ++y) {
-	// 	for (size_t x = 0; x < grid_width; ++x) {
-	// 		avg_cnt += grid[y][x].size();
-	// 		max_replace(max_cnt, grid[y][x].size());
-	// 	}
-	// }
-	// avg_cnt /= grid_height*grid_width;
-	// PRINT_ZU(avg_cnt);
-	// PRINT_ZU(max_cnt);
-	// // for (const auto e : grid[1][0])
-	// // 	PRINT_ZU(e);
-#endif
+		// std::size_t avg_cnt = 0;
+		// std::size_t max_cnt = 0;
+		// for (size_t y = 0; y < grid_height; ++y) {
+		// 	for (size_t x = 0; x < grid_width; ++x) {
+		// 		avg_cnt += grid[y][x].size();
+		// 		max_replace(max_cnt, grid[y][x].size());
+		// 	}
+		// }
+		// avg_cnt /= grid_height*grid_width;
+		// PRINT_ZU(avg_cnt);
+		// PRINT_ZU(max_cnt);
+		// // for (const auto e : grid[1][0])
+		// // 	PRINT_ZU(e);
+	}
 
-#ifndef GENERATE_WITH_GPU
-	draw_map_cpu(gen);
-#else
-	draw_map_gpu();
-#endif
-	// draw_tour_path(bitmap, gen);
+	if (not global_settings.generate_with_gpu) {
+		draw_map_cpu(gen);
+		// draw_tour_path(bitmap, gen);
+	} else
+		draw_map_gpu();
 
-#ifndef GENERATE_WITH_GPU
-	generate_joints(gen);
-	generate_rivers(gen);
-	calculate_climate();
+	if (not global_settings.generate_with_gpu) {
+		// generate_joints(gen);
+		// generate_rivers(gen);
+		// calculate_climate();
 
-	bitmap->load_to_texture();
-#endif
+		bitmap->load_to_texture();
+	}
 }

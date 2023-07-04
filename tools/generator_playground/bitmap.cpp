@@ -104,6 +104,7 @@ void bitmap_t::init() {
 	reallocate();
 }
 
+// Destructor
 bitmap_t::~bitmap_t() {
 	glDeleteBuffers(1, &quad_positions_buffer_id);
 	glDeleteBuffers(1, &quad_uvs_buffer_id);

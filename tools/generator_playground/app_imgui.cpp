@@ -38,7 +38,7 @@ void app_t::loop_imgui() {
 
 	// Debug window
 	{
-		if (ImGui::CollapsingHeader("General")) {
+		if (ImGui::CollapsingHeader("Buttons")) {
 			if (ImGui::Button("Save"))
 				global_settings.save_settings_to_file();
 			if (ImGui::Button("Load"))
@@ -47,20 +47,26 @@ void app_t::loop_imgui() {
 				reload_procedure();
 			if (ImGui::Button("Soft reload"))
 				soft_reload_procedure();
+		}
 
-			constexpr std::size_t size_t_step = 1;
-			ImGui::InputScalar("debug_vals[0]", ImGuiDataType_U64,
-				&global_settings.debug_vals[0], &size_t_step);
-			ImGui::InputScalar("debug_vals[1]", ImGuiDataType_U64,
-				&global_settings.debug_vals[1], &size_t_step);
-			ImGui::InputScalar("debug_vals[2]", ImGuiDataType_U64,
-				&global_settings.debug_vals[2], &size_t_step);
+		if (ImGui::CollapsingHeader(
+					"General", ImGuiTreeNodeFlags_DefaultOpen)) {
+			// constexpr std::size_t size_t_step = 1;
+			// ImGui::InputScalar("debug_vals[0]", ImGuiDataType_U64,
+			// 	&global_settings.debug_vals[0], &size_t_step);
+			// ImGui::InputScalar("debug_vals[1]", ImGuiDataType_U64,
+			// 	&global_settings.debug_vals[1], &size_t_step);
+			// ImGui::InputScalar("debug_vals[2]", ImGuiDataType_U64,
+			// 	&global_settings.debug_vals[2], &size_t_step);
 
 			ImGui::DragScalar("chunk_dim", ImGuiDataType_S32,
 				&global_settings.chunk_dim,
 				1.0f,
 				&global_settings.chunk_dim_min,
 				&global_settings.chunk_dim_max);
+
+			ImGui::Checkbox("generate_with_gpu",
+				&global_settings.generate_with_gpu);
 
 			ImGui::DragScalar("voro_cnt", ImGuiDataType_U64,
 				&global_settings.voro_cnt,
