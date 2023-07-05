@@ -23,8 +23,10 @@ void generator_C_t::init() {
 
 	// Uniforms
 	t_prog1_uniform = glGetUniformLocation(program1, "t");
-	t_prog2_uniform = glGetUniformLocation(program1, "t");
+	t_prog2_uniform = glGetUniformLocation(program2, "t");
 	space_max_uniform = glGetUniformLocation(program2, "space_max");
+	triple_bitmap_size_uniform
+		= glGetUniformLocation(program2, "triple_bitmap_size");
 
 	// Create FBO etc.
 	glGenFramebuffers(1, &fbo);
@@ -42,7 +44,6 @@ void generator_C_t::init() {
 	// Buffers
 	glGenBuffers(1, &continents_triangle_pos_buf);
 	glGenBuffers(1, &continents_elevation_buf);
-	// glGenBuffers(1, &continents_type_buf);
 
 	glBindBuffer(GL_ARRAY_BUFFER, continents_triangle_pos_buf);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -51,10 +52,6 @@ void generator_C_t::init() {
 	glBindBuffer(GL_ARRAY_BUFFER, continents_elevation_buf);
 	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(1);
-
-	// glBindBuffer(GL_ARRAY_BUFFER, continents_type_buf);
-	// glVertexAttribIPointer(1, 1, GL_UNSIGNED_BYTE, 0, NULL);
-	// glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
 
@@ -66,7 +63,6 @@ void generator_C_t::deinit() {
 	glDeleteProgram(program2);
 	glDeleteBuffers(1, &continents_triangle_pos_buf);
 	glDeleteBuffers(1, &continents_elevation_buf);
-	// glDeleteBuffers(1, &continents_type_buf);
 	glDeleteFramebuffers(1, &fbo);
 	glDeleteVertexArrays(1, &continents_vao);
 }
@@ -100,7 +96,7 @@ void generator_C_t::draw_map_gpu() {
 	glUniform1f(t_prog1_uniform, t);
 
 	// Execute shader
-	glDispatchCompute(bitmap->width/3, bitmap->height, 1);
+	glDispatchCompute(bitmap->get_width()/3, bitmap->get_height(), 1);
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	// glFinish();
@@ -109,7 +105,6 @@ void generator_C_t::draw_map_gpu() {
 	// Prepare buffers
 	continents_triangles_pos.resize(0);
 	continents_elevation.resize(0);
-	// continents_type.resize(0);
 
 	for (size_t i = 0; i < diagram.voronois_cnt(); ++i) {
 		const voronoi_t &voro = diagram.voronois[i];
@@ -130,9 +125,6 @@ void generator_C_t::draw_map_gpu() {
 					continents_elevation.push_back(elevation);
 					continents_elevation.push_back(other_elevation);
 					continents_elevation.push_back(other_elevation);
-					// continents_type.push_back(type);
-					// continents_type.push_back(other_type);
-					// continents_type.push_back(other_type);
 				} else if (plates[e.neighbor_id].type == type) {
 					size_t prev = j;
 					size_t nxt = j;
@@ -158,16 +150,10 @@ void generator_C_t::draw_map_gpu() {
 							continents_elevation.push_back(elevation);
 							continents_elevation.push_back(elevation);
 							continents_elevation.push_back(elevation);
-							// continents_type.push_back(type);
-							// continents_type.push_back(type);
-							// continents_type.push_back(type);
 						} else if (prev_type == other_type) {
 							continents_elevation.push_back(elevation);
 							continents_elevation.push_back(elevation);
 							continents_elevation.push_back(other_elevation);
-							// continents_type.push_back(type);
-							// continents_type.push_back(type);
-							// continents_type.push_back(other_type);
 						} else {
 							assert(false);
 						}
@@ -180,16 +166,10 @@ void generator_C_t::draw_map_gpu() {
 							continents_elevation.push_back(elevation);
 							continents_elevation.push_back(elevation);
 							continents_elevation.push_back(elevation);
-							// continents_type.push_back(type);
-							// continents_type.push_back(type);
-							// continents_type.push_back(type);
 						} else if (nxt_type == other_type) {
 							continents_elevation.push_back(elevation);
 							continents_elevation.push_back(other_elevation);
 							continents_elevation.push_back(elevation);
-							// continents_type.push_back(type);
-							// continents_type.push_back(other_type);
-							// continents_type.push_back(type);
 						} else {
 							assert(false);
 						}
@@ -201,18 +181,9 @@ void generator_C_t::draw_map_gpu() {
 				continents_triangles_pos.push_back(voro.center);
 				continents_triangles_pos.push_back(e.end);
 				continents_triangles_pos.push_back(e.beg);
-				// if (type == plate_t::WATER) {
-				// 	continents_type.push_back(plate_t::WATER);
-				// 	continents_type.push_back(plate_t::WATER);
-				// 	continents_type.push_back(plate_t::WATER);
-				// } else {
-				// }
 				continents_elevation.push_back(0.0);
 				continents_elevation.push_back(0.0);
 				continents_elevation.push_back(0.0);
-				// continents_type.push_back(plate_t::NONE);
-				// continents_type.push_back(plate_t::NONE);
-				// continents_type.push_back(plate_t::NONE);
 			}
 		}
 	}
@@ -227,11 +198,6 @@ void generator_C_t::draw_map_gpu() {
 		continents_elevation.size()*sizeof(continents_elevation[0]),
 		&continents_elevation[0],
 		GL_STATIC_DRAW);
-	// glBindBuffer(GL_ARRAY_BUFFER, continents_type_buf);
-	// glBufferData(GL_ARRAY_BUFFER,
-	// 	continents_type.size()*sizeof(continents_type[0]),
-	// 	&continents_type[0],
-	// 	GL_STATIC_DRAW);
 
 	// Render
 	glUseProgram(program2);
@@ -250,7 +216,8 @@ void generator_C_t::draw_map_gpu() {
 	const float t = float(elapsed_ms);
 	glUniform1f(t_prog2_uniform, t);
 
-	glDrawArraysInstanced(GL_TRIANGLES, 0, continents_triangles_pos.size(), 3);
+	glDrawArraysInstanced(GL_TRIANGLES,
+			0, continents_triangles_pos.size(), 3);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindVertexArray(0);

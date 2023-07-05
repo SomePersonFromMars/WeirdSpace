@@ -4,6 +4,8 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(binding = 0) writeonly uniform image2D image_out;
 uniform float t;
 
+const float PI = 3.14159265359;
+
 // Description : Array and textureless GLSL 2D/3D/4D simplex
 //               noise functions.
 //      Author : Ian McEwan, Ashima Arts.
@@ -135,7 +137,7 @@ vec3 hsv_to_rgb(vec3 c) {
 }
 
 void main(void) {
-	ivec2 P = ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y);
+	ivec2 pos = ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y);
 	vec4 color = vec4(0.5f);
 	color.r = float(gl_WorkGroupID.x) / float(gl_NumWorkGroups.x);
 	color.a = color.b = color.g = color.r;
@@ -149,6 +151,7 @@ void main(void) {
 	uv.x *= ratio_wh;
 	uv *= 2.0;
 
+	/*
 	// float noise = snoise(uv);
 	// float noise = fbm(uv);
 	float noise = fbm_warped(vec3(uv, vec2(t / 10000.0)));
@@ -159,8 +162,22 @@ void main(void) {
 
 	// color = vec4(noise);
 	color = vec4(hsv_to_rgb(vec3(noise, 0.7, 1.0)), 0.0);
+	*/
 
-	imageStore(image_out, P, color);
-	imageStore(image_out, P + ivec2(gl_NumWorkGroups.x, 0), color);
-	imageStore(image_out, P + ivec2(gl_NumWorkGroups.x * 2, 0), color);
+	const vec2 P = uv;
+	const float radius = (ratio_wh * 2.0) / 2.0 / PI;
+
+	const float angle = P.x / radius;
+	const float off = t / 10000.0;
+	const vec3 Q = vec3(
+			sin(angle + 2.0 * off) * radius + off,
+			cos(angle + 2.0 * off) * radius + 2.0 * off,
+			P.y + off);
+	// const float noise_val = fbm_warped(vec3(P * 3.0, t / 10000.0)) + 0.5;
+	const float noise_val = fbm_warped(Q * 0.5) + 0.5;
+	color = vec4(noise_val, noise_val, noise_val, 1.0);
+
+	imageStore(image_out, pos, color);
+	imageStore(image_out, pos + ivec2(gl_NumWorkGroups.x, 0), color);
+	imageStore(image_out, pos + ivec2(gl_NumWorkGroups.x * 2, 0), color);
 }

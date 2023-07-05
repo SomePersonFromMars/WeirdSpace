@@ -5,6 +5,7 @@ layout (location = 0) in vec2 pos;
 layout (location = 1) in float elevation;
 
 uniform vec2 space_max;
+uniform bool triple_bitmap_size;
 
 // const vec3[] COLORS = vec3[](
 // 	vec3(0.0, 0.0, 0.0),
@@ -26,11 +27,15 @@ out VS_OUT {
 } vs_out;
 
 void main(void) {
+	const vec2 real_space_max = vec2(space_max.x*3.0, space_max.y);
 	vec2 P = pos;
-	P.x -= space_max.x / 3.0;
-	P /= space_max;
+	P.x -= space_max.x;
+	P /= real_space_max;
+	P.x += float(gl_InstanceID) * 1.0 / 3.0;
 	P = 2.0*P-1.0;
-	P.x += float(gl_InstanceID) * 2.0 / 3.0;
+	if (!triple_bitmap_size) {
+		P.x *= 3.0;
+	}
 	gl_Position = vec4(P, 0.0, 1.0);
 
 	// vs_out.color = vec4(COLORS[type], 1.0);

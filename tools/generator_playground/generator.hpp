@@ -26,6 +26,10 @@ struct generator_C_t {
 
 	void generate_bitmap();
 
+	inline glm::dvec2 get_space_max() const;
+	inline double get_ratio_wh() const;
+	inline double get_ratio_hw() const;
+	inline bool tour_path_points_generated() const;
 	std::pair<glm::dvec2, glm::dvec2> get_tour_path_points(const double off);
 
 	std::size_t * const debug_vals = global_settings.debug_vals;
@@ -101,9 +105,12 @@ private:
 	// Constants
 	std::size_t grid_box_dim_zu;
 
+	// Dimensions of the bitmap
 	const int &width, &height;
+	// Ratios of the bitmap coordinates
 	double ratio_wh, ratio_hw;
-	glm::dvec2 space_max; // Maximum double coordinates
+	glm::dvec2 space_max; // Maximum double coordinates of not tripled space
+	glm::dvec2 real_space_max; // Maximum double coordinates of tripled space
 	double space_max_x_duplicate_off;
 	glm::dvec2 space_max_duplicate_off_vec;
 
@@ -141,30 +148,43 @@ private:
 	GLuint t_prog1_uniform;
 	GLuint t_prog2_uniform;
 	GLuint space_max_uniform;
+	GLuint triple_bitmap_size_uniform;
 	GLuint fbo;
 	GLuint continents_vao;
 	GLuint continents_triangle_pos_buf;
 	GLuint continents_elevation_buf;
-	// GLuint continents_type_buf;
 
 	// OpenGL buffers helpers
 	std::vector<glm::vec2> continents_triangles_pos;
 	std::vector<float> continents_elevation;
-	// std::vector<uint8_t> continents_type;
 };
 
+inline glm::dvec2 generator_C_t::get_space_max() const {
+	return space_max;
+}
+
+inline double generator_C_t::get_ratio_wh() const {
+	return ratio_wh;
+}
+
+inline double generator_C_t::get_ratio_hw() const {
+	return ratio_hw;
+}
+
+inline bool generator_C_t::tour_path_points_generated() const {
+	return tour_path_points.size() > 0;
+}
 
 inline glm::dvec2 generator_C_t::space_to_bitmap_coords(glm::dvec2 pos) const {
 	return
-		pos.x = pos.x*double(width-1),
-		pos.x /= double(width) / double(height),
-		pos.y = pos.y*double(height-1),
+		pos.x = pos.x * double(width-1) / (3.0*space_max.x),
+		pos.y = pos.y * double(height-1) / space_max.y,
 
 		pos;
 }
 inline glm::dvec2 generator_C_t::bitmap_to_space_coords(glm::dvec2 pos) const {
 	return
-		pos.x = pos.x * space_max.x / double(width-1),
+		pos.x = pos.x * (3.0*space_max.x) / double(width-1),
 		pos.y = pos.y * space_max.y / double(height-1),
 
 		pos;

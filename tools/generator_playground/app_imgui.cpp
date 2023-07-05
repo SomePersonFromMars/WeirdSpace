@@ -65,8 +65,17 @@ void app_t::loop_imgui() {
 				&global_settings.chunk_dim_min,
 				&global_settings.chunk_dim_max);
 
+			// if (not global_settings.triple_bitmap_size)
+			// 	global_settings.generate_with_gpu = true;
+
 			ImGui::Checkbox("generate_with_gpu",
 				&global_settings.generate_with_gpu);
+
+			if (global_settings.generate_with_gpu)
+				ImGui::Checkbox("triple_bitmap_size",
+					&global_settings.triple_bitmap_size);
+			else
+				global_settings.triple_bitmap_size = true;
 
 			ImGui::DragScalar("voro_cnt", ImGuiDataType_U64,
 				&global_settings.voro_cnt,
@@ -91,6 +100,9 @@ void app_t::loop_imgui() {
 				1.0f,
 				&global_settings.replace_seed_min,
 				&global_settings.replace_seed_max);
+
+			ImGui::Checkbox("draw_player",
+				&global_settings.draw_player);
 		}
 
 		if (ImGui::CollapsingHeader("Rivers and climate")) {
@@ -120,6 +132,15 @@ void app_t::loop_imgui() {
 					global_settings.river_color
 						= color_vec3_to_hex(river_color_f);
 			}
+
+			ImGui::Checkbox("generate_rivers",
+				&global_settings.generate_rivers);
+
+			ImGui::Checkbox("draw_temperature",
+				&global_settings.draw_temperature);
+
+			ImGui::Checkbox("draw_humidity",
+				&global_settings.draw_humidity);
 
 			ImGui::DragScalar("humidity_scale", ImGuiDataType_S32,
 				&global_settings.humidity_scale,

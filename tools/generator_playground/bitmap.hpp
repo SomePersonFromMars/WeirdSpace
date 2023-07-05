@@ -9,10 +9,12 @@
 #include "settings.hpp"
 
 struct bitmap_t {
-	// static constexpr int width = CHUNK_DIM*6 * 3;
-	// static constexpr int height = CHUNK_DIM*3;
-	int width;
-	int height;
+	inline const int& get_width() const {
+		return width;
+	}
+	inline const int& get_height() const {
+		return height;
+	}
 	inline uint32_t get(int y, int x);
 	void set(int y, int x, uint32_t color);
 	void set(int y, int x, glm::u8vec3 color);
@@ -29,6 +31,8 @@ struct bitmap_t {
 	void draw(const glm::mat4 &MVP_matrix);
 
 private:
+	int width;
+	int height;
 	uint8_t *content = nullptr;
 	inline uint8_t& get(int y, int x, int component);
 
@@ -62,6 +66,10 @@ inline uint8_t& bitmap_t::get(int y, int x, int component) {
 }
 
 inline uint32_t bitmap_t::get(int y, int x) {
+	if (x < 0 || x >= width)
+		return 0;
+	if (y < 0 || y >= height)
+		return 0;
 	return
 		(uint32_t(get(y, x, 2)) << 0) |
 		(uint32_t(get(y, x, 1)) << 8) |

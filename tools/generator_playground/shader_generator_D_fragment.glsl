@@ -7,7 +7,10 @@ in VS_OUT {
 	vec2 pos;
 } fs_in;
 
+uniform vec2 space_max;
 uniform float t;
+
+const float PI = 3.14159265359;
 
 // Description : Array and textureless GLSL 2D/3D/4D simplex
 //               noise functions.
@@ -142,6 +145,34 @@ vec3 hsv_to_rgb(float h, float s, float v) {
 	return hsv_to_rgb(vec3(h, s, v));
 }
 
+float usual_noise(vec2 P) {
+	return fbm_warped(vec3(P * 3.0, t / 10000.0)) + 0.5;
+}
+
+// float cyclic_noise_cyllinder(vec2 P) {
+// 	const float radius = space_max.x / 2.0 / PI;
+// 	const float angle = P.x / radius;
+// 	const vec3 Q = vec3(
+// 			sin(angle) * radius + t / 10000.0,
+// 			cos(angle) * radius + t / 10000.0,
+// 			P.y);
+// 	return fbm_warped(Q * 3.0) + 0.5;
+// }
+
+float cyclic_noise_heuristic(vec2 P) {
+	const float width = space_max.x;
+	P.x -= floor(P.x / width) * width;
+	const float margin = width * 0.1;
+	const float n1 = usual_noise(P);
+	float n = n1;
+	if (P.x > width - margin) {
+		const float over_margin = P.x - (width - margin);
+		const float n2 = usual_noise(vec2(over_margin - margin, P.y));
+		n = mix(n1, n2, over_margin / margin);
+	}
+	return n;
+}
+
 void main(void) {
 	float elevation = fs_in.elevation;
 	{
@@ -151,8 +182,10 @@ void main(void) {
 		elevation = (-3.0*xxx + 4.0*xx + x) / 2.0;
 	}
 
-	const vec2 P = fs_in.pos * 3.0;
-	const float noise_val = fbm_warped(vec3(P, t / 10000.0)) + 0.5;
+	const vec2 P = fs_in.pos - vec2(space_max.x, 0.0);
+	// const float noise_val = usual_noise(P);
+	// const float noise_val = cyclic_noise_cyllinder(P);
+	const float noise_val = cyclic_noise_heuristic(P);
 
 	float noised_elevation
 		= -0.4 + elevation * 0.8
@@ -163,8 +196,11 @@ void main(void) {
 	if (hue < 0.5) hue = 0.15 + 0.25 * hue;
 	else hue = 0.0 + 1.0 * hue;
 
+	// color.rgb = vec3(elevation);
+
 	color.rgb = hsv_to_rgb(
 		(1.0 - hue) * 240.0 / 360.0, 0.6, 0.8);
+
 	color.a = 1.0;
 
 	// color = vec4(noise_val, noise_val, noise_val, 1.0);

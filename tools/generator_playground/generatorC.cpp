@@ -20,16 +20,6 @@ using namespace glm;
 #include "noise.hpp"
 #include <delaunator.hpp>
 
-// generator_t::generator_t(bitmap_t * const bitmap)
-// 	:bitmap{bitmap}
-// 	,width{bitmap_t::width}
-// 	,height{bitmap_t::height}
-// 	,ratio_wh{double(width)/double(height)}
-// 	,ratio_hw{double(height)/double(width)}
-// {
-// 	// new_seed();
-// }
-
 void generator_C_t::draw_edge(dvec2 beg, dvec2 end,
 		uint32_t color, bool draw_only_empty) {
 	beg = space_to_bitmap_coords(beg);
@@ -78,8 +68,6 @@ void generator_C_t::fill(glm::dvec2 origin,
 	origin = space_to_bitmap_coords(origin);
 
 	ivec2 first_pixel(origin.x, origin.y);
-	// first_pixel.x = origin.x * double(width-1) / ratio_wh;
-	// first_pixel.y = origin.y * double(height-1);
 	if (first_pixel.x < 0 || first_pixel.x >= width)
 		return;
 	if (first_pixel.y < 0 || first_pixel.y >= height)
@@ -213,7 +201,6 @@ void generator_C_t::draw_noisy_edge(
 		std::uniform_real_distribution<double> distrib(
 				0.5-amplitude, 0.5+amplitude);
 		const dvec2 P = lerp(X, Y, distrib(gen));
-		// const dvec2 P = lerp(X, Y, 1.0);
 		draw_noisy_edge(
 				gen,
 
@@ -242,8 +229,8 @@ void generator_C_t::draw_noisy_edge(
 // Constructor
 generator_C_t::generator_C_t(bitmap_t * const bitmap)
 	:bitmap{bitmap}
-	,width{bitmap->width}
-	,height{bitmap->height}
+	,width{bitmap->get_width()}
+	,height{bitmap->get_height()}
 	,get_tour_path_point_x { [this] (const long long id) -> double {
 		const double duplicate_off_x = diagram.space_max_x_duplicate_off;
 		const auto [plane_id, point_id]
@@ -269,7 +256,8 @@ void generator_C_t::load_settings() {
 	voro_cnt = global_settings.voro_cnt;
 	super_voro_cnt = std::min(voro_cnt, global_settings.super_voro_cnt);
 	glUseProgram(program2);
-	glUniform2f(space_max_uniform, space_max.x, space_max.y);
+	glUniform1i(triple_bitmap_size_uniform,
+			global_settings.triple_bitmap_size);
 
 	calculate_constants();
 }
@@ -280,7 +268,12 @@ void generator_C_t::calculate_constants() {
 	ratio_wh = double(width)/double(height);
 	ratio_hw = double(height)/double(width);
 	space_max = {ratio_wh, 1};
-	space_max_x_duplicate_off = space_max.x * 1.0 / 3.0;
+	if (global_settings.triple_bitmap_size)
+		space_max.x /= 3.0;
+	real_space_max = {space_max.x*3.0, space_max.y};
+	glUseProgram(program2);
+	glUniform2f(space_max_uniform, space_max.x, space_max.y);
+	space_max_x_duplicate_off = space_max.x * 1.0;
 	space_max_duplicate_off_vec = {space_max_x_duplicate_off, 0};
 
 	grid_height = ceil_div(static_cast<size_t>(height), grid_box_dim_zu);
@@ -294,7 +287,7 @@ void generator_C_t::calculate_constants() {
 		* space_max.y / static_cast<double>(height);
 	noise_pos_mult = 1.0/double(chunk_dim_f)*2.0;
 
-	noise.border_end = space_max.x*noise_pos_mult/3.0;
+	noise.border_end = space_max.x*noise_pos_mult;
 	noise.border_beg = noise.border_end;
 	noise.border_beg -= chunk_dim_f*noise_pos_mult*1.0;
 }
@@ -312,12 +305,12 @@ void generator_C_t::new_seed() {
 
 void generator_C_t::generate_continents(std::mt19937 &gen) {
 	std::uniform_real_distribution<double> distrib_x(
-			space_max.x * 1.0 / 3.0,
-			space_max.x * 2.0 / 3.0);
+			space_max.x * 1.0,
+			space_max.x * 2.0);
 	// std::uniform_real_distribution<double> distrib_x(0, space_max.x);
 	std::uniform_real_distribution<double> distrib_y(0, space_max.y);
 	diagram = voronoi_diagram_t();
-	diagram.space_max = space_max;
+	diagram.space_max = real_space_max;
 	diagram.space_max_x_duplicate_off = space_max_x_duplicate_off;
 	diagram.duplicate_off_vec = space_max_duplicate_off_vec;
 	diagram.voronois.assign(voro_cnt, voronoi_t());
@@ -479,20 +472,20 @@ void generator_C_t::generate_grid_intersections() {
 			}
 		}
 
-		if (max_x > space_max.x*2.0/3.0) {
-			max_replace(min_x, space_max.x*2.0/3.0);
-			min_x -= space_max.x*1.0/3.0;
-			max_x -= space_max.x*1.0/3.0;
+		if (max_x > space_max.x*2.0) {
+			max_replace(min_x, space_max.x*2.0);
+			min_x -= space_max.x*1.0;
+			max_x -= space_max.x*1.0;
 			calc_grid_constrains();
 			for (ll y = min_grid.y; y <= max_grid.y; ++y) {
 				for (ll x = min_grid.x; x <= max_grid.x; ++x) {
 					grid[y][x].push_back({voronoi_id, voro_id_t::LEFT});
 				}
 			}
-		} else if (min_x < space_max.x*1.0/3.0) {
-			min_replace(max_x, space_max.x*1.0/3.0);
-			min_x += space_max.x*1.0/3.0;
-			max_x += space_max.x*1.0/3.0;
+		} else if (min_x < space_max.x*1.0) {
+			min_replace(max_x, space_max.x*1.0);
+			min_x += space_max.x*1.0;
+			max_x += space_max.x*1.0;
 			calc_grid_constrains();
 			for (ll y = min_grid.y; y <= max_grid.y; ++y) {
 				for (ll x = min_grid.x; x <= max_grid.x; ++x) {
@@ -512,7 +505,7 @@ void generator_C_t::generate_joints(
 	const double RR = R*R;
 	constexpr double SQRT_2 = 1.4142135623730951;
 	const double CELL_DIM = R / SQRT_2;
-	const double BG_GRID_WIDTH_F = std::ceil(space_max.x/3.0 / CELL_DIM);
+	const double BG_GRID_WIDTH_F = std::ceil(space_max.x / CELL_DIM);
 	const double BG_GRID_HEIGHT_F = std::ceil(space_max.y / CELL_DIM);
 	const std::size_t BG_GRID_WIDTH = BG_GRID_WIDTH_F;
 	const std::size_t BG_GRID_HEIGHT = BG_GRID_HEIGHT_F;
@@ -539,7 +532,7 @@ void generator_C_t::generate_joints(
 		};
 		if (
 			not (p.x >= 0.0) ||
-			not (p.x <= space_max.x/3.0) ||
+			not (p.x <= space_max.x) ||
 			not (p.y >= 0.0) ||
 			not (p.y <= space_max.y)
 		) return false;
@@ -598,7 +591,7 @@ void generator_C_t::generate_joints(
 	};
 
 	add_point({
-		std::uniform_real_distribution<double>(0.0, space_max.x/3.0)(gen),
+		std::uniform_real_distribution<double>(0.0, space_max.x)(gen),
 		std::uniform_real_distribution<double>(0.0, space_max.y)(gen),
 	});
 
@@ -642,27 +635,17 @@ void generator_C_t::generate_rivers(std::mt19937 &gen) {
 	std::vector<double> joints_coords(joints_cnt * 2 * 3);
 	for (std::size_t i = 0; i < joints_cnt; ++i) {
 		joints_coords[2*i+0 + 0*joints_cnt] = joints[i].x
-			+ 1.0*space_max.x/3.0;
+			+ 1.0*space_max.x;
 		joints_coords[2*i+1 + 0*joints_cnt] = joints[i].y;
 
 		joints_coords[2*i+0 + 2*joints_cnt] = joints[i].x;
 		joints_coords[2*i+1 + 2*joints_cnt] = joints[i].y;
 
 		joints_coords[2*i+0 + 4*joints_cnt] = joints[i].x
-			+ 2.0*space_max.x/3.0;
+			+ 2.0*space_max.x;
 		joints_coords[2*i+1 + 4*joints_cnt] = joints[i].y;
 	}
 	const delaunator::Delaunator d(joints_coords);
-	// struct edge_t {
-	// 	std::size_t dest;
-	// 	enum type_t : uint8_t {
-	// 		USUAL = 0,
-	// 		TO_LEFT,
-	// 		TO_RIGHT
-	// 	} type;
-	// 	bool river = false;
-	// };
-	// std::vector<std::vector<edge_t>> al(joints_cnt);
 
 	for (std::size_t half_edge = 0;
 			half_edge < d.triangles.size();
@@ -786,8 +769,6 @@ void generator_C_t::generate_rivers(std::mt19937 &gen) {
 	}
 
 	const uint32_t river_color = global_settings.river_color;
-	// constn uint32_t river_color = 0x51CCC2;
-	// constn uint32_t river_color = 0x477199;
 	for (std::size_t i = 0; i < joints_cnt; ++i) {
 		const dvec2 A = space_max_duplicate_off_vec + joints[i];
 		for (const joint_edge_t &e : al[i]) {
@@ -877,8 +858,11 @@ void generator_C_t::calculate_climate() {
 		min_replace(humidity, 1.0f);
 		const double temperature = get_temperature(p);
 
-		// const double hue = humidity * 120.0 / 360.0 + 240.0 / 360.0;
-		const double hue = (1.0 - temperature) * 300.0 / 360.0;
+		double hue = 0;
+		if (global_settings.draw_humidity)
+			hue = humidity * 120.0 / 360.0 + 240.0 / 360.0;
+		else if (global_settings.draw_temperature)
+			hue = (1.0 - temperature) * 300.0 / 360.0;
 
 		const uint32_t color = hsv_to_rgb(hue, 0.67f, 0.86f);
 		draw_point(p, 0.03, color);
@@ -1065,7 +1049,7 @@ double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
 		elevation = 1;
 
 	double noise_val = noise.octave2D_01_warped(
-		(p.x-space_max.x/3) * noise_pos_mult,
+		(p.x-space_max.x) * noise_pos_mult,
 		p.y * noise_pos_mult,
 		8);
 
@@ -1086,24 +1070,24 @@ double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
 void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 // #define DRAW_GRID
 #ifdef DRAW_GRID
-	for (double x = 0; x <= space_max.x / 3.0; x += grid_box_dim_f) {
+	for (double x = 0; x <= space_max.x; x += grid_box_dim_f) {
 		draw_edge(
 				dvec2(x, 0),
 				dvec2(x, space_max.y),
 				0x424242);
 		draw_edge(
-				dvec2(x+space_max.x/3.0, 0),
-				dvec2(x+space_max.x/3.0, space_max.y),
+				dvec2(x+space_max.x, 0),
+				dvec2(x+space_max.x, space_max.y),
 				0x424242);
 		draw_edge(
-				dvec2(x+space_max.x*2/3.0, 0),
-				dvec2(x+space_max.x*2/3.0, space_max.y),
+				dvec2(x+space_max.x*2, 0),
+				dvec2(x+space_max.x*2, space_max.y),
 				0x424242);
 	}
 	for (double y = 0; y < space_max.y; y += grid_box_dim_f) {
 		draw_edge(
 				dvec2(0, y),
-				dvec2(space_max.x, y),
+				dvec2(real_space_max.x, y),
 				0x424242);
 	}
 #endif
@@ -1330,12 +1314,12 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 // #define DRAW_SPACE_CYCLIC_BORDER
 #ifdef DRAW_SPACE_CYCLIC_BORDER
 	draw_edge(
-			dvec2(space_max.x * 1.0 / 3.0, 0),
-			dvec2(space_max.x * 1.0 / 3.0, space_max.y),
+			dvec2(space_max.x * 1.0, 0),
+			dvec2(space_max.x * 1.0, space_max.y),
 			0x7c7c7c);
 	draw_edge(
-			dvec2(space_max.x * 2.0 / 3.0, 0),
-			dvec2(space_max.x * 2.0 / 3.0, space_max.y),
+			dvec2(space_max.x * 2.0, 0),
+			dvec2(space_max.x * 2.0, space_max.y),
 			0x7c7c7c);
 #endif
 #undef DRAW_SPACE_CYCLIC_BORDER
@@ -1369,14 +1353,21 @@ void generator_C_t::generate_bitmap() {
 
 	if (not global_settings.generate_with_gpu) {
 		draw_map_cpu(gen);
-		// draw_tour_path(bitmap, gen);
 	} else
 		draw_map_gpu();
 
 	if (not global_settings.generate_with_gpu) {
-		// generate_joints(gen);
-		// generate_rivers(gen);
-		// calculate_climate();
+		if (global_settings.generate_rivers) {
+			generate_joints(gen);
+			generate_rivers(gen);
+
+			if (global_settings.draw_temperature or
+					global_settings.draw_humidity) {
+				calculate_climate();
+			}
+		}
+		if (global_settings.draw_player)
+			draw_tour_path(gen);
 
 		bitmap->load_to_texture();
 	}

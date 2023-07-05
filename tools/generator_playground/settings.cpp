@@ -27,10 +27,15 @@ void settings_t::save_settings_to_file() {
 	WRITE_FIELD( river_start_prob )
 	WRITE_FIELD( river_branch_prob )
 	WRITE_FIELD( river_color )
+	WRITE_FIELD( generate_rivers )
+	WRITE_FIELD( draw_temperature )
+	WRITE_FIELD( draw_humidity )
 	WRITE_FIELD( humidity_scale )
 	WRITE_FIELD( temperature_exp )
 	WRITE_FIELD( chunk_dim )
 	WRITE_FIELD( generate_with_gpu )
+	WRITE_FIELD( triple_bitmap_size )
+	WRITE_FIELD( draw_player )
 #ifdef DEBUG
 	WRITE_FIELD( enable_breakpoints )
 #endif
@@ -68,10 +73,15 @@ void settings_t::load_settings_from_file() {
 		READ_FIELD( river_start_prob )
 		READ_FIELD( river_branch_prob )
 		READ_FIELD( river_color )
+		READ_FIELD( generate_rivers )
+		READ_FIELD( draw_temperature )
+		READ_FIELD( draw_humidity )
 		READ_FIELD( humidity_scale )
 		READ_FIELD( temperature_exp )
 		READ_FIELD( chunk_dim )
 		READ_FIELD( generate_with_gpu )
+		READ_FIELD( triple_bitmap_size )
+		READ_FIELD( draw_player )
 #ifdef DEBUG
 		READ_FIELD( enable_breakpoints )
 #endif

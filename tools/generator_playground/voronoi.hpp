@@ -61,10 +61,22 @@ struct voro_id_t {
 	} type = BASE;
 };
 
+// You need to manually fill in some
+// variables and arrays before usage,
+// since there is no constructor.
 struct voronoi_diagram_t {
+	// Maximum valid coordinates of points.
+	// Left and right one thirds of this plane
+	// will contain duplicated polygons, so that
+	// the middle one third will contain polygons
+	// that are "cyclic" - meaning that you can
+	// wrap them around a cyllinder.
 	glm::dvec2 space_max;
+	// `space_max.x` divided by 3.0
 	double space_max_x_duplicate_off;
+	// Equal to `glm::dvec2(space_max_x_duplicate_off, 0.0)`
 	glm::dvec2 duplicate_off_vec;
+	// Will contain computed voronoi diagram.
 	std::vector<voronoi_t> voronois;
 
 	// Array useful for drawing voronoi diagram
