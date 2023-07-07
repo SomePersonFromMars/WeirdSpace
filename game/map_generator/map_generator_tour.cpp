@@ -1,4 +1,4 @@
-#include "generator.hpp"
+#include "map_generator.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -13,9 +13,9 @@
 #include <glm/glm.hpp>
 using namespace glm;
 
-#include "useful.hpp"
-#include "geometry.hpp"
-#include "settings.hpp"
+#include <useful.hpp>
+#include <geometry.hpp>
+#include <settings.hpp>
 
 #include "noise.hpp"
 #include <delaunator.hpp>
@@ -71,7 +71,7 @@ double spline_gradient(
 }
 
 std::pair<glm::dvec2, glm::dvec2>
-generator_C_t::get_tour_path_points(const double off) {
+map_generator_t::get_tour_path_points(const double off) {
 	const dvec2 pos(
 			spline(off, get_tour_path_point_x),
 			spline(off, get_tour_path_point_y)
@@ -84,7 +84,7 @@ generator_C_t::get_tour_path_points(const double off) {
 	return { pos, gradient };
 }
 
-void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
+void map_generator_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	const double duplicate_off_x = diagram.space_max_x_duplicate_off;
 
 	std::size_t land_voronois_cnt = 0;
@@ -140,18 +140,18 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	}
 
 	// for (std::size_t i = 0; i < chosen_points_coords.size() / 2; i += 2) {
-	// 	draw_point(bitmap,
+	// 	draw_point(map_storage,
 	// 			dvec2(chosen_points_coords[i], chosen_points_coords[i+1]),
 	// 			0.01, 0xef6b81);
 
-	// 	draw_point(bitmap,
+	// 	draw_point(map_storage,
 	// 			dvec2(
 	// 				chosen_points_coords[i]
 	// 				- duplicate_off_x,
 	// 				chosen_points_coords[i+1]),
 	// 			0.01, 0xef6b81);
 
-	// 	draw_point(bitmap,
+	// 	draw_point(map_storage,
 	// 			dvec2(
 	// 				chosen_points_coords[i]
 	// 				+ duplicate_off_x,
@@ -254,7 +254,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 
 	// for (std::size_t v = 0; v < path_points_cnt; ++v) {
 	// 	for (const std::size_t w : al_tour[v]) {
-	// 		draw_edge(bitmap,
+	// 		draw_edge(map_storage,
 	// 			dvec2(
 	// 				chosen_points_coords[2*v+0],
 	// 				chosen_points_coords[2*v+1]),
@@ -264,7 +264,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	// 			0x9e0922
 	// 			);
 
-	// 		draw_edge(bitmap,
+	// 		draw_edge(map_storage,
 	// 			dvec2(
 	// 				chosen_points_coords[2*v+0]
 	// 				- duplicate_off_x,
@@ -276,7 +276,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	// 			0x9e0922
 	// 			);
 
-	// 		draw_edge(bitmap,
+	// 		draw_edge(map_storage,
 	// 			dvec2(
 	// 				chosen_points_coords[2*v+0]
 	// 				+ duplicate_off_x,
@@ -291,7 +291,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	// }
 
 	assert(cyclic_edge.len_sq != std::numeric_limits<double>::infinity());
-	// draw_edge(bitmap,
+	// draw_edge(map_storage,
 	// 	dvec2(
 	// 		chosen_points_coords[2*cyclic_edge.a+0],
 	// 		chosen_points_coords[2*cyclic_edge.a+1]),
@@ -301,7 +301,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	// 		chosen_points_coords[2*cyclic_edge.b+1]),
 	// 	0x9e0922
 	// 	);
-	// draw_edge(bitmap,
+	// draw_edge(map_storage,
 	// 	dvec2(
 	// 		chosen_points_coords[2*cyclic_edge.a+0]
 	// 		+ duplicate_off_x,
@@ -360,7 +360,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 
 	// for (std::size_t i = 0; ; ++i) {
 	// 	draw_point(
-	// 		bitmap,
+	// 		map_storage,
 	// 		dvec2(
 	// 			get_tour_path_point_x(static_cast<long long>(i)
 	// 				+ static_cast<long long>(cycle.size())),
@@ -371,7 +371,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	// 		);
 
 	// 	draw_point(
-	// 		bitmap,
+	// 		map_storage,
 	// 		dvec2(
 	// 			get_tour_path_point_x(static_cast<long long>(i)
 	// 				- static_cast<long long>(cycle.size())),
@@ -382,7 +382,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	// 		);
 
 	// 	draw_point(
-	// 		bitmap,
+	// 		map_storage,
 	// 		dvec2(
 	// 			get_tour_path_point_x(static_cast<long long>(i)),
 	// 			get_tour_path_point_y(static_cast<long long>(i))),
@@ -393,7 +393,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	// 	if (i+1 == cycle.size())
 	// 		break;
 
-	// 	// draw_edge(bitmap,
+	// 	// draw_edge(map_storage,
 	// 	// 	dvec2(
 	// 	// 		chosen_points_coords[2*cycle[i+0]+0],
 	// 	// 		chosen_points_coords[2*cycle[i+0]+1]),
@@ -403,7 +403,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	// 	// 	0x9e0922
 	// 	// 	);
 
-	// 	// draw_edge(bitmap,
+	// 	// draw_edge(map_storage,
 	// 	// 	dvec2(
 	// 	// 		chosen_points_coords[2*cycle[i+0]+0]
 	// 	// 		- duplicate_off_x,
@@ -415,7 +415,7 @@ void generator_C_t::draw_tour_path([[maybe_unused]] std::mt19937 &gen) {
 	// 	// 	0x9e0922
 	// 	// 	);
 
-	// 	// draw_edge(bitmap,
+	// 	// draw_edge(map_storage,
 	// 	// 	dvec2(
 	// 	// 		chosen_points_coords[2*cycle[i+0]+0]
 	// 	// 		+ duplicate_off_x,

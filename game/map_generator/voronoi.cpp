@@ -1,6 +1,6 @@
 #include "voronoi.hpp"
-#include "useful.hpp"
-#include "geometry.hpp"
+#include <useful.hpp>
+#include <geometry.hpp>
 #include <delaunator.hpp>
 
 using namespace glm;

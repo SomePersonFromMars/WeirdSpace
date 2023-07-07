@@ -142,7 +142,7 @@ void player_t::move_left(float delta_time) {
 	move_by_queued({move_speed * delta_time, 0});
 }
 
-void player_t::jump(float delta_time) {
+void player_t::jump([[maybe_unused]] float delta_time) {
 	if (position.y == std::floor(position.y)
 			&& world_buffer.get(glm::ivec3(
 					std::floor(position.x),

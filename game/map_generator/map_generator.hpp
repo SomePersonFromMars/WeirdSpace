@@ -1,8 +1,8 @@
 #pragma once
-#ifndef GENERATOR_HPP
-#define GENERATOR_HPP
+#ifndef MAP_GENERATOR_HPP
+#define MAP_GENERATOR_HPP
 
-#include "bitmap.hpp"
+#include "map_storage.hpp"
 #include "noise.hpp"
 #include "voronoi.hpp"
 
@@ -14,9 +14,9 @@ double spline(double t, const std::function<double(const long long)> &f);
 double spline_gradient(
 		double t, const std::function<double(const long long)> &f);
 
-struct generator_C_t {
+struct map_generator_t {
 	// Public functions
-	generator_C_t(bitmap_t * const bitmap);
+	map_generator_t(map_storage_t * const map_storage);
 
 	void init();
 	void deinit();
@@ -24,7 +24,7 @@ struct generator_C_t {
 	void load_settings();
 	void calculate_constants();
 
-	void generate_bitmap();
+	void generate_map();
 
 	inline glm::dvec2 get_space_max() const;
 	inline double get_ratio_wh() const;
@@ -62,8 +62,8 @@ private:
 	};
 
 	// Private functions
-	inline glm::dvec2 space_to_bitmap_coords(glm::dvec2 pos) const;
-	inline glm::dvec2 bitmap_to_space_coords(glm::dvec2 pos) const;
+	inline glm::dvec2 space_to_map_coords(glm::dvec2 pos) const;
+	inline glm::dvec2 map_to_space_coords(glm::dvec2 pos) const;
 	void draw_edge(glm::dvec2 beg, glm::dvec2 end,
 			uint32_t color, bool draw_only_empty = false);
 	void draw_point(glm::dvec2 pos, double dim,
@@ -100,14 +100,14 @@ private:
 		const glm::dvec2 &p) const;
 
 	// Private data
-	// Bitmap
-	bitmap_t * const bitmap;
+	// Map storage
+	map_storage_t * const map_storage;
 	// Constants
 	std::size_t grid_box_dim_zu;
 
-	// Dimensions of the bitmap
+	// Dimensions of the map storage
 	const int &width, &height;
-	// Ratios of the bitmap coordinates
+	// Ratios of the map storage coordinates
 	double ratio_wh, ratio_hw;
 	glm::dvec2 space_max; // Maximum double coordinates of not tripled space
 	glm::dvec2 real_space_max; // Maximum double coordinates of tripled space
@@ -148,7 +148,7 @@ private:
 	GLuint t_prog1_uniform;
 	GLuint t_prog2_uniform;
 	GLuint space_max_uniform;
-	GLuint triple_bitmap_size_uniform;
+	GLuint triple_map_size_uniform;
 	GLuint fbo;
 	GLuint continents_vao;
 	GLuint continents_triangle_pos_buf;
@@ -159,30 +159,30 @@ private:
 	std::vector<float> continents_elevation;
 };
 
-inline glm::dvec2 generator_C_t::get_space_max() const {
+inline glm::dvec2 map_generator_t::get_space_max() const {
 	return space_max;
 }
 
-inline double generator_C_t::get_ratio_wh() const {
+inline double map_generator_t::get_ratio_wh() const {
 	return ratio_wh;
 }
 
-inline double generator_C_t::get_ratio_hw() const {
+inline double map_generator_t::get_ratio_hw() const {
 	return ratio_hw;
 }
 
-inline bool generator_C_t::tour_path_points_generated() const {
+inline bool map_generator_t::tour_path_points_generated() const {
 	return tour_path_points.size() > 0;
 }
 
-inline glm::dvec2 generator_C_t::space_to_bitmap_coords(glm::dvec2 pos) const {
+inline glm::dvec2 map_generator_t::space_to_map_coords(glm::dvec2 pos) const {
 	return
 		pos.x = pos.x * double(width-1) / (3.0*space_max.x),
 		pos.y = pos.y * double(height-1) / space_max.y,
 
 		pos;
 }
-inline glm::dvec2 generator_C_t::bitmap_to_space_coords(glm::dvec2 pos) const {
+inline glm::dvec2 map_generator_t::map_to_space_coords(glm::dvec2 pos) const {
 	return
 		pos.x = pos.x * (3.0*space_max.x) / double(width-1),
 		pos.y = pos.y * space_max.y / double(height-1),
@@ -190,7 +190,7 @@ inline glm::dvec2 generator_C_t::bitmap_to_space_coords(glm::dvec2 pos) const {
 		pos;
 }
 
-inline glm::tvec2<long long, glm::highp> generator_C_t::space_to_grid_coords(
+inline glm::tvec2<long long, glm::highp> map_generator_t::space_to_grid_coords(
 	const glm::dvec2 &p) const {
 	return glm::tvec2<long long, glm::highp>(
 			std::floor(

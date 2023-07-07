@@ -1,35 +1,39 @@
-#include "bitmap.hpp"
+#include "map_storage.hpp"
 
 #include <cstdio>
 
-#include "settings.hpp"
-#include "useful.hpp"
-#include "shader_loader.hpp"
+#include <settings.hpp>
+#include <useful.hpp>
+#include <shader_loader.hpp>
 
 // Constructor
-bitmap_t::bitmap_t() {
+map_storage_t::map_storage_t() {
 	load_settings();
 }
 
-void bitmap_t::load_settings() {
+void map_storage_t::load_settings() {
 	width = global_settings.chunk_dim*6;
-	if (global_settings.triple_bitmap_size)
+	if (global_settings.triple_map_size)
 		width *= 3;
 	height = global_settings.chunk_dim*3;
 
 	static int prev_chunk_dim = global_settings.chunk_dim;
-	static bool prev_triple_bitmap_size = global_settings.triple_bitmap_size;
-	if (global_settings.chunk_dim != prev_chunk_dim
-		|| global_settings.triple_bitmap_size != prev_triple_bitmap_size)
+	static bool prev_triple_map_size = global_settings.triple_map_size;
+	if (global_settings.chunk_dim != prev_chunk_dim or
+			global_settings.triple_map_size != prev_triple_map_size or
+			(not global_settings.generate_with_gpu and content == nullptr))
 		reallocate();
 	prev_chunk_dim = global_settings.chunk_dim;
-	prev_triple_bitmap_size = global_settings.triple_bitmap_size;
+	prev_triple_map_size = global_settings.triple_map_size;
 }
 
-void bitmap_t::reallocate() {
+void map_storage_t::reallocate() {
 	if (content)
 		delete[] content;
-	content = new uint8_t[width*height*3]; // Times three for RGB
+	if (not global_settings.generate_with_gpu)
+		content = new uint8_t[width*height*3]; // Times three for RGB
+	else
+		content = nullptr;
 
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 	GL_GET_ERROR;
@@ -39,12 +43,12 @@ void bitmap_t::reallocate() {
 	GL_GET_ERROR;
 }
 
-void bitmap_t::init() {
+void map_storage_t::init() {
 	// Load shaders and generate shader program
 	GLuint vertex_shader_id = compile_shader(
-			SHADER_BITMAP_VERTEX_PATH, GL_VERTEX_SHADER);
+			SHADER_MAP_STORAGE_VERTEX_PATH, GL_VERTEX_SHADER);
 	GLuint fragment_shader_id = compile_shader(
-			SHADER_BITMAP_FRAGMENT_PATH, GL_FRAGMENT_SHADER);
+			SHADER_MAP_STORAGE_FRAGMENT_PATH, GL_FRAGMENT_SHADER);
 
 	program_id = link_program(2, vertex_shader_id, fragment_shader_id);
 
@@ -111,7 +115,7 @@ void bitmap_t::init() {
 }
 
 // Destructor
-bitmap_t::~bitmap_t() {
+map_storage_t::~map_storage_t() {
 	glDeleteBuffers(1, &quad_positions_buffer_id);
 	glDeleteBuffers(1, &quad_uvs_buffer_id);
 	glDeleteVertexArrays(1, &vao_id);
@@ -121,7 +125,7 @@ bitmap_t::~bitmap_t() {
 	delete[] content;
 }
 
-void bitmap_t::set(int y, int x, uint32_t color) {
+void map_storage_t::set(int y, int x, uint32_t color) {
 	if (x < 0 || x >= width)
 		return;
 	if (y < 0 || y >= height)
@@ -131,7 +135,7 @@ void bitmap_t::set(int y, int x, uint32_t color) {
 	get(y, x, 0) = (color & 0xff0000) >> 16;
 }
 
-void bitmap_t::set(int y, int x, glm::u8vec3 color) {
+void map_storage_t::set(int y, int x, glm::u8vec3 color) {
 	if (x < 0 || x >= width)
 		return;
 	if (y < 0 || y >= height)
@@ -141,8 +145,7 @@ void bitmap_t::set(int y, int x, glm::u8vec3 color) {
 	get(y, x, 0) = color.b;
 }
 
-void bitmap_t::clear() {
-	// Clear bitmap
+void map_storage_t::clear() {
 	for (int x = 0; x < width; ++x) {
 		for (int y = 0; y < height; ++y) {
 			set(y, x, 0);
@@ -150,7 +153,7 @@ void bitmap_t::clear() {
 	}
 }
 
-void bitmap_t::load_to_texture() {
+void map_storage_t::load_to_texture() {
 	glBindTexture(GL_TEXTURE_2D, texture_id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
 			GL_RGB, GL_UNSIGNED_BYTE, content);
@@ -159,7 +162,7 @@ void bitmap_t::load_to_texture() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void bitmap_t::draw(const glm::mat4 &MVP_matrix) {
+void map_storage_t::draw(const glm::mat4 &MVP_matrix) {
 	// Shader
 	glUseProgram(program_id);
 

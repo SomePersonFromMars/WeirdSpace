@@ -19,6 +19,10 @@ include_directories(
 	external/imgui/backends/
 	)
 
+include_directories(
+	game/utilities/
+)
+
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw

@@ -1,4 +1,4 @@
-#include "useful.hpp"
+#include <useful.hpp>
 #include "settings.hpp"
 
 #include <cstdio>
@@ -34,7 +34,7 @@ void settings_t::save_settings_to_file() {
 	WRITE_FIELD( temperature_exp )
 	WRITE_FIELD( chunk_dim )
 	WRITE_FIELD( generate_with_gpu )
-	WRITE_FIELD( triple_bitmap_size )
+	WRITE_FIELD( triple_map_size )
 	WRITE_FIELD( draw_player )
 #ifdef DEBUG
 	WRITE_FIELD( enable_breakpoints )
@@ -80,7 +80,7 @@ void settings_t::load_settings_from_file() {
 		READ_FIELD( temperature_exp )
 		READ_FIELD( chunk_dim )
 		READ_FIELD( generate_with_gpu )
-		READ_FIELD( triple_bitmap_size )
+		READ_FIELD( triple_map_size )
 		READ_FIELD( draw_player )
 #ifdef DEBUG
 		READ_FIELD( enable_breakpoints )

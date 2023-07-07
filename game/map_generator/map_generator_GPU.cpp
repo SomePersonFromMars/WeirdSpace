@@ -1,22 +1,22 @@
-#include "generator.hpp"
+#include "map_generator.hpp"
 
-#include "settings.hpp"
-#include "useful.hpp"
-#include "shader_loader.hpp"
+#include <settings.hpp>
+#include <useful.hpp>
+#include <shader_loader.hpp>
 
 #include <chrono>
 
-void generator_C_t::init() {
+void map_generator_t::init() {
 	// Load shaders and generate shader programs
 	GLuint compute_shader_id = compile_shader(
-			SHADER_GENERATOR_D_COMPUTE_PATH, GL_COMPUTE_SHADER);
+			SHADER_MAP_GENERATOR_COMPUTE_PATH, GL_COMPUTE_SHADER);
 	program1 = link_program(1, compute_shader_id);
 	delete_shader(compute_shader_id);
 
 	GLuint vertex_shader_id = compile_shader(
-			SHADER_GENERATOR_D_VERRTEX_PATH, GL_VERTEX_SHADER);
+			SHADER_MAP_GENERATOR_VERRTEX_PATH, GL_VERTEX_SHADER);
 	GLuint fragment_shader_id = compile_shader(
-			SHADER_GENERATOR_D_FRAGMENT_PATH, GL_FRAGMENT_SHADER);
+			SHADER_MAP_GENERATOR_FRAGMENT_PATH, GL_FRAGMENT_SHADER);
 	program2 = link_program(2, vertex_shader_id, fragment_shader_id);
 	delete_shader(vertex_shader_id);
 	delete_shader(fragment_shader_id);
@@ -25,14 +25,14 @@ void generator_C_t::init() {
 	t_prog1_uniform = glGetUniformLocation(program1, "t");
 	t_prog2_uniform = glGetUniformLocation(program2, "t");
 	space_max_uniform = glGetUniformLocation(program2, "space_max");
-	triple_bitmap_size_uniform
-		= glGetUniformLocation(program2, "triple_bitmap_size");
+	triple_map_size_uniform
+		= glGetUniformLocation(program2, "triple_map_size");
 
 	// Create FBO etc.
 	glGenFramebuffers(1, &fbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			bitmap->get_texture_id(), 0);
+			map_storage->get_texture_id(), 0);
 	static const GLenum draw_buffers[] = { GL_COLOR_ATTACHMENT0 };
 	glDrawBuffers(1, draw_buffers);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -58,7 +58,7 @@ void generator_C_t::init() {
 	load_settings();
 }
 
-void generator_C_t::deinit() {
+void map_generator_t::deinit() {
 	glDeleteProgram(program1);
 	glDeleteProgram(program2);
 	glDeleteBuffers(1, &continents_triangle_pos_buf);
@@ -68,7 +68,7 @@ void generator_C_t::deinit() {
 }
 
 
-void generator_C_t::draw_map_gpu() {
+void map_generator_t::draw_map_gpu() {
 #define PROG 2
 #if PROG == 1
 	// Shader program
@@ -77,7 +77,7 @@ void generator_C_t::draw_map_gpu() {
 	// Uniforms and texture
 	glBindImageTexture(
 			0,
-			bitmap->get_texture_id(),
+			map_storage->get_texture_id(),
 			0,
 			GL_FALSE,
 			0,
@@ -96,7 +96,7 @@ void generator_C_t::draw_map_gpu() {
 	glUniform1f(t_prog1_uniform, t);
 
 	// Execute shader
-	glDispatchCompute(bitmap->get_width()/3, bitmap->get_height(), 1);
+	glDispatchCompute(map_storage->get_width()/3, map_storage->get_height(), 1);
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	// glFinish();
@@ -205,8 +205,8 @@ void generator_C_t::draw_map_gpu() {
 	glBindVertexArray(continents_vao);
 
 	glViewport(0, 0, width, height);
-	static const GLfloat blue[] = { 0.0f, 0.0f, 0.3f, 1.0f };
-	glClearBufferfv(GL_COLOR, 0, blue);
+	static const GLfloat none[] = { 0.0f, 0.0f, 0.3f, 0.0f }; // Blue
+	glClearBufferfv(GL_COLOR, 0, none);
 
 	const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::high_resolution_clock::now().time_since_epoch()

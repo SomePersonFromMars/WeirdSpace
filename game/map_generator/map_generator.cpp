@@ -1,4 +1,4 @@
-#include "generator.hpp"
+#include "map_generator.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -13,17 +13,17 @@
 #include <glm/glm.hpp>
 using namespace glm;
 
-#include "useful.hpp"
-#include "geometry.hpp"
-#include "settings.hpp"
+#include <useful.hpp>
+#include <geometry.hpp>
+#include <settings.hpp>
 
 #include "noise.hpp"
 #include <delaunator.hpp>
 
-void generator_C_t::draw_edge(dvec2 beg, dvec2 end,
+void map_generator_t::draw_edge(dvec2 beg, dvec2 end,
 		uint32_t color, bool draw_only_empty) {
-	beg = space_to_bitmap_coords(beg);
-	end = space_to_bitmap_coords(end);
+	beg = space_to_map_coords(beg);
+	end = space_to_map_coords(end);
 
 	dvec2 off = end - beg;
 	const int iterations_cnt = std::max(
@@ -39,12 +39,12 @@ void generator_C_t::draw_edge(dvec2 beg, dvec2 end,
 		if (pos.x < 0 || pos.x >= double(width)
 				|| pos.y < 0 || pos.y >= double(height))
 			continue;
-		if (!draw_only_empty || bitmap->get(pos.y, pos.x) == 0x0)
-			bitmap->set(pos.y, pos.x, color);
+		if (!draw_only_empty || map_storage->get(pos.y, pos.x) == 0x0)
+			map_storage->set(pos.y, pos.x, color);
 	}
 }
 
-void generator_C_t::draw_point(glm::dvec2 pos, double dim,
+void map_generator_t::draw_point(glm::dvec2 pos, double dim,
 		uint32_t color) {
 
 	ivec2 beg, end;
@@ -58,14 +58,14 @@ void generator_C_t::draw_point(glm::dvec2 pos, double dim,
 
 		for (int y = beg.y; y <= end.y; ++y) {
 			if (y < 0 || y >= height) continue;
-			bitmap->set(y, x, color);
+			map_storage->set(y, x, color);
 		}
 	}
 }
 
-void generator_C_t::fill(glm::dvec2 origin,
+void map_generator_t::fill(glm::dvec2 origin,
 		uint32_t fill_color) {
-	origin = space_to_bitmap_coords(origin);
+	origin = space_to_map_coords(origin);
 
 	ivec2 first_pixel(origin.x, origin.y);
 	if (first_pixel.x < 0 || first_pixel.x >= width)
@@ -82,7 +82,7 @@ void generator_C_t::fill(glm::dvec2 origin,
 
 	std::queue<ivec2> next_pixel;
 	next_pixel.push(first_pixel);
-	bitmap->set(first_pixel.y, first_pixel.x, fill_color);
+	map_storage->set(first_pixel.y, first_pixel.x, fill_color);
 
 	while (!next_pixel.empty()) {
 		ivec2 pixel = next_pixel.front();
@@ -96,17 +96,17 @@ void generator_C_t::fill(glm::dvec2 origin,
 			if (p.y < 0 || p.y >= height)
 				continue;
 
-			const uint32_t cur_color = bitmap->get(p.y, p.x);
+			const uint32_t cur_color = map_storage->get(p.y, p.x);
 			if (cur_color != 0x000000)
 				continue;
 
 			next_pixel.push(p);
-			bitmap->set(p.y, p.x, fill_color);
+			map_storage->set(p.y, p.x, fill_color);
 		}
 	}
 }
 
-void generator_C_t::draw_convex_polygon(
+void map_generator_t::draw_convex_polygon(
 		const std::vector<glm::dvec2> _points,
 		const uint32_t color) {
 	if (_points.size() == 0)
@@ -120,12 +120,12 @@ void generator_C_t::draw_convex_polygon(
 	ll max_x = std::numeric_limits<ll>::min();
 	ll max_y = std::numeric_limits<ll>::min();
 	for (std::size_t i = 0; i < _points.size(); ++i) {
-		points[i] = space_to_bitmap_coords(_points[i]);
+		points[i] = space_to_map_coords(_points[i]);
 		min_replace(min_x, points[i].x);
 		max_replace(max_x, points[i].x);
 		min_replace(min_y, points[i].y);
 		max_replace(max_y, points[i].y);
-		points[i] = space_to_bitmap_coords(_points[i])
+		points[i] = space_to_map_coords(_points[i])
 			* static_cast<double>(MULT);
 	}
 
@@ -142,13 +142,13 @@ void generator_C_t::draw_convex_polygon(
 					break;
 				}
 			}
-			if (inside && bitmap->get(y, x) == 0x0)
-				bitmap->set(y, x, color);
+			if (inside && map_storage->get(y, x) == 0x0)
+				map_storage->set(y, x, color);
 		}
 	}
 }
 
-// void generator_t::draw_convex_polygon(bitmap_t &bitmap,
+// void map_generator_t::draw_convex_polygon(map_storage_t &map_storage,
 // 		const std::vector<glm::dvec2> _points,
 // 		const uint32_t color) {
 // 	if (_points.size() == 0)
@@ -160,7 +160,7 @@ void generator_C_t::draw_convex_polygon(
 // 	double max_x = std::numeric_limits<double>::min();
 // 	double max_y = std::numeric_limits<double>::min();
 // 	for (std::size_t i = 0; i < _points.size(); ++i) {
-// 		points[i] = space_to_bitmap_coords(_points[i]);
+// 		points[i] = space_to_map_coords(_points[i]);
 // 		min_replace(min_x, points[i].x);
 // 		max_replace(max_x, points[i].x);
 // 		min_replace(min_y, points[i].y);
@@ -181,12 +181,12 @@ void generator_C_t::draw_convex_polygon(
 // 				}
 // 			}
 // 			if (inside)
-// 				bitmap.set(y, x, color);
+// 				map_storage.set(y, x, color);
 // 		}
 // 	}
 // }
 
-void generator_C_t::draw_noisy_edge(
+void map_generator_t::draw_noisy_edge(
 		std::mt19937 &gen,
 		const std::size_t level,
 		const double amplitude,
@@ -227,10 +227,10 @@ void generator_C_t::draw_noisy_edge(
 }
 
 // Constructor
-generator_C_t::generator_C_t(bitmap_t * const bitmap)
-	:bitmap{bitmap}
-	,width{bitmap->get_width()}
-	,height{bitmap->get_height()}
+map_generator_t::map_generator_t(map_storage_t * const map_storage)
+	:map_storage{map_storage}
+	,width{map_storage->get_width()}
+	,height{map_storage->get_height()}
 	,get_tour_path_point_x { [this] (const long long id) -> double {
 		const double duplicate_off_x = diagram.space_max_x_duplicate_off;
 		const auto [plane_id, point_id]
@@ -252,23 +252,23 @@ generator_C_t::generator_C_t(bitmap_t * const bitmap)
 	new_seed();
 }
 
-void generator_C_t::load_settings() {
+void map_generator_t::load_settings() {
 	voro_cnt = global_settings.voro_cnt;
 	super_voro_cnt = std::min(voro_cnt, global_settings.super_voro_cnt);
 	glUseProgram(program2);
-	glUniform1i(triple_bitmap_size_uniform,
-			global_settings.triple_bitmap_size);
+	glUniform1i(triple_map_size_uniform,
+			global_settings.triple_map_size);
 
 	calculate_constants();
 }
 
-void generator_C_t::calculate_constants() {
+void map_generator_t::calculate_constants() {
 	grid_box_dim_zu = global_settings.chunk_dim/4;
 
 	ratio_wh = double(width)/double(height);
 	ratio_hw = double(height)/double(width);
 	space_max = {ratio_wh, 1};
-	if (global_settings.triple_bitmap_size)
+	if (global_settings.triple_map_size)
 		space_max.x /= 3.0;
 	real_space_max = {space_max.x*3.0, space_max.y};
 	glUseProgram(program2);
@@ -292,7 +292,7 @@ void generator_C_t::calculate_constants() {
 	noise.border_beg -= chunk_dim_f*noise_pos_mult*1.0;
 }
 
-void generator_C_t::new_seed() {
+void map_generator_t::new_seed() {
 	auto nseed = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::system_clock::now().time_since_epoch()
 		).count() / 1;
@@ -303,7 +303,7 @@ void generator_C_t::new_seed() {
 	noise.reseed(nseed);
 }
 
-void generator_C_t::generate_continents(std::mt19937 &gen) {
+void map_generator_t::generate_continents(std::mt19937 &gen) {
 	std::uniform_real_distribution<double> distrib_x(
 			space_max.x * 1.0,
 			space_max.x * 2.0);
@@ -430,7 +430,7 @@ void generator_C_t::generate_continents(std::mt19937 &gen) {
 	}
 }
 
-void generator_C_t::generate_grid_intersections() {
+void map_generator_t::generate_grid_intersections() {
 	using ll = long long;
 	grid.assign(grid_height,
 		std::vector<std::vector<voro_id_t>>(grid_width));
@@ -498,7 +498,7 @@ void generator_C_t::generate_grid_intersections() {
 
 // https://github.com/dandrino/terrain-erosion-3-ways/tree/master
 // https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
-void generator_C_t::generate_joints(
+void map_generator_t::generate_joints(
 		std::mt19937 &gen) {
 	using ll = long long;
 	const double R = global_settings.river_joints_R;
@@ -619,12 +619,12 @@ void generator_C_t::generate_joints(
 	}
 
 	// for (const dvec2 &p : joints) {
-	// 	draw_point(bitmap, p, 0.001, 0x4f4f4f);
-	// 	draw_point(bitmap, p + space_max_duplicate_off_vec, 0.001, 0x4f4f4f);
+	// 	draw_point(map_storage, p, 0.001, 0x4f4f4f);
+	// 	draw_point(map_storage, p + space_max_duplicate_off_vec, 0.001, 0x4f4f4f);
 	// }
 }
 
-void generator_C_t::generate_rivers(std::mt19937 &gen) {
+void map_generator_t::generate_rivers(std::mt19937 &gen) {
 	const double R = global_settings.river_joints_R;
 	const double RR = R*R;
 	const std::size_t joints_cnt = joints.size();
@@ -788,7 +788,7 @@ void generator_C_t::generate_rivers(std::mt19937 &gen) {
 					B + space_max_duplicate_off_vec,
 					river_color);
 			// else if (e.type == joint_edge_t::TO_LEFT)
-			// 	draw_edge(bitmap,
+			// 	draw_edge(map_storage,
 			// 		A,
 			// 		B - space_max_duplicate_off_vec,
 			// 		river_color);
@@ -806,13 +806,13 @@ void generator_C_t::generate_rivers(std::mt19937 &gen) {
 
 	// for (std::size_t i = 0; i < joints_cnt; ++i) {
 	// 	const dvec2 A = space_max_duplicate_off_vec + joints[i];
-	// 	draw_point(bitmap, A, 0.01, 0xe2a3b5);
-	// 	draw_point(bitmap, A - space_max_duplicate_off_vec, 0.01, 0xe2a3b5);
-	// 	draw_point(bitmap, A + space_max_duplicate_off_vec, 0.01, 0xe2a3b5);
+	// 	draw_point(map_storage, A, 0.01, 0xe2a3b5);
+	// 	draw_point(map_storage, A - space_max_duplicate_off_vec, 0.01, 0xe2a3b5);
+	// 	draw_point(map_storage, A + space_max_duplicate_off_vec, 0.01, 0xe2a3b5);
 	// }
 }
 
-double generator_C_t::get_temperature(const glm::dvec2 &p) const {
+double map_generator_t::get_temperature(const glm::dvec2 &p) const {
 	double elevation = get_elevation_A(p);
 	double temperature = std::abs(space_max.y/2.0 - p.y) / (space_max.y/2.0);
 	temperature = 1.0 - temperature;
@@ -827,7 +827,7 @@ double generator_C_t::get_temperature(const glm::dvec2 &p) const {
 	return temperature;
 }
 
-void generator_C_t::calculate_climate() {
+void map_generator_t::calculate_climate() {
 	const std::size_t joints_cnt = joints.size();
 	const int humidity_scale = global_settings.humidity_scale;
 
@@ -869,7 +869,7 @@ void generator_C_t::calculate_climate() {
 	}
 }
 
-double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
+double map_generator_t::get_elevation_A(const glm::dvec2 &p) const {
 	auto grid_p = space_to_grid_coords(p);
 	min_replace<long long>(grid_p.x, grid_width-1);
 	min_replace<long long>(grid_p.y, grid_height-1);
@@ -1067,7 +1067,7 @@ double generator_C_t::get_elevation_A(const glm::dvec2 &p) const {
 	return noised_elevation;
 }
 
-void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
+void map_generator_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 // #define DRAW_GRID
 #ifdef DRAW_GRID
 	for (double x = 0; x <= space_max.x; x += grid_box_dim_f) {
@@ -1101,17 +1101,17 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 				continue;
 			dvec2 B = diagram.voronois[edge.neighbor_id].center;
 			if (edge.type == edge.TO_LEFT) {
-				draw_edge(bitmap,
+				draw_edge(map_storage,
 						A,
 						B diagram.duplicate_off_vec,
 						0xfcf485);
 			} else if (edge.type == edge.TO_RIGHT) {
-				draw_edge(bitmap,
+				draw_edge(map_storage,
 						A,
 						B + diagram.duplicate_off_vec,
 						0xfcb985);
 			} else {
-				draw_edge(bitmap,
+				draw_edge(map_storage,
 						A,
 						B,
 						0x70a9f9);
@@ -1128,7 +1128,7 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 	#pragma omp parallel for schedule (dynamic, 8)
 	for (std::size_t y = 0; y < static_cast<std::size_t>(height); ++y) {
 		for (std::size_t x = 0; x < static_cast<std::size_t>(width) / 3; ++x) {
-			const dvec2 p = bitmap_to_space_coords(dvec2(x+width/3, y));
+			const dvec2 p = map_to_space_coords(dvec2(x+width/3, y));
 
 			double elevation_A = get_elevation_A(p);
 
@@ -1154,9 +1154,9 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 			// 	color = color | (color << 8) | (color << 16);
 			// }
 
-			bitmap->set(y, x+width*0/3, color);
-			bitmap->set(y, x+width*1/3, color);
-			bitmap->set(y, x+width*2/3, color);
+			map_storage->set(y, x+width*0/3, color);
+			map_storage->set(y, x+width*1/3, color);
+			map_storage->set(y, x+width*2/3, color);
 		}
 	}
 	const auto diff = clock.now() - timer_start;
@@ -1174,11 +1174,11 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 		// const uint32_t color
 		// = COLORS[static_cast<uint8_t>(plates[id].type)];
 		// const uint32_t color = 0x015e1f;
-		// draw_convex_polygon(bitmap, voronoi.points, color);
+		// draw_convex_polygon(map_storage, voronoi.points, color);
 // #define DRAW_NOISY
 #ifndef DRAW_NOISY
 		for (std::size_t j = 0; j < voronoi.points.size(); ++j) {
-			// draw_edge(bitmap,
+			// draw_edge(map_storage,
 			// 		voronoi.points[j],
 			// 		voronoi.center,
 			// 		// color, true);
@@ -1210,7 +1210,7 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 		}
 
 		for (std::size_t j = 0; j < voronoi.al.size(); ++j) {
-			// draw_edge(bitmap,
+			// draw_edge(map_storage,
 			// 		voronoi.center + voronoi.al[j].to_mid,
 			// 		voronoi.center,
 			// 		// color, true);
@@ -1325,8 +1325,7 @@ void generator_C_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 #undef DRAW_SPACE_CYCLIC_BORDER
 }
 
-void generator_C_t::generate_bitmap() {
-	bitmap->clear();
+void map_generator_t::generate_map() {
 	printf("\n");
 
 	std::mt19937 gen(seed_voronoi);
@@ -1334,6 +1333,7 @@ void generator_C_t::generate_bitmap() {
 
 	generate_continents(gen);
 	if (not global_settings.generate_with_gpu) {
+		map_storage->clear();
 		generate_grid_intersections();
 
 		// std::size_t avg_cnt = 0;
@@ -1369,6 +1369,6 @@ void generator_C_t::generate_bitmap() {
 		if (global_settings.draw_player)
 			draw_tour_path(gen);
 
-		bitmap->load_to_texture();
+		map_storage->load_to_texture();
 	}
 }

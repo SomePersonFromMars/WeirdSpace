@@ -1,10 +1,11 @@
 #include "chunk.hpp"
 
-#include "texture_loader.hpp"
-#include "useful.hpp"
-#include "settings.hpp"
-
 #include <cstdio>
+
+#include <texture_loader.hpp>
+#include <useful.hpp>
+
+#include "settings.hpp"
 
 shader_world_t *chunk_t::pshader;
 GLuint chunk_t::texture_id;

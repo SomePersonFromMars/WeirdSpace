@@ -9,19 +9,19 @@
 #define FRAME_MIN_DURATION 46 // 20fps
 // #define FRAME_MIN_DURATION 120
 
-#define SHADER_BITMAP_VERTEX_PATH "runtime/shader_bitmap_vertex.glsl"
-#define SHADER_BITMAP_FRAGMENT_PATH "runtime/shader_bitmap_fragment.glsl"
+#define SHADER_MAP_STORAGE_VERTEX_PATH "runtime/shader_map_vertex.glsl"
+#define SHADER_MAP_STORAGE_FRAGMENT_PATH "runtime/shader_map_fragment.glsl"
 
 #define SHADER_LINE_VERTEX_PATH "runtime/shader_line_vertex.glsl"
 #define SHADER_LINE_FRAGMENT_PATH "runtime/shader_line_fragment.glsl"
 
-#define SHADER_GENERATOR_D_COMPUTE_PATH \
-	"runtime/shader_generator_D_compute.glsl"
+#define SHADER_MAP_GENERATOR_COMPUTE_PATH \
+	"runtime/shader_map_generator_compute.glsl"
 
-#define SHADER_GENERATOR_D_VERRTEX_PATH \
-	"runtime/shader_generator_D_vertex.glsl"
-#define SHADER_GENERATOR_D_FRAGMENT_PATH \
-	"runtime/shader_generator_D_fragment.glsl"
+#define SHADER_MAP_GENERATOR_VERRTEX_PATH \
+	"runtime/shader_map_generator_vertex.glsl"
+#define SHADER_MAP_GENERATOR_FRAGMENT_PATH \
+	"runtime/shader_map_generator_fragment.glsl"
 
 #include <cstddef>
 #include <cstdint>
@@ -53,7 +53,7 @@ extern struct settings_t {
 	// size compared to the chunk dimensions.
 	FIELD(int        , chunk_dim         , 64,       1,    4096)
 	FIELD(bool       , generate_with_gpu , false,    0,    1)
-	FIELD(bool       , triple_bitmap_size, false,    0,    1)
+	FIELD(bool       , triple_map_size, false,    0,    1)
 	FIELD(bool       , draw_player       , false,    0,    1)
 	size_t debug_vals[3] {
 		7,

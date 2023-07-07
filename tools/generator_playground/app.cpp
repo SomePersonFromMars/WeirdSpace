@@ -6,12 +6,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 
-#include "useful.hpp"
+#include <useful.hpp>
 
 // App
 app_t::app_t()
 	:callbacks_strct(window_width, window_height)
-	,generator_C(&bitmap_A)
+	,map_generator(&map_storage)
 { }
 
 // Init
@@ -19,7 +19,7 @@ void app_t::init() {
 	global_settings.load_settings_from_file();
 	init_opengl_etc();
 	init_imgui();
-	init_generator();
+	init_map_generator();
 }
 
 // Loop
@@ -45,7 +45,7 @@ void app_t::loop() {
 
 		glClear(GL_COLOR_BUFFER_BIT);
 		glViewport(0, 0, window_width, window_height);
-		loop_generator();
+		loop_map_generator();
 		loop_imgui();
 
 		double fps_cnt;
@@ -77,7 +77,7 @@ void app_t::loop() {
 
 // Deinit
 void app_t::deinit() {
-	generator_C.deinit();
+	map_generator.deinit();
 	deinit_imgui();
 
 	global_settings.save_settings_to_file();
@@ -183,12 +183,12 @@ void app_t::loop_input() {
 	}
 
 	// if (glfwGetKey(window, GLFW_KEY_K) == GLFW_RELEASE) {
-	// 	++generator->debug_vals[0];
-	// 	PRINT_ZU(generator->debug_vals[0]);
+	// 	++map_generator->debug_vals[0];
+	// 	PRINT_ZU(map_generator->debug_vals[0]);
 	// }
 	// if (glfwGetKey(window, GLFW_KEY_J) == GLFW_RELEASE) {
-	// 	--generator->debug_vals[0];
-	// 	PRINT_ZU(generator->debug_vals[0]);
+	// 	--map_generator->debug_vals[0];
+	// 	PRINT_ZU(map_generator->debug_vals[0]);
 	// }
 
 	const float zoom_off = delta_time * 1.0;
@@ -199,7 +199,7 @@ void app_t::loop_input() {
 		camera_zoom *= 1-zoom_off;
 	}
 
-	// Calculate MVP for bitmap
+	// Calculate MVP for map storage
 	MVPb = mat4(1);
 	{
 		MVPb = scale(MVPb, vec3(camera_zoom));
@@ -212,7 +212,7 @@ void app_t::loop_input() {
 
 		MVPb = scale(MVPb, vec3(
 				1,
-				float(bitmap_A.get_height())/float(bitmap_A.get_width()),
+				float(map_storage.get_height())/float(map_storage.get_width()),
 				1));
 	}
 
@@ -233,20 +233,20 @@ void app_t::loop_input() {
 		mp.y /= float(window_width)/float(window_height);
 		mp -= -camera_pos
 			* vec3(1, -float(window_width)/float(window_height), 1);
-		mp.y /= float(bitmap_A.get_height())/float(bitmap_A.get_width());
+		mp.y /= float(map_storage.get_height())/float(map_storage.get_width());
 
 		mp.x += 1.0;
 		mp.y += 1.0;
 		mp.x /= 2.0;
 		mp.y /= 2.0;
-		mp.x *= float(bitmap_A.get_width());
-		mp.y *= float(bitmap_A.get_height());
+		mp.x *= float(map_storage.get_width());
+		mp.y *= float(map_storage.get_height());
 		mp.x = max(mp.x, 0.0f);
 		mp.y = max(mp.y, 0.0f);
-		mp.x = min(mp.x, float(bitmap_A.get_width()-1));
-		mp.y = min(mp.y, float(bitmap_A.get_height()-1));
+		mp.x = min(mp.x, float(map_storage.get_width()-1));
+		mp.y = min(mp.y, float(map_storage.get_height()-1));
 
-		mp.x -= float(bitmap_A.get_width()/3);
+		mp.x -= float(map_storage.get_width()/3);
 	}
 }
 
@@ -282,24 +282,23 @@ static void key_callback(GLFWwindow* window,
 		= callbacks_strct_t::get_strct(window);
 
 	if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_PRESS) {
-		PRINT_ZU(++strct_ptr->generator_C->debug_vals[0]);
+		PRINT_ZU(++strct_ptr->map_generator->debug_vals[0]);
 		strct_ptr->refresh_required = true;
 	}
 	if (key == GLFW_KEY_LEFT_BRACKET && action == GLFW_PRESS) {
-		if (strct_ptr->generator_C->debug_vals[0] != 0) {
-			PRINT_ZU(--strct_ptr->generator_C->debug_vals[0]);
+		if (strct_ptr->map_generator->debug_vals[0] != 0) {
+			PRINT_ZU(--strct_ptr->map_generator->debug_vals[0]);
 			strct_ptr->refresh_required = true;
 		}
 	}
 	if (key == GLFW_KEY_P && action == GLFW_PRESS) {
-		++strct_ptr->generator_C->debug_vals[1];
+		++strct_ptr->map_generator->debug_vals[1];
 		strct_ptr->refresh_required = true;
 	}
 	if (key == GLFW_KEY_O && action == GLFW_PRESS) {
-		if (strct_ptr->generator_C->debug_vals[1] != 0) {
-			--strct_ptr->generator_C->debug_vals[1];
+		if (strct_ptr->map_generator->debug_vals[1] != 0) {
+			--strct_ptr->map_generator->debug_vals[1];
 			strct_ptr->refresh_required = true;
 		}
 	}
 }
-

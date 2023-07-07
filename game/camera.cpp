@@ -2,7 +2,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "useful.hpp"
+#include <useful.hpp>
 
 camera_t::camera_t(glm::vec3 pos, float h_angle, float v_angle, float fov)
 	:position{pos}

@@ -1,1 +1,0 @@
-../shader_bitmap_vertex.glsl

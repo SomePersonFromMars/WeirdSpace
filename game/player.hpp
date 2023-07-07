@@ -11,7 +11,7 @@
 #include "shader_A.hpp"
 #include "world_buffer.hpp"
 
-#include "useful.hpp"
+#include <useful.hpp>
 #include "settings.hpp"
 
 struct player_t {

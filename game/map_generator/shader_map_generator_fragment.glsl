@@ -201,7 +201,7 @@ void main(void) {
 	color.rgb = hsv_to_rgb(
 		(1.0 - hue) * 240.0 / 360.0, 0.6, 0.8);
 
-	color.a = 1.0;
+	color.a = noised_elevation;
 
 	// color = vec4(noise_val, noise_val, noise_val, 1.0);
 }

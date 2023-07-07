@@ -11,13 +11,13 @@
 
 #include <imgui.h>
 
-#include "generator.hpp"
+#include "map_generator/map_generator.hpp"
 #include "line.hpp"
 
 struct callbacks_strct_t {
 	callbacks_strct_t(GLint &window_width, GLint &window_height);
 	GLint &window_width, &window_height;
-	generator_C_t *generator_C = nullptr;
+	map_generator_t *map_generator = nullptr;
 	bool refresh_required = false;
 
 	static inline callbacks_strct_t* get_strct(GLFWwindow *window) {
@@ -38,11 +38,11 @@ public:
 private:
 	void init_opengl_etc();
 	void init_imgui();
-	void init_generator();
+	void init_map_generator();
 
 	void loop_input();
 	void loop_imgui();
-	void loop_generator();
+	void loop_map_generator();
 
 	void deinit_imgui();
 
@@ -59,8 +59,8 @@ private:
 	bool show_another_window = false;
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-	bitmap_t bitmap_A;
-	generator_C_t generator_C;
+	map_storage_t map_storage;
+	map_generator_t map_generator;
 	line_t line;
 	double line_off = 0;
 	glm::vec3 camera_pos = {0, 0, 0};

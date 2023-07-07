@@ -74,9 +74,10 @@ int32_t main(void) {
 	chunk_t::init_static(&shader_world);
 	world_buffer_t world_buffer;
 
-	std::chrono::time_point<std::chrono::high_resolution_clock>
+	[[maybe_unused]]
+		std::chrono::time_point<std::chrono::high_resolution_clock>
 		timer, now;
-	long int elapsed;
+	[[maybe_unused]] long int elapsed;
 
 	const int CHUNKS_X_CNT = world_buffer.width;
 	constexpr int CHUNKS_Z_CNT = 1;

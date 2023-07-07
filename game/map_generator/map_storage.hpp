@@ -1,28 +1,24 @@
 #pragma once
-#ifndef BITMAP_HPP
-#define BITMAP_HPP
+#ifndef MAP_STORAGE_HPP
+#define MAP_STORAGE_HPP
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "settings.hpp"
+#include <settings.hpp>
 
-struct bitmap_t {
-	inline const int& get_width() const {
-		return width;
-	}
-	inline const int& get_height() const {
-		return height;
-	}
+struct map_storage_t {
+	inline const int& get_width() const;
+	inline const int& get_height() const;
 	inline uint32_t get(int y, int x);
 	void set(int y, int x, uint32_t color);
 	void set(int y, int x, glm::u8vec3 color);
 	void clear();
 
-	bitmap_t();
+	map_storage_t();
 	void init();
-	~bitmap_t();
+	~map_storage_t();
 	void reallocate();
 	void load_settings();
 
@@ -61,11 +57,19 @@ private:
 	};
 };
 
-inline uint8_t& bitmap_t::get(int y, int x, int component) {
+inline const int& map_storage_t::get_width() const {
+	return width;
+}
+
+inline const int& map_storage_t::get_height() const {
+	return height;
+}
+
+inline uint8_t& map_storage_t::get(int y, int x, int component) {
 	return content[y*width*3 + x*3 + component];
 }
 
-inline uint32_t bitmap_t::get(int y, int x) {
+inline uint32_t map_storage_t::get(int y, int x) {
 	if (x < 0 || x >= width)
 		return 0;
 	if (y < 0 || y >= height)
@@ -76,7 +80,7 @@ inline uint32_t bitmap_t::get(int y, int x) {
 		(uint32_t(get(y, x, 0)) << 16);
 }
 
-inline GLuint bitmap_t::get_texture_id() const {
+inline GLuint map_storage_t::get_texture_id() const {
 	return texture_id;
 }
 

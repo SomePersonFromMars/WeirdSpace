@@ -8,7 +8,7 @@ using namespace glm;
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include "useful.hpp"
+#include <useful.hpp>
 
 void app_t::init_imgui() {
 	// Setup Dear ImGui context
@@ -65,17 +65,17 @@ void app_t::loop_imgui() {
 				&global_settings.chunk_dim_min,
 				&global_settings.chunk_dim_max);
 
-			// if (not global_settings.triple_bitmap_size)
+			// if (not global_settings.triple_map_size)
 			// 	global_settings.generate_with_gpu = true;
 
 			ImGui::Checkbox("generate_with_gpu",
 				&global_settings.generate_with_gpu);
 
 			if (global_settings.generate_with_gpu)
-				ImGui::Checkbox("triple_bitmap_size",
-					&global_settings.triple_bitmap_size);
+				ImGui::Checkbox("triple_map_size",
+					&global_settings.triple_map_size);
 			else
-				global_settings.triple_bitmap_size = true;
+				global_settings.triple_map_size = true;
 
 			ImGui::DragScalar("voro_cnt", ImGuiDataType_U64,
 				&global_settings.voro_cnt,

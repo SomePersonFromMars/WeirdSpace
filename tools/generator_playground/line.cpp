@@ -1,7 +1,7 @@
 #include "line.hpp"
 
 #include "settings.hpp"
-#include "shader_loader.hpp"
+#include <shader_loader.hpp>
 
 void line_t::init() {
 	// Load shaders and generate shader program

@@ -31,9 +31,9 @@ struct camera_t {
 	void enable_rotation_acceleration (bool enable);
 
 	inline const glm::vec3& get_position() const;
-	inline const float get_horizontal_angle() const;
-	inline const float get_vertical_angle() const;
-	inline const bool get_following_mode() const;
+	inline float get_horizontal_angle() const;
+	inline float get_vertical_angle() const;
+	inline bool get_following_mode() const;
 	glm::mat4 get_view_matrix();
 	glm::mat4 get_projection_matrix(
 			GLint window_width, GLint window_height) const;
@@ -63,13 +63,13 @@ private:
 inline const glm::vec3& camera_t::get_position() const {
 	return position;
 }
-inline const float camera_t::get_horizontal_angle() const {
+inline float camera_t::get_horizontal_angle() const {
 	return horizontal_angle;
 }
-inline const float camera_t::get_vertical_angle() const {
+inline float camera_t::get_vertical_angle() const {
 	return vertical_angle;
 }
-inline const bool camera_t::get_following_mode() const {
+inline bool camera_t::get_following_mode() const {
 	return following_mode;
 }
 

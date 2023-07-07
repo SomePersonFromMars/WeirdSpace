@@ -1,1 +1,0 @@
-../shader_bitmap_fragment.glsl

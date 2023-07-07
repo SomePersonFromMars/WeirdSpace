@@ -1,6 +1,6 @@
 #include "callbacks.hpp"
 
-#include "useful.hpp"
+#include <useful.hpp>
 
 callbacks_strct_t::callbacks_strct_t(
 		GLFWwindow *window,
@@ -73,7 +73,7 @@ void callbacks_strct_t::handle_input() {
 		player.jump(delta_time);
 
 
-	const float off = 3.0 * delta_time;
+	[[maybe_unused ]]const float off = 3.0 * delta_time;
 	if (key_holded[GLFW_KEY_KP_7]) {
 		// player.move_by({off, off});
 		player.move_up(delta_time);
@@ -107,17 +107,18 @@ void window_size_callback(GLFWwindow* window, int width, int height) {
 	strct_ptr->window_height = height;
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
 void key_callback(GLFWwindow *window,
-		int key, int scancode, int action, int mods) {
+		int key, [[maybe_unused]] int scancode,
+		int action, [[maybe_unused]] int mods) {
 
 	callbacks_strct_t * const strct_ptr
 		= callbacks_strct_t::get_strct(window);
 
-	const float delta_time = strct_ptr->delta_time;
+	[[maybe_unused]] const float delta_time = strct_ptr->delta_time;
 	camera_t &camera = strct_ptr->camera;
 	player_t &player = strct_ptr->player;
 
