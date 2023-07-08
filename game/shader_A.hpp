@@ -8,8 +8,11 @@
 /*
 	* Usage:
 
+	* Construction
+		shader_A_t shader; // Default constructor
+
 	* Initialization:
-		shader_A_t shader;
+		shader.init();
 
 	* Drawing single VAO:
 		glUseProgram(shader.program_id);
@@ -19,17 +22,20 @@
 		glBindVertexArray(0); // Unbinding not necessary
 
 	* Deinitialization:
-		// Destructor is called
+		shader.deinit();
+
+	* Deconstruction
+		// Default deconstructor
 */
 
 struct shader_A_t {
 
 	// * Loads and compiles the A shaders
 	// * Gets the uniforms' locations
-	shader_A_t();
+	void init();
 
 	// * Deletes the program
-	~shader_A_t();
+	void deinit();
 
 	// Program
 	GLuint program_id;

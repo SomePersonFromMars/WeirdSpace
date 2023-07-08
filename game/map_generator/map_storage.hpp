@@ -9,6 +9,16 @@
 #include <settings.hpp>
 
 struct map_storage_t {
+	// Basic usage functions
+	map_storage_t() = default;
+	void load_settings();
+	void init_gl();
+	void reallocate_gpu_and_cpu_memory();
+	void draw(const glm::mat4 &MVP_matrix);
+	void deinit_gl();
+	~map_storage_t();
+
+	// Getters and setters
 	inline const int& get_width() const;
 	inline const int& get_height() const;
 	inline uint32_t get(int y, int x);
@@ -16,15 +26,9 @@ struct map_storage_t {
 	void set(int y, int x, glm::u8vec3 color);
 	void clear();
 
-	map_storage_t();
-	void init();
-	~map_storage_t();
-	void reallocate();
-	void load_settings();
-
-	void load_to_texture();
+	// Fill texture in functions
+	void load_to_texture(); // Load `content` to texture
 	inline GLuint get_texture_id() const;
-	void draw(const glm::mat4 &MVP_matrix);
 
 private:
 	int width;

@@ -2,6 +2,8 @@
 # Weird Space
 add_executable(weird_space
 	weird_space.cpp
+	app.cpp
+
 	callbacks.cpp
 	camera.cpp
 	chunk.cpp
@@ -12,8 +14,16 @@ add_executable(weird_space
 	shader_world.cpp
 
 	map_generator/noise.cpp
+	map_generator/voronoi.cpp
+	map_generator/map_storage.cpp
+	map_generator/map_generator.cpp
+	map_generator/map_generator_cpu_drawing_helpers.cpp
+	map_generator/map_generator_GPU.cpp
+	map_generator/map_generator_tour.cpp
 
+	utilities/settings.cpp
 	utilities/useful.cpp
+	utilities/geometry.cpp
 	utilities/texture_loader.cpp
 	utilities/shader_loader.cpp
 	)

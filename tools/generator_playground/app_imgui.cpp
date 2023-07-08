@@ -30,7 +30,7 @@ void app_t::init_imgui() {
 			0.0f);
 }
 
-void app_t::loop_imgui() {
+void app_t::in_loop_update_imgui() {
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();

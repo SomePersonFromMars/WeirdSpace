@@ -10,10 +10,10 @@ struct shader_world_t {
 
 	// * Loads and compiles the A shaders
 	// * Gets the uniforms' locations
-	shader_world_t();
+	void init();
 
 	// * Deletes the program
-	~shader_world_t();
+	void deinit();
 
 	// Program
 	GLuint program_id;

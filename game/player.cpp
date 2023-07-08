@@ -14,7 +14,7 @@ player_t::player_t(shader_A_t &shader, world_buffer_t &world_buffer)
 	,world_buffer{world_buffer}
 {  }
 
-void player_t::init() {
+void player_t::init_gl() {
 	// Generate OpenGL ids
 	texture_id = load_texture(TEXTURE_PLAYER_PATH);
 
@@ -73,7 +73,7 @@ void player_t::init() {
 	glBindVertexArray(0); // Unbind vao, not necessary
 }
 
-void player_t::deinit() {
+void player_t::deinit_gl() {
 	glDeleteBuffers(1,  &positions_buffer_id);
 	glDeleteBuffers(1,  &uvs_buffer_id);
 	glDeleteBuffers(1,  &normals_buffer_id);

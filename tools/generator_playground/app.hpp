@@ -40,11 +40,13 @@ private:
 	void init_imgui();
 	void init_map_generator();
 
-	void loop_input();
-	void loop_imgui();
-	void loop_map_generator();
+	void in_loop_parse_input();
+	void in_loop_update_imgui();
+	void in_loop_draw_map();
 
+	void deinit_opengl_etc();
 	void deinit_imgui();
+	void deinit_map_generator();
 
 	void soft_reload_procedure();
 	void reload_procedure();

@@ -6,7 +6,7 @@
 
 #include <chrono>
 
-void map_generator_t::init() {
+void map_generator_t::init_gl() {
 	// Load shaders and generate shader programs
 	GLuint compute_shader_id = compile_shader(
 			SHADER_MAP_GENERATOR_COMPUTE_PATH, GL_COMPUTE_SHADER);
@@ -55,10 +55,29 @@ void map_generator_t::init() {
 
 	glBindVertexArray(0);
 
-	load_settings();
+	// load_settings();
 }
 
-void map_generator_t::deinit() {
+void map_generator_t::set_uniforms() {
+	const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::high_resolution_clock::now().time_since_epoch()
+			).count();
+	static auto app_start_ms = now_ms;
+	const auto elapsed_ms = now_ms - app_start_ms;
+	const float t = float(elapsed_ms);
+#if PROG == 1
+	glUseProgram(program1);
+	glUniform1f(t_prog1_uniform, t);
+#elif PROG == 2
+	glUseProgram(program2);
+	glUniform1f(t_prog2_uniform, t);
+	glUniform1i(triple_map_size_uniform,
+			global_settings.triple_map_size);
+	glUniform2f(space_max_uniform, space_max.x, space_max.y);
+#endif
+}
+
+void map_generator_t::deinit_gl() {
 	glDeleteProgram(program1);
 	glDeleteProgram(program2);
 	glDeleteBuffers(1, &continents_triangle_pos_buf);
@@ -69,7 +88,6 @@ void map_generator_t::deinit() {
 
 
 void map_generator_t::draw_map_gpu() {
-#define PROG 2
 #if PROG == 1
 	// Shader program
 	glUseProgram(program1);
@@ -85,15 +103,7 @@ void map_generator_t::draw_map_gpu() {
 			GL_RGBA8
 			);
 
-	const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::high_resolution_clock::now().time_since_epoch()
-			).count();
-	static auto app_start_ms = now_ms;
-	const auto elapsed_ms = now_ms - app_start_ms;
-	const float t = float(elapsed_ms);
-	// PRINT_F(t);
-
-	glUniform1f(t_prog1_uniform, t);
+	set_uniforms();
 
 	// Execute shader
 	glDispatchCompute(map_storage->get_width()/3, map_storage->get_height(), 1);
@@ -208,13 +218,7 @@ void map_generator_t::draw_map_gpu() {
 	static const GLfloat none[] = { 0.0f, 0.0f, 0.3f, 0.0f }; // Blue
 	glClearBufferfv(GL_COLOR, 0, none);
 
-	const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::high_resolution_clock::now().time_since_epoch()
-			).count();
-	static auto app_start_ms = now_ms;
-	const auto elapsed_ms = now_ms - app_start_ms;
-	const float t = float(elapsed_ms);
-	glUniform1f(t_prog2_uniform, t);
+	set_uniforms();
 
 	glDrawArraysInstanced(GL_TRIANGLES,
 			0, continents_triangles_pos.size(), 3);

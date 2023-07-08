@@ -41,12 +41,12 @@ void app_t::loop() {
 			soft_reload_procedure();
 		}
 
-		loop_input();
+		in_loop_parse_input();
 
 		glClear(GL_COLOR_BUFFER_BIT);
 		glViewport(0, 0, window_width, window_height);
-		loop_map_generator();
-		loop_imgui();
+		in_loop_draw_map();
+		in_loop_update_imgui();
 
 		double fps_cnt;
 		{ // FPS cnter
@@ -77,23 +77,18 @@ void app_t::loop() {
 
 // Deinit
 void app_t::deinit() {
-	map_generator.deinit();
 	deinit_imgui();
-
+	deinit_map_generator();
+	deinit_opengl_etc();
 	global_settings.save_settings_to_file();
-
-	glfwDestroyWindow(window);
-	glfwTerminate();
-
-	GL_GET_ERROR;
 }
 
 
 // Init subfunctions
-static void framebuffer_size_callback(
+void framebuffer_size_callback(
 		GLFWwindow* window, int width, int height);
 void window_size_callback(GLFWwindow* window, int width, int height);
-static void key_callback(GLFWwindow* window,
+void key_callback(GLFWwindow* window,
 		int key, int scancode, int action, int mods);
 
 void app_t::init_opengl_etc() {
@@ -136,10 +131,37 @@ void app_t::init_opengl_etc() {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetWindowSizeCallback(window, window_size_callback);
 	glfwSetKeyCallback(window, key_callback);
+
+#ifdef DEBUG
+	PRINT_NL;
+	PRINT_U(GL_NO_ERROR);
+	PRINT_U(GL_INVALID_ENUM);
+	PRINT_U(GL_INVALID_VALUE);
+	PRINT_U(GL_INVALID_OPERATION);
+	PRINT_U(GL_INVALID_FRAMEBUFFER_OPERATION);
+	PRINT_U(GL_OUT_OF_MEMORY);
+	PRINT_U(GL_STACK_UNDERFLOW);
+	PRINT_U(GL_STACK_OVERFLOW);
+	GLint max_texture_size;
+	GLint max_compute_work_group_count[3];
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);
+	glGetIntegeri_v(
+			GL_MAX_COMPUTE_WORK_GROUP_COUNT,
+			0, &max_compute_work_group_count[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT,
+			1, &max_compute_work_group_count[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT,
+			2, &max_compute_work_group_count[2]);
+	PRINT_D(max_texture_size);
+	PRINT_D(max_compute_work_group_count[0]);
+	PRINT_D(max_compute_work_group_count[1]);
+	PRINT_D(max_compute_work_group_count[2]);
+	PRINT_NL;
+#endif
 }
 
 // Loop subfunctions
-void app_t::loop_input() {
+void app_t::in_loop_parse_input() {
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		reload_procedure();
 	}
@@ -251,21 +273,21 @@ void app_t::loop_input() {
 }
 
 
+// Deinit subfunctions
+void app_t::deinit_opengl_etc() {
+	glfwDestroyWindow(window);
+	glfwTerminate();
+	GL_GET_ERROR;
+}
+
+
 // Callbacks
 callbacks_strct_t::callbacks_strct_t(GLint &window_width, GLint &window_height)
 	:window_width{window_width}
 	,window_height{window_height}
 {  }
 
-void window_size_callback(GLFWwindow* window, int width, int height) {
-	callbacks_strct_t * const strct_ptr
-		= callbacks_strct_t::get_strct(window);
-
-	strct_ptr->window_width = width;
-	strct_ptr->window_height = height;
-}
-
-static void framebuffer_size_callback(
+void framebuffer_size_callback(
 		GLFWwindow* window, int width, int height) {
 	callbacks_strct_t * const strct_ptr
 		= callbacks_strct_t::get_strct(window);
@@ -275,7 +297,15 @@ static void framebuffer_size_callback(
 	// glViewport(0, 0, width, height);
 }
 
-static void key_callback(GLFWwindow* window,
+void window_size_callback(GLFWwindow* window, int width, int height) {
+	callbacks_strct_t * const strct_ptr
+		= callbacks_strct_t::get_strct(window);
+
+	strct_ptr->window_width = width;
+	strct_ptr->window_height = height;
+}
+
+void key_callback(GLFWwindow* window,
 		int key, [[maybe_unused]] int scancode,
 		int action, [[maybe_unused]] int mods) {
 	callbacks_strct_t * const strct_ptr

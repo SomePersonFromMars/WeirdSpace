@@ -17,6 +17,7 @@ add_executable(generator_playground
 	map_generator/voronoi.cpp
 	map_generator/map_storage.cpp
 	map_generator/map_generator.cpp
+	map_generator/map_generator_cpu_drawing_helpers.cpp
 	map_generator/map_generator_tour.cpp
 	map_generator/map_generator_GPU.cpp
 

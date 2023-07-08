@@ -1,9 +1,9 @@
 #include "shader_world.hpp"
 
 #include "shader_loader.hpp"
-#include "settings.hpp"
+#include <settings.hpp>
 
-shader_world_t::shader_world_t() {
+void shader_world_t::init() {
 	GLuint vertex_shader_id = compile_shader(
 			SHADER_WORLD_VERTEX_PATH, GL_VERTEX_SHADER);
 	GLuint fragment_shader_id = compile_shader(
@@ -35,6 +35,6 @@ shader_world_t::shader_world_t() {
 			"texture_sampler");
 }
 
-shader_world_t::~shader_world_t() {
+void shader_world_t::deinit() {
 	delete_program(program_id);
 }

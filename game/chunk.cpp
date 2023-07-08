@@ -5,13 +5,13 @@
 #include <texture_loader.hpp>
 #include <useful.hpp>
 
-#include "settings.hpp"
+#include <settings.hpp>
 
 shader_world_t *chunk_t::pshader;
 GLuint chunk_t::texture_id;
 GLuint chunk_t::block_model_uniform_buffer_id;
 
-void chunk_t::init_static(shader_world_t *shader_ptr) {
+void chunk_t::init_gl_static(shader_world_t *shader_ptr) {
 	chunk_t::pshader = shader_ptr;
 
 	// Load the combined texture
@@ -104,7 +104,7 @@ chunk_t::chunk_t()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void chunk_t::deinit_static() {
+void chunk_t::deinit_gl_static() {
 	glDeleteTextures(1, &texture_id);
 	glDeleteBuffers(1, &block_model_uniform_buffer_id);
 }

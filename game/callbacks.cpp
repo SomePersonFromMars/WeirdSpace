@@ -3,7 +3,6 @@
 #include <useful.hpp>
 
 callbacks_strct_t::callbacks_strct_t(
-		GLFWwindow *window,
 		GLint &window_width,
 		GLint &window_height,
 		double &delta_time,
@@ -15,7 +14,9 @@ callbacks_strct_t::callbacks_strct_t(
 	,delta_time{delta_time}
 	,camera{camera}
 	,player{player}
-{
+{ }
+
+void callbacks_strct_t::init_gl(GLFWwindow *window) {
 	glfwSetWindowUserPointer(
 			window,
 			reinterpret_cast<void*>(this)
@@ -73,7 +74,7 @@ void callbacks_strct_t::handle_input() {
 		player.jump(delta_time);
 
 
-	[[maybe_unused ]]const float off = 3.0 * delta_time;
+	[[maybe_unused]] const float off = 3.0 * delta_time;
 	if (key_holded[GLFW_KEY_KP_7]) {
 		// player.move_by({off, off});
 		player.move_up(delta_time);
@@ -114,6 +115,8 @@ void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, i
 void key_callback(GLFWwindow *window,
 		int key, [[maybe_unused]] int scancode,
 		int action, [[maybe_unused]] int mods) {
+	if (key == GLFW_KEY_UNKNOWN)
+		return;
 
 	callbacks_strct_t * const strct_ptr
 		= callbacks_strct_t::get_strct(window);

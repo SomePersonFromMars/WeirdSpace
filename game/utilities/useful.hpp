@@ -6,6 +6,7 @@
 
 #define DEBUG
 #ifdef DEBUG
+	#define PRINT_NL printf("\n")
 	#define PRINT_D(var) printf(#var " = %d\n", var)
 	#define PRINT_LD(var) printf(#var " = %ld\n", var)
 	#define PRINT_U(var) printf(#var " = %u\n", var)
@@ -25,6 +26,7 @@
 	#define BREAKPOINT (enable_breakpoints) ? std::raise(SIGINT) : 0
 	#define BREAKPOINT_IF(expr) (expr) ? (BREAKPOINT) : 0
 #else
+	#define PRINT_NL
 	#define PRINT_D(var)
 	#define PRINT_U(var)
 	#define PRINT_LU(var)

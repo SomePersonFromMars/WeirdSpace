@@ -6,44 +6,59 @@
 #include <useful.hpp>
 #include <shader_loader.hpp>
 
-// Constructor
-map_storage_t::map_storage_t() {
-	load_settings();
-}
-
 void map_storage_t::load_settings() {
 	width = global_settings.chunk_dim*6;
 	if (global_settings.triple_map_size)
 		width *= 3;
 	height = global_settings.chunk_dim*3;
-
-	static int prev_chunk_dim = global_settings.chunk_dim;
-	static bool prev_triple_map_size = global_settings.triple_map_size;
-	if (global_settings.chunk_dim != prev_chunk_dim or
-			global_settings.triple_map_size != prev_triple_map_size or
-			(not global_settings.generate_with_gpu and content == nullptr))
-		reallocate();
-	prev_chunk_dim = global_settings.chunk_dim;
-	prev_triple_map_size = global_settings.triple_map_size;
 }
 
-void map_storage_t::reallocate() {
-	if (content)
-		delete[] content;
-	if (not global_settings.generate_with_gpu)
-		content = new uint8_t[width*height*3]; // Times three for RGB
-	else
-		content = nullptr;
+void map_storage_t::reallocate_gpu_and_cpu_memory() {
+	static int prev_content_width = 0;
+	static int prev_content_height = 0;
+	static int prev_texture_width = 0;
+	static int prev_texture_height = 0;
 
-	glBindTexture(GL_TEXTURE_2D, texture_id);
-	GL_GET_ERROR;
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
-			GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	// glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
-	GL_GET_ERROR;
+	const int new_content_width
+		= global_settings.generate_with_gpu ? 0 : width;
+	const int new_content_height
+		= global_settings.generate_with_gpu ? 0 : height;
+	const int new_texture_width
+		= global_settings.generate_with_gpu ? width : 0;
+	const int new_texture_height
+		= global_settings.generate_with_gpu ? height : 0;
+
+	if (
+		prev_content_width != new_content_width or
+		prev_content_height != new_content_height
+		) {
+		if (content)
+			delete[] content;
+		if (new_content_width*new_content_height > 0)
+			content = new uint8_t[new_content_width*new_content_height*3];
+		else
+			content = nullptr;
+	}
+
+	if (
+		prev_texture_width != new_texture_width or
+		prev_texture_height != new_texture_height
+		) {
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		GL_GET_ERROR;
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
+				GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		// glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+		GL_GET_ERROR;
+	}
+
+	prev_content_width = new_content_width;
+	prev_content_height = new_content_height;
+	prev_texture_width = new_texture_width;
+	prev_texture_height = new_texture_height;
 }
 
-void map_storage_t::init() {
+void map_storage_t::init_gl() {
 	// Load shaders and generate shader program
 	GLuint vertex_shader_id = compile_shader(
 			SHADER_MAP_STORAGE_VERTEX_PATH, GL_VERTEX_SHADER);
@@ -111,18 +126,20 @@ void map_storage_t::init() {
 			GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	reallocate();
+	// reallocate();
 }
 
-// Destructor
-map_storage_t::~map_storage_t() {
+void map_storage_t::deinit_gl() {
 	glDeleteBuffers(1, &quad_positions_buffer_id);
 	glDeleteBuffers(1, &quad_uvs_buffer_id);
 	glDeleteVertexArrays(1, &vao_id);
 	glDeleteTextures(1, &texture_id);
 	delete_program(program_id);
+}
 
-	delete[] content;
+map_storage_t::~map_storage_t() {
+	if (content)
+		delete[] content;
 }
 
 void map_storage_t::set(int y, int x, uint32_t color) {

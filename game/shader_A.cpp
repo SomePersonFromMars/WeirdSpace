@@ -1,9 +1,9 @@
 #include "shader_A.hpp"
 
 #include "shader_loader.hpp"
-#include "settings.hpp"
+#include <settings.hpp>
 
-shader_A_t::shader_A_t() {
+void shader_A_t::init() {
 	GLuint vertex_shader_id = compile_shader(
 			SHADER_A_VERTEX_PATH, GL_VERTEX_SHADER);
 	GLuint fragment_shader_id = compile_shader(
@@ -26,6 +26,6 @@ shader_A_t::shader_A_t() {
 			"texture_sampler");
 }
 
-shader_A_t::~shader_A_t() {
+void shader_A_t::deinit() {
 	delete_program(program_id);
 }

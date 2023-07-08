@@ -15,21 +15,19 @@ double spline_gradient(
 		double t, const std::function<double(const long long)> &f);
 
 struct map_generator_t {
-	// Public functions
+	// Basic usage functions
 	map_generator_t(map_storage_t * const map_storage);
-
-	void init();
-	void deinit();
-	void new_seed();
 	void load_settings();
-	void calculate_constants();
-
+	void init_gl();
+	void new_seed();
 	void generate_map();
+	void deinit_gl();
 
+	// State query functions
 	inline glm::dvec2 get_space_max() const;
 	inline double get_ratio_wh() const;
 	inline double get_ratio_hw() const;
-	inline bool tour_path_points_generated() const;
+	inline bool are_tour_path_points_generated() const;
 	std::pair<glm::dvec2, glm::dvec2> get_tour_path_points(const double off);
 
 	std::size_t * const debug_vals = global_settings.debug_vals;
@@ -62,6 +60,9 @@ private:
 	};
 
 	// Private functions
+	void calculate_constants();
+	void set_uniforms();
+
 	inline glm::dvec2 space_to_map_coords(glm::dvec2 pos) const;
 	inline glm::dvec2 map_to_space_coords(glm::dvec2 pos) const;
 	void draw_edge(glm::dvec2 beg, glm::dvec2 end,
@@ -143,6 +144,7 @@ private:
 	std::vector<int> joints_humidity;
 
 	// OpenGL names
+#define PROG 2
 	GLuint program1;
 	GLuint program2;
 	GLuint t_prog1_uniform;
@@ -171,7 +173,7 @@ inline double map_generator_t::get_ratio_hw() const {
 	return ratio_hw;
 }
 
-inline bool map_generator_t::tour_path_points_generated() const {
+inline bool map_generator_t::are_tour_path_points_generated() const {
 	return tour_path_points.size() > 0;
 }
 

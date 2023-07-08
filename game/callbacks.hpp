@@ -17,13 +17,13 @@ void key_callback(GLFWwindow *window,
 
 struct callbacks_strct_t {
 	callbacks_strct_t(
-			GLFWwindow *window,
 			GLint &window_width,
 			GLint &window_height,
 			double &delta_time,
 			camera_t &camera,
 			player_t &player
 		);
+	void init_gl(GLFWwindow *window);
 	void handle_input();
 
 private:

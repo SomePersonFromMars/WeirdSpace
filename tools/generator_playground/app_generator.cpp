@@ -9,30 +9,29 @@ void app_t::init_map_generator() {
 	callbacks_strct.map_generator = &map_generator;
 
 	// GL_GET_ERROR
-	PRINT_U(GL_NO_ERROR);
-	PRINT_U(GL_INVALID_ENUM);
-	PRINT_U(GL_INVALID_VALUE);
-	PRINT_U(GL_INVALID_OPERATION);
-	PRINT_U(GL_INVALID_FRAMEBUFFER_OPERATION);
-	PRINT_U(GL_OUT_OF_MEMORY);
-	PRINT_U(GL_STACK_UNDERFLOW);
-	PRINT_U(GL_STACK_OVERFLOW);
 
-	map_storage.init();
-	map_generator.init();
+	map_storage.load_settings();
+	map_storage.init_gl();
+
+	map_generator.load_settings();
+	map_generator.init_gl();
+
 	line.init();
-	soft_reload_procedure();
+
+	map_storage.reallocate_gpu_and_cpu_memory();
+	map_generator.new_seed();
+	map_generator.generate_map();
 }
 
 
-void app_t::loop_map_generator() {
+void app_t::in_loop_draw_map() {
 	// Drawing the map storage
 	map_storage.draw(MVPb);
 
 	// Drawing the line (player)
 	if (global_settings.draw_player and
 			not global_settings.generate_with_gpu and
-			map_generator.tour_path_points_generated()) {
+			map_generator.are_tour_path_points_generated()) {
 		mat4 MVP(1);
 		MVP = scale(MVP, vec3(camera_zoom));
 		MVP
@@ -69,17 +68,23 @@ void app_t::loop_map_generator() {
 	}
 }
 
+void app_t::deinit_map_generator() {
+	map_generator.deinit_gl();
+	map_storage.deinit_gl();
+}
 
 // Actions
 void app_t::soft_reload_procedure() {
 	map_storage.load_settings();
+	map_storage.reallocate_gpu_and_cpu_memory();
 	map_generator.load_settings();
-
 	map_generator.generate_map();
 };
 
 void app_t::reload_procedure() {
+	map_storage.load_settings();
+	map_storage.reallocate_gpu_and_cpu_memory();
+	map_generator.load_settings();
 	map_generator.new_seed();
-
-	soft_reload_procedure();
+	map_generator.generate_map();
 };

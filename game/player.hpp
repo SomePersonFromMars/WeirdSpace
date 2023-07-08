@@ -12,7 +12,7 @@
 #include "world_buffer.hpp"
 
 #include <useful.hpp>
-#include "settings.hpp"
+#include <settings.hpp>
 
 struct player_t {
 	player_t(shader_A_t &shader, world_buffer_t &world_buffer);
@@ -20,8 +20,8 @@ struct player_t {
 	glm::vec3 debug_position;
 
 	// Rendering
-	void init();
-	void deinit();
+	void init_gl();
+	void deinit_gl();
 	void draw(
 		const glm::vec3 &light_pos,
 		const glm::mat4 &projection_matrix,

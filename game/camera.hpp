@@ -17,6 +17,7 @@ struct camera_t {
 	static constexpr float rotation_speed_accelerated = 4.0f;
 
 	// Interface
+	// Operations
 	void rotate_up     (float delta_time);
 	void rotate_down   (float delta_time);
 	void rotate_right  (float delta_time);
@@ -30,6 +31,7 @@ struct camera_t {
 	void enable_moving_acceleration   (bool enable);
 	void enable_rotation_acceleration (bool enable);
 
+	// Getters
 	inline const glm::vec3& get_position() const;
 	inline float get_horizontal_angle() const;
 	inline float get_vertical_angle() const;

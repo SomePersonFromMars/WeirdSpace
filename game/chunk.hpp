@@ -33,8 +33,8 @@ struct chunk_t {
 	// +z
 	const chunk_t *neighbors[6] { };
 
-	static void init_static(shader_world_t *pshader);
-	static void deinit_static();
+	static void init_gl_static(shader_world_t *pshader);
+	static void deinit_gl_static();
 	chunk_t();
 	~chunk_t();
 
