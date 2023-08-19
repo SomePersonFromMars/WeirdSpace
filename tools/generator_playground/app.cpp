@@ -87,7 +87,6 @@ void app_t::deinit() {
 // Init subfunctions
 void framebuffer_size_callback(
 		GLFWwindow* window, int width, int height);
-void window_size_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window,
 		int key, int scancode, int action, int mods);
 
@@ -129,7 +128,6 @@ void app_t::init_opengl_etc() {
 	glfwSetWindowUserPointer(window,
 			reinterpret_cast<void*>(&callbacks_strct));
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetWindowSizeCallback(window, window_size_callback);
 	glfwSetKeyCallback(window, key_callback);
 
 #ifdef DEBUG
@@ -293,16 +291,7 @@ void framebuffer_size_callback(
 		= callbacks_strct_t::get_strct(window);
 	strct_ptr->window_width = width;
 	strct_ptr->window_height = height;
-
 	// glViewport(0, 0, width, height);
-}
-
-void window_size_callback(GLFWwindow* window, int width, int height) {
-	callbacks_strct_t * const strct_ptr
-		= callbacks_strct_t::get_strct(window);
-
-	strct_ptr->window_width = width;
-	strct_ptr->window_height = height;
 }
 
 void key_callback(GLFWwindow* window,

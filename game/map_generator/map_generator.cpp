@@ -920,22 +920,19 @@ void map_generator_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 			const dvec2 p = map_to_space_coords(dvec2(x+width/3, y));
 
 			double elevation_A = get_elevation_A(p);
+			assert(in_between_inclusive(0.0, 1.0, elevation_A));
 
 			uint32_t color;
-			{
-				assert(in_between_inclusive(0.0, 1.0, elevation_A));
+			if (elevation_A < 0.5)
+				elevation_A = 0.15 + 0.25 * elevation_A;
+			else
+				elevation_A = 0.0 + 1.0 * elevation_A;
 
-				if (elevation_A < 0.5)
-					elevation_A = 0.15 + 0.25 * elevation_A;
-				else
-					elevation_A = 0.0 + 1.0 * elevation_A;
+			// color = lerp(0, 0xff, elevation_A);
+			// color = color | (color << 8) | (color << 16);
 
-				// color = lerp(0, 0xff, elevation_A);
-				// color = color | (color << 8) | (color << 16);
-
-				color = hsv_to_rgb(
-					(1.0 - elevation_A) * 240.0 / 360.0, 0.6, 0.8);
-			}
+			color = hsv_to_rgb(
+				(1.0 - elevation_A) * 240.0 / 360.0, 0.6, 0.8);
 
 			// if (debug_vals[1] % 2 == 1) {
 			// 	// PRINT_F(noise_val);
@@ -943,9 +940,17 @@ void map_generator_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 			// 	color = color | (color << 8) | (color << 16);
 			// }
 
-			map_storage->set(y, x+width*0/3, color);
-			map_storage->set(y, x+width*1/3, color);
-			map_storage->set(y, x+width*2/3, color);
+			map_storage->set_rgb_value(y, x+width*0/3, color);
+			map_storage->set_rgb_value(y, x+width*1/3, color);
+			map_storage->set_rgb_value(y, x+width*2/3, color);
+
+			const uint8_t elevation_A_byte = elevation_A * 255.0;
+			map_storage->get_component_reference(y, x+width*0/3, 3)
+				= elevation_A_byte;
+			map_storage->get_component_reference(y, x+width*1/3, 3)
+				= elevation_A_byte;
+			map_storage->get_component_reference(y, x+width*2/3, 3)
+				= elevation_A_byte;
 		}
 	}
 	const auto diff = clock.now() - timer_start;
@@ -1116,15 +1121,13 @@ void map_generator_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 
 void map_generator_t::generate_map() {
 	printf("\n");
-
 	std::mt19937 gen(seed_voronoi);
 	PRINT_LU(seed_voronoi);
-
 	generate_continents(gen);
+
 	if (not global_settings.generate_with_gpu) {
 		map_storage->clear();
 		generate_grid_intersections();
-
 		// std::size_t avg_cnt = 0;
 		// std::size_t max_cnt = 0;
 		// for (size_t y = 0; y < grid_height; ++y) {
@@ -1138,26 +1141,18 @@ void map_generator_t::generate_map() {
 		// PRINT_ZU(max_cnt);
 		// // for (const auto e : grid[1][0])
 		// // 	PRINT_ZU(e);
-	}
-
-	if (not global_settings.generate_with_gpu) {
 		draw_map_cpu(gen);
-	} else
-		draw_map_gpu();
-
-	if (not global_settings.generate_with_gpu) {
 		if (global_settings.generate_rivers) {
 			generate_joints(gen);
 			generate_rivers(gen);
-
 			if (global_settings.draw_temperature or
-					global_settings.draw_humidity) {
+					global_settings.draw_humidity)
 				calculate_climate();
-			}
 		}
 		if (global_settings.draw_player)
 			draw_tour_path(gen);
-
-		map_storage->load_to_texture();
+		map_storage->load_from_cpu_to_gpu_memory();
+	} else {
+		draw_map_gpu();
 	}
 }

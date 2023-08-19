@@ -4,9 +4,9 @@
 
 // Minimal frame duration in ms
 // #define FRAME_MIN_DURATION 1
-// #define FRAME_MIN_DURATION 16 // 60fps
+#define FRAME_MIN_DURATION 16 // 60fps
 // #define FRAME_MIN_DURATION 33 // 30fps
-#define FRAME_MIN_DURATION 46 // 20fps
+// #define FRAME_MIN_DURATION 46 // 20fps
 // #define FRAME_MIN_DURATION 120
 
 #define SHADER_A_VERTEX_PATH "runtime/shader_A_vertex.glsl"
@@ -95,7 +95,8 @@ extern struct settings_t {
 	// For example noise features remain the same
 	// size compared to the chunk dimensions.
 	FIELD(int        , chunk_dim         , 256,      1,    4096)
-	FIELD(bool       , generate_with_gpu , true,    0,    1)
+	FIELD(int        , chunk_height      , 64,       1,    4096)
+	FIELD(bool       , generate_with_gpu , true,     0,    1)
 	FIELD(bool       , triple_map_size   , false,    0,    1)
 	FIELD(bool       , draw_player       , false,    0,    1)
 	size_t debug_vals[3] {

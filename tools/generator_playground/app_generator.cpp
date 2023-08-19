@@ -12,15 +12,18 @@ void app_t::init_map_generator() {
 
 	map_storage.load_settings();
 	map_storage.init_gl();
+	map_storage.reallocate_gpu_and_cpu_memory();
 
 	map_generator.load_settings();
 	map_generator.init_gl();
 
 	line.init();
 
-	map_storage.reallocate_gpu_and_cpu_memory();
 	map_generator.new_seed();
 	map_generator.generate_map();
+
+	// map_storage.load_from_gpu_to_cpu_memory();
+	// PRINT_D((int)map_storage.get_component_value(0, 0, 0));
 }
 
 

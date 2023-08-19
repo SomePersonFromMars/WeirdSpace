@@ -54,8 +54,6 @@ void map_generator_t::init_gl() {
 	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
-
-	// load_settings();
 }
 
 void map_generator_t::set_uniforms() {
@@ -220,8 +218,16 @@ void map_generator_t::draw_map_gpu() {
 
 	set_uniforms();
 
+	GLuint debug_query;
+	GLuint debug_query_result;
+	glGenQueries(1, &debug_query);
+	glBeginQuery(GL_FRAGMENT_SHADER_INVOCATIONS_ARB, debug_query);
 	glDrawArraysInstanced(GL_TRIANGLES,
 			0, continents_triangles_pos.size(), 3);
+	glEndQuery(GL_FRAGMENT_SHADER_INVOCATIONS_ARB);
+	glGetQueryObjectuiv(debug_query, GL_QUERY_RESULT, &debug_query_result);
+	glDeleteQueries(1, &debug_query);
+	PRINT_U(debug_query_result);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindVertexArray(0);

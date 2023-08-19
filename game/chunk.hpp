@@ -19,9 +19,9 @@ enum class block_type : uint8_t {
 };
 
 struct chunk_t {
-	static constexpr int WIDTH = 256;
+	static constexpr int WIDTH = 128;
 	static constexpr int HEIGHT = 64;
-	static constexpr int DEPTH = 256;
+	static constexpr int DEPTH = 128;
 
 	block_type content[WIDTH][HEIGHT][DEPTH];
 	// Neighbors order:

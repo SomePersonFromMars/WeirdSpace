@@ -27,8 +27,8 @@ void map_generator_t::draw_edge(dvec2 beg, dvec2 end,
 		if (pos.x < 0 || pos.x >= double(width)
 				|| pos.y < 0 || pos.y >= double(height))
 			continue;
-		if (!draw_only_empty || map_storage->get(pos.y, pos.x) == 0x0)
-			map_storage->set(pos.y, pos.x, color);
+		if (!draw_only_empty || map_storage->get_rgb_value(pos.y, pos.x) == 0x0)
+			map_storage->set_rgb_value(pos.y, pos.x, color);
 	}
 }
 
@@ -46,7 +46,7 @@ void map_generator_t::draw_point(glm::dvec2 pos, double dim,
 
 		for (int y = beg.y; y <= end.y; ++y) {
 			if (y < 0 || y >= height) continue;
-			map_storage->set(y, x, color);
+			map_storage->set_rgb_value(y, x, color);
 		}
 	}
 }
@@ -70,7 +70,7 @@ void map_generator_t::fill(glm::dvec2 origin,
 
 	std::queue<ivec2> next_pixel;
 	next_pixel.push(first_pixel);
-	map_storage->set(first_pixel.y, first_pixel.x, fill_color);
+	map_storage->set_rgb_value(first_pixel.y, first_pixel.x, fill_color);
 
 	while (!next_pixel.empty()) {
 		ivec2 pixel = next_pixel.front();
@@ -84,12 +84,12 @@ void map_generator_t::fill(glm::dvec2 origin,
 			if (p.y < 0 || p.y >= height)
 				continue;
 
-			const uint32_t cur_color = map_storage->get(p.y, p.x);
+			const uint32_t cur_color = map_storage->get_rgb_value(p.y, p.x);
 			if (cur_color != 0x000000)
 				continue;
 
 			next_pixel.push(p);
-			map_storage->set(p.y, p.x, fill_color);
+			map_storage->set_rgb_value(p.y, p.x, fill_color);
 		}
 	}
 }
@@ -130,8 +130,8 @@ void map_generator_t::draw_convex_polygon(
 					break;
 				}
 			}
-			if (inside && map_storage->get(y, x) == 0x0)
-				map_storage->set(y, x, color);
+			if (inside && map_storage->get_rgb_value(y, x) == 0x0)
+				map_storage->set_rgb_value(y, x, color);
 		}
 	}
 }
@@ -169,7 +169,7 @@ void map_generator_t::draw_convex_polygon(
 // 				}
 // 			}
 // 			if (inside)
-// 				map_storage.set(y, x, color);
+// 				map_storage.set_rgb_value(y, x, color);
 // 		}
 // 	}
 // }

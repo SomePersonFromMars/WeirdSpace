@@ -21,20 +21,23 @@ struct map_storage_t {
 	// Getters and setters
 	inline const int& get_width() const;
 	inline const int& get_height() const;
-	inline uint32_t get(int y, int x);
-	void set(int y, int x, uint32_t color);
-	void set(int y, int x, glm::u8vec3 color);
+	inline uint32_t get_rgb_value(int y, int x) const;
+	inline uint32_t get_rgba_value(int y, int x) const;
+	inline uint8_t& get_component_reference(int y, int x, int component);
+	inline uint8_t get_component_value(int y, int x, int component) const;
+	inline void set_rgb_value(int y, int x, uint32_t color);
+	inline void set_rgb_value(int y, int x, glm::u8vec3 color);
 	void clear();
-
-	// Fill texture in functions
-	void load_to_texture(); // Load `content` to texture
+	void load_from_cpu_to_gpu_memory();
+	void load_from_gpu_to_cpu_memory();
 	inline GLuint get_texture_id() const;
 
 private:
-	int width;
-	int height;
+	int desired_width;
+	int desired_height;
+	int width = 0;
+	int height = 0;
 	uint8_t *content = nullptr;
-	inline uint8_t& get(int y, int x, int component);
 
 	GLuint texture_id;
 	GLuint program_id;
@@ -69,19 +72,51 @@ inline const int& map_storage_t::get_height() const {
 	return height;
 }
 
-inline uint8_t& map_storage_t::get(int y, int x, int component) {
-	return content[y*width*3 + x*3 + component];
+inline uint8_t& map_storage_t::get_component_reference(
+		int y, int x, int component) {
+	assert(0 <= y && y < height);
+	assert(0 <= x && x < width);
+	return content[y*width*4 + x*4 + component];
 }
 
-inline uint32_t map_storage_t::get(int y, int x) {
-	if (x < 0 || x >= width)
-		return 0;
-	if (y < 0 || y >= height)
-		return 0;
+inline uint8_t map_storage_t::get_component_value(
+		int y, int x, int component) const {
+	assert(0 <= y && y < height);
+	assert(0 <= x && x < width);
+	// if (x < 0 || x >= width) return 0;
+	// if (y < 0 || y >= height) return 0;
+	return content[y*width*4 + x*4 + component];
+}
+
+inline uint32_t map_storage_t::get_rgb_value(int y, int x) const {
 	return
-		(uint32_t(get(y, x, 2)) << 0) |
-		(uint32_t(get(y, x, 1)) << 8) |
-		(uint32_t(get(y, x, 0)) << 16);
+		(uint32_t(get_component_value(y, x, 2)) << 0) |
+		(uint32_t(get_component_value(y, x, 1)) << 8) |
+		(uint32_t(get_component_value(y, x, 0)) << 16);
+}
+
+inline uint32_t map_storage_t::get_rgba_value(int y, int x) const {
+	return
+		(uint32_t(get_component_value(y, x, 3)) << 0) |
+		(uint32_t(get_component_value(y, x, 2)) << 8) |
+		(uint32_t(get_component_value(y, x, 1)) << 16) |
+		(uint32_t(get_component_value(y, x, 0)) << 24);
+}
+
+inline void map_storage_t::set_rgb_value(int y, int x, uint32_t color) {
+	if (x < 0 || x >= width) return;
+	if (y < 0 || y >= height) return;
+	get_component_reference(y, x, 2) = (color & 0x0000ff) >> 0;
+	get_component_reference(y, x, 1) = (color & 0x00ff00) >> 8;
+	get_component_reference(y, x, 0) = (color & 0xff0000) >> 16;
+}
+
+inline void map_storage_t::set_rgb_value(int y, int x, glm::u8vec3 color) {
+	if (x < 0 || x >= width) return;
+	if (y < 0 || y >= height) return;
+	get_component_reference(y, x, 2) = color.r;
+	get_component_reference(y, x, 1) = color.g;
+	get_component_reference(y, x, 0) = color.b;
 }
 
 inline GLuint map_storage_t::get_texture_id() const {

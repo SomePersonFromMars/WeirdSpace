@@ -7,55 +7,37 @@
 #include <shader_loader.hpp>
 
 void map_storage_t::load_settings() {
-	width = global_settings.chunk_dim*6;
+	desired_width = global_settings.chunk_dim*6;
 	if (global_settings.triple_map_size)
-		width *= 3;
-	height = global_settings.chunk_dim*3;
+		desired_width *= 3;
+	desired_height = global_settings.chunk_dim*3;
 }
 
 void map_storage_t::reallocate_gpu_and_cpu_memory() {
-	static int prev_content_width = 0;
-	static int prev_content_height = 0;
-	static int prev_texture_width = 0;
-	static int prev_texture_height = 0;
+	const int prev_width = width;
+	const int prev_height = height;
+	const int new_width = desired_width;
+	const int new_height = desired_height;
 
-	const int new_content_width
-		= global_settings.generate_with_gpu ? 0 : width;
-	const int new_content_height
-		= global_settings.generate_with_gpu ? 0 : height;
-	const int new_texture_width
-		= global_settings.generate_with_gpu ? width : 0;
-	const int new_texture_height
-		= global_settings.generate_with_gpu ? height : 0;
-
-	if (
-		prev_content_width != new_content_width or
-		prev_content_height != new_content_height
-		) {
+	if (prev_width != new_width or
+			prev_height != new_height) {
 		if (content)
 			delete[] content;
-		if (new_content_width*new_content_height > 0)
-			content = new uint8_t[new_content_width*new_content_height*3];
+		if (new_width*new_height > 0)
+			content = new uint8_t[new_width*new_height*4];
 		else
 			content = nullptr;
-	}
 
-	if (
-		prev_texture_width != new_texture_width or
-		prev_texture_height != new_texture_height
-		) {
-		glBindTexture(GL_TEXTURE_2D, texture_id);
+		glBindTexture(GL_TEXTURE_2D, get_texture_id());
 		GL_GET_ERROR;
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
-				GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, new_width, new_height, 0,
+				GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		// glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
 		GL_GET_ERROR;
 	}
 
-	prev_content_width = new_content_width;
-	prev_content_height = new_content_height;
-	prev_texture_width = new_texture_width;
-	prev_texture_height = new_texture_height;
+	width = desired_width;
+	height = desired_height;
 }
 
 void map_storage_t::init_gl() {
@@ -107,10 +89,7 @@ void map_storage_t::init_gl() {
 
 	// Generate texture
 	glGenTextures(1, &texture_id);
-	glBindTexture(GL_TEXTURE_2D, texture_id);
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
-	// 		GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	// // glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+	glBindTexture(GL_TEXTURE_2D, get_texture_id());
 
 	// Set the texture wrapping/filtering options
 	// (on the currently bound texture object)
@@ -125,8 +104,6 @@ void map_storage_t::init_gl() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
 			GL_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// reallocate();
 }
 
 void map_storage_t::deinit_gl() {
@@ -142,41 +119,27 @@ map_storage_t::~map_storage_t() {
 		delete[] content;
 }
 
-void map_storage_t::set(int y, int x, uint32_t color) {
-	if (x < 0 || x >= width)
-		return;
-	if (y < 0 || y >= height)
-		return;
-	get(y, x, 2) = (color & 0x0000ff) >> 0;
-	get(y, x, 1) = (color & 0x00ff00) >> 8;
-	get(y, x, 0) = (color & 0xff0000) >> 16;
-}
-
-void map_storage_t::set(int y, int x, glm::u8vec3 color) {
-	if (x < 0 || x >= width)
-		return;
-	if (y < 0 || y >= height)
-		return;
-	get(y, x, 2) = color.r;
-	get(y, x, 1) = color.g;
-	get(y, x, 0) = color.b;
-}
-
 void map_storage_t::clear() {
 	for (int x = 0; x < width; ++x) {
 		for (int y = 0; y < height; ++y) {
-			set(y, x, 0);
+			set_rgb_value(y, x, 0);
+			get_component_reference(y, x, 3) = 0;
 		}
 	}
 }
 
-void map_storage_t::load_to_texture() {
-	glBindTexture(GL_TEXTURE_2D, texture_id);
+void map_storage_t::load_from_cpu_to_gpu_memory() {
+	glBindTexture(GL_TEXTURE_2D, get_texture_id());
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
-			GL_RGB, GL_UNSIGNED_BYTE, content);
+			GL_RGBA, GL_UNSIGNED_BYTE, content);
 	// glGenerateMipmap(GL_TEXTURE_2D);
 	// WHERE; PRINT_U(glGetError());
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void map_storage_t::load_from_gpu_to_cpu_memory() {
+	glGetTextureImage(get_texture_id(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
+			width*height*4, content);
 }
 
 void map_storage_t::draw(const glm::mat4 &MVP_matrix) {
@@ -188,7 +151,7 @@ void map_storage_t::draw(const glm::mat4 &MVP_matrix) {
 		1, GL_FALSE, &MVP_matrix[0][0]);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture_id);
+	glBindTexture(GL_TEXTURE_2D, get_texture_id());
 	glUniform1i(texture_sampler_uniform,
 			0);
 

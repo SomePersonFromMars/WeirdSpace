@@ -23,7 +23,6 @@ void callbacks_strct_t::init_gl(GLFWwindow *window) {
 		);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetWindowSizeCallback(window, window_size_callback);
 	glfwSetKeyCallback(window, key_callback);
 }
 
@@ -100,16 +99,11 @@ void callbacks_strct_t::handle_input() {
 	}
 }
 
-void window_size_callback(GLFWwindow* window, int width, int height) {
+void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height) {
 	callbacks_strct_t * const strct_ptr
 		= callbacks_strct_t::get_strct(window);
-
 	strct_ptr->window_width = width;
 	strct_ptr->window_height = height;
-}
-
-void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height) {
-	glViewport(0, 0, width, height);
 }
 
 void key_callback(GLFWwindow *window,
