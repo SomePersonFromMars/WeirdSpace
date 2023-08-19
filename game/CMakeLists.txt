@@ -29,6 +29,8 @@ add_executable(weird_space
 
 	utilities/settings.cpp
 	utilities/useful.cpp
+	utilities/imgui_basic_controls.cpp
+	utilities/global_settings_gui.cpp
 	utilities/geometry.cpp
 	utilities/texture_loader.cpp
 	utilities/shader_loader.cpp

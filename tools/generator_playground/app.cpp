@@ -43,6 +43,7 @@ void app_t::loop() {
 
 		in_loop_parse_input();
 
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glViewport(0, 0, window_width, window_height);
 		in_loop_draw_map();

@@ -8,6 +8,8 @@ using namespace glm;
 
 #include <useful.hpp>
 #include <settings.hpp>
+#include <imgui_basic_controls.hpp>
+#include <global_settings_gui.hpp>
 
 // App
 app_t::app_t()
@@ -36,6 +38,8 @@ void app_t::init() {
 
 	init_opengl_etc();
 	init_callbacks();
+	init_imgui();
+
 	init_camera();
 
 	init_map_related();
@@ -95,6 +99,8 @@ void app_t::loop() {
 
 		// player.draw(light_pos, projection_matrix, view_matrix);
 
+		in_loop_update_imgui();
+
 		double fps_cnt;
 		{ // FPS cnter
 			const double now = glfwGetTime();
@@ -136,8 +142,18 @@ void app_t::loop() {
 	}
 }
 
+void app_t::in_loop_update_imgui() {
+	imgui_basic_controls::begin_drawing();
+
+	imgui_basic_controls::draw_demo_windows();
+	global_settings_gui::draw_imgui_widgets();
+
+	imgui_basic_controls::end_drawing();
+}
+
 // Deinit
 void app_t::deinit() {
+	deinit_imgui();
 	deinit_world_blocks();
 	deinit_player();
 	deinit_map_related();
@@ -180,6 +196,10 @@ void app_t::init_opengl_etc() {
 		exit(-1);
 	}
 	glGetError();
+}
+
+void app_t::init_imgui() {
+	imgui_basic_controls::init_imgui(window);
 }
 
 void app_t::init_camera() {
@@ -284,6 +304,10 @@ void app_t::deinit_opengl_etc() {
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	GL_GET_ERROR;
+}
+
+void app_t::deinit_imgui() {
+	imgui_basic_controls::deinit_imgui();
 }
 
 void app_t::deinit_map_related() {

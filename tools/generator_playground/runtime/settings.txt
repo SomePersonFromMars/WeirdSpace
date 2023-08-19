@@ -3,7 +3,7 @@ super_voro_cnt 43
 debug_vals[0] 18
 debug_vals[1] 5
 debug_vals[2] 0
-replace_seed 1692357807303
+replace_seed 0
 draw_mid_polygons 0
 river_joints_R 0.0106
 river_start_prob 12

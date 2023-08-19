@@ -29,6 +29,7 @@ struct app_t {
 private:
 	// Init subfunctions
 	void init_opengl_etc();
+	void init_imgui();
 	void init_camera();
 	void init_map_related();
 	void init_world_blocks();
@@ -37,9 +38,13 @@ private:
 
 	// Deinit subfunctions
 	void deinit_opengl_etc();
+	void deinit_imgui();
 	void deinit_map_related();
 	void deinit_world_blocks();
 	void deinit_player();
+
+	// Loop subfuncitons
+	void in_loop_update_imgui();
 
 	// Window
 	GLFWwindow* window;

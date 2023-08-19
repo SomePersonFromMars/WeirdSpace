@@ -9,8 +9,6 @@
 
 #include <glm/glm.hpp>
 
-#include <imgui.h>
-
 #include "map_generator/map_generator.hpp"
 #include "line.hpp"
 
@@ -48,6 +46,7 @@ private:
 	void deinit_imgui();
 	void deinit_map_generator();
 
+	void draw_playground_specific_imgui_widgets();
 	void soft_reload_procedure();
 	void reload_procedure();
 
@@ -55,11 +54,6 @@ private:
 	GLint window_width = 1080*2;
 	GLint window_height = 1080;
 	callbacks_strct_t callbacks_strct;
-
-	const glm::vec3 background_color = glm::vec3(0.0);
-	bool show_demo_window = true;
-	bool show_another_window = false;
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 	map_storage_t map_storage;
 	map_generator_t map_generator;
