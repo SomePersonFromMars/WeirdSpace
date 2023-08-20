@@ -7,10 +7,14 @@
 #include <shader_loader.hpp>
 
 void map_storage_t::load_settings() {
-	desired_width = global_settings.chunk_dim*6;
+	desired_width
+		= global_settings.map_unit_resolution
+		* global_settings.map_width_in_units;
 	if (global_settings.triple_map_size)
 		desired_width *= 3;
-	desired_height = global_settings.chunk_dim*3;
+	desired_height
+		= global_settings.map_unit_resolution
+		* global_settings.map_height_in_units;
 }
 
 void map_storage_t::reallocate_gpu_and_cpu_memory() {

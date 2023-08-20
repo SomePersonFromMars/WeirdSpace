@@ -19,18 +19,14 @@ enum class block_type : uint8_t {
 };
 
 struct chunk_t {
-	static constexpr int WIDTH = 128;
-	static constexpr int HEIGHT = 64;
-	static constexpr int DEPTH = 128;
+	static constexpr int WIDTH = 256;
+	static constexpr int HEIGHT = 128;
+	static constexpr int DEPTH = 256;
 
 	block_type content[WIDTH][HEIGHT][DEPTH];
 	// Neighbors order:
-	// -x
-	// +x
-	// -y
-	// +y
-	// -z
-	// +z
+	// 0,  1,  2,  3,  4,  5
+	// -x, +x, -y, +y, -z, +z
 	const chunk_t *neighbors[6] { };
 
 	static void init_gl_static(shader_world_t *pshader);
@@ -38,9 +34,11 @@ struct chunk_t {
 	chunk_t();
 	~chunk_t();
 
-	void clear_preprocessing_data();
-	void preprocess();
+	void clear_cpu_preprocessing_data();
+	void preprocess_on_cpu();
 	void send_preprocessed_to_gpu();
+	inline void enable_rendering(bool enable);
+	inline bool is_rendering_enabled() const;
 
 	void draw(
 		const glm::mat4 &projection_matrix,
@@ -50,6 +48,9 @@ struct chunk_t {
 	);
 
 private:
+	bool preprocessing_data_available = false;
+	bool rendering_enabled = true;
+
 	static shader_world_t *pshader;
 
 	// Static shader data
@@ -186,5 +187,13 @@ private:
 		0, 0, 1,   0,
 	};
 };
+
+inline void chunk_t::enable_rendering(bool enable) {
+	rendering_enabled = enable;
+}
+
+inline bool chunk_t::is_rendering_enabled() const {
+	return rendering_enabled;
+}
 
 #endif

@@ -1,9 +1,9 @@
 voro_cnt 217
-super_voro_cnt 43
+super_voro_cnt 3
 debug_vals[0] 18
 debug_vals[1] 5
 debug_vals[2] 0
-replace_seed 0
+replace_seed 1692555248454
 draw_mid_polygons 0
 river_joints_R 0.0106
 river_start_prob 12
@@ -14,8 +14,9 @@ draw_temperature 0
 draw_humidity 0
 humidity_scale 15
 temperature_exp 1.5
-chunk_dim 128
-chunk_height 64
+map_unit_resolution 2048
+map_width_in_units 2
+map_height_in_units 1
 generate_with_gpu 1
 triple_map_size 0
 draw_player 0

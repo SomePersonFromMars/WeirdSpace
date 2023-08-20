@@ -120,7 +120,6 @@ private:
 
 	double grid_box_dim_f;
 	static constexpr int GREATEST_WATER_DIST = std::numeric_limits<int>::max();
-	double chunk_dim_f;
 	double noise_pos_mult;
 
 	// Small variables

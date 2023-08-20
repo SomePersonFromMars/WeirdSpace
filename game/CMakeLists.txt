@@ -9,6 +9,7 @@ endif()
 add_executable(weird_space
 	weird_space.cpp
 	app.cpp
+	app_imgui.cpp
 
 	callbacks.cpp
 	camera.cpp

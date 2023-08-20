@@ -46,6 +46,9 @@ private:
 	// Loop subfuncitons
 	void in_loop_update_imgui();
 
+	// Specific operations
+	void draw_game_specific_imgui_widgets();
+
 	// Window
 	GLFWwindow* window;
 	GLint window_width = 1920;

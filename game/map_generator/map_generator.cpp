@@ -54,7 +54,7 @@ void map_generator_t::load_settings() {
 }
 
 void map_generator_t::calculate_constants() {
-	grid_box_dim_zu = global_settings.chunk_dim/4;
+	grid_box_dim_zu = global_settings.map_unit_resolution/4;
 
 	ratio_wh = double(width)/double(height);
 	ratio_hw = double(height)/double(width);
@@ -71,14 +71,10 @@ void map_generator_t::calculate_constants() {
 	grid_box_dim_f
 		= static_cast<double>(grid_box_dim_zu)
 		* space_max.y / static_cast<double>(height);
-	chunk_dim_f
-		= static_cast<double>(global_settings.chunk_dim)
-		* space_max.y / static_cast<double>(height);
-	noise_pos_mult = 1.0/double(chunk_dim_f)*2.0;
-
+	noise_pos_mult = 6.0;
 	noise.border_end = space_max.x*noise_pos_mult;
 	noise.border_beg = noise.border_end;
-	noise.border_beg -= chunk_dim_f*noise_pos_mult*1.0;
+	noise.border_beg -= noise_pos_mult / 3.0;
 }
 
 void map_generator_t::new_seed() {

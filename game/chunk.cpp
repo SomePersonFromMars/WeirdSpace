@@ -84,24 +84,24 @@ chunk_t::chunk_t()
 
 	glBindVertexArray(0);
 
-	// Allocate instanced buffers
-	glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
-	glBufferData(GL_ARRAY_BUFFER,
-		chunk_t::WIDTH*chunk_t::HEIGHT*chunk_t::DEPTH*sizeof(GLfloat)*3,
-		nullptr, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// // Allocate instanced buffers
+	// glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
+	// glBufferData(GL_ARRAY_BUFFER,
+	// 	chunk_t::WIDTH*chunk_t::HEIGHT*chunk_t::DEPTH*sizeof(GLfloat)*3,
+	// 	nullptr, GL_DYNAMIC_DRAW);
+	// glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, blocks_types_instanced_buffer_id);
-	glBufferData(GL_ARRAY_BUFFER,
-		chunk_t::WIDTH*chunk_t::HEIGHT*chunk_t::DEPTH*sizeof(uint8_t),
-		nullptr, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// glBindBuffer(GL_ARRAY_BUFFER, blocks_types_instanced_buffer_id);
+	// glBufferData(GL_ARRAY_BUFFER,
+	// 	chunk_t::WIDTH*chunk_t::HEIGHT*chunk_t::DEPTH*sizeof(uint8_t),
+	// 	nullptr, GL_DYNAMIC_DRAW);
+	// glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, faces_types_instanced_buffer_id);
-	glBufferData(GL_ARRAY_BUFFER,
-		chunk_t::WIDTH*chunk_t::HEIGHT*chunk_t::DEPTH*sizeof(uint8_t),
-		nullptr, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// glBindBuffer(GL_ARRAY_BUFFER, faces_types_instanced_buffer_id);
+	// glBufferData(GL_ARRAY_BUFFER,
+	// 	chunk_t::WIDTH*chunk_t::HEIGHT*chunk_t::DEPTH*sizeof(uint8_t),
+	// 	nullptr, GL_DYNAMIC_DRAW);
+	// glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void chunk_t::deinit_gl_static() {
@@ -117,13 +117,13 @@ chunk_t::~chunk_t() {
 	glDeleteVertexArrays(1, &vao_id);
 }
 
-void chunk_t::clear_preprocessing_data() {
+void chunk_t::clear_cpu_preprocessing_data() {
 	positions_instanced_buffer.clear();
 	blocks_types_instanced_buffer.clear();
 	faces_types_instanced_buffer.clear();
 }
 
-void chunk_t::preprocess() {
+void chunk_t::preprocess_on_cpu() {
 	float average_faces_visible = 0;
 	float visible_blocks_cnt = 0;
 
@@ -227,27 +227,47 @@ void chunk_t::preprocess() {
 }
 
 void chunk_t::send_preprocessed_to_gpu() {
-	printf("%zu\n", positions_instanced_buffer.size());
-	printf("%zu\n", blocks_types_instanced_buffer.size());
-	printf("%zu\n", faces_types_instanced_buffer.size());
+	// printf("%zu\n", positions_instanced_buffer.size());
+	// printf("%zu\n", blocks_types_instanced_buffer.size());
+	// printf("%zu\n", faces_types_instanced_buffer.size());
+
+	// glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
+	// glBufferSubData(GL_ARRAY_BUFFER, 0,
+	// 		positions_instanced_buffer.size()*sizeof(GLfloat),
+	// 		&positions_instanced_buffer[0]);
+	// glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// glBindBuffer(GL_ARRAY_BUFFER, blocks_types_instanced_buffer_id);
+	// glBufferSubData(GL_ARRAY_BUFFER, 0,
+	// 		blocks_types_instanced_buffer.size()*sizeof(GLubyte),
+	// 		&blocks_types_instanced_buffer[0]);
+	// glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// glBindBuffer(GL_ARRAY_BUFFER, faces_types_instanced_buffer_id);
+	// glBufferSubData(GL_ARRAY_BUFFER, 0,
+	// 		faces_types_instanced_buffer.size()*sizeof(GLubyte),
+	// 		&faces_types_instanced_buffer[0]);
+	// glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, positions_instanced_buffer_id);
-	glBufferSubData(GL_ARRAY_BUFFER, 0,
-			positions_instanced_buffer.size()*sizeof(GLfloat),
-			&positions_instanced_buffer[0]);
+	glBufferData(GL_ARRAY_BUFFER,
+		positions_instanced_buffer.size()*sizeof(GLfloat),
+		&positions_instanced_buffer[0], GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, blocks_types_instanced_buffer_id);
-	glBufferSubData(GL_ARRAY_BUFFER, 0,
-			blocks_types_instanced_buffer.size()*sizeof(GLubyte),
-			&blocks_types_instanced_buffer[0]);
+	glBufferData(GL_ARRAY_BUFFER,
+		blocks_types_instanced_buffer.size()*sizeof(GLubyte),
+		&blocks_types_instanced_buffer[0], GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, faces_types_instanced_buffer_id);
-	glBufferSubData(GL_ARRAY_BUFFER, 0,
-			faces_types_instanced_buffer.size()*sizeof(GLubyte),
-			&faces_types_instanced_buffer[0]);
+	glBufferData(GL_ARRAY_BUFFER,
+		faces_types_instanced_buffer.size()*sizeof(GLubyte),
+		&faces_types_instanced_buffer[0], GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	preprocessing_data_available = not positions_instanced_buffer.empty();
 }
 
 void chunk_t::draw(

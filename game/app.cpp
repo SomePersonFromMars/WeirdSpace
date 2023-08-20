@@ -8,8 +8,6 @@ using namespace glm;
 
 #include <useful.hpp>
 #include <settings.hpp>
-#include <imgui_basic_controls.hpp>
-#include <global_settings_gui.hpp>
 
 // App
 app_t::app_t()
@@ -80,6 +78,8 @@ void app_t::loop() {
 
 		for (auto &p : world_buffer.chunks) {
 			chunk_t &chunk = p.second;
+			if (not chunk.is_rendering_enabled())
+				continue;
 			model_matrix[3][0] = p.first.x * chunk_t::WIDTH;
 			model_matrix[3][2] = p.first.y * chunk_t::DEPTH;
 			chunk.draw(
@@ -142,15 +142,6 @@ void app_t::loop() {
 	}
 }
 
-void app_t::in_loop_update_imgui() {
-	imgui_basic_controls::begin_drawing();
-
-	imgui_basic_controls::draw_demo_windows();
-	global_settings_gui::draw_imgui_widgets();
-
-	imgui_basic_controls::end_drawing();
-}
-
 // Deinit
 void app_t::deinit() {
 	deinit_imgui();
@@ -198,10 +189,6 @@ void app_t::init_opengl_etc() {
 	glGetError();
 }
 
-void app_t::init_imgui() {
-	imgui_basic_controls::init_imgui(window);
-}
-
 void app_t::init_camera() {
 	camera.switch_following_mode();
 }
@@ -230,10 +217,12 @@ void app_t::init_world_blocks() {
 	chunk_t::init_gl_static(&shader_world);
 
 	const int CHUNKS_X_CNT = world_buffer.width;
-	constexpr int CHUNKS_Z_CNT = 3;
+	const int CHUNKS_Z_CNT = world_buffer.depth;
 	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
 		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
 			world_generator.gen_chunk({x, z});
+			world_buffer.chunks[ivec2(x, z)].enable_rendering(
+				x < 4 and z < 4);
 		}
 	}
 
@@ -278,7 +267,7 @@ void app_t::init_world_blocks() {
 			if (z < CHUNKS_Z_CNT-1)
 				chunk.neighbors[5] = &world_buffer.chunks[glm::ivec2(x, z+1)];
 
-			chunk.preprocess();
+			chunk.preprocess_on_cpu();
 			chunk.send_preprocessed_to_gpu();
 		}
 	}
@@ -304,10 +293,6 @@ void app_t::deinit_opengl_etc() {
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	GL_GET_ERROR;
-}
-
-void app_t::deinit_imgui() {
-	imgui_basic_controls::deinit_imgui();
 }
 
 void app_t::deinit_map_related() {

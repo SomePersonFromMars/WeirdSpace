@@ -7,7 +7,10 @@
 #include "chunk.hpp"
 
 struct world_buffer_t {
-	const int width = 6; // World width in chunks
+	// World dimensions in chunks
+	const int width = 6;
+	const int depth = 6;
+
 	std::map<glm::ivec2, chunk_t, vec2_cmp_t<int>> chunks;
 
 	inline block_type& get(glm::ivec3 pos);

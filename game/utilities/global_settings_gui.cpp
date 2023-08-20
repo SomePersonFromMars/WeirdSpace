@@ -19,7 +19,7 @@ void global_settings_gui::draw_imgui_widgets() {
 	}
 
 	if (ImGui::CollapsingHeader(
-				"General", ImGuiTreeNodeFlags_DefaultOpen)) {
+				"General" /* , ImGuiTreeNodeFlags_DefaultOpen */)) {
 		// constexpr std::size_t size_t_step = 1;
 		// ImGui::InputScalar("debug_vals[0]", ImGuiDataType_U64,
 		// 	&global_settings.debug_vals[0], &size_t_step);
@@ -28,11 +28,23 @@ void global_settings_gui::draw_imgui_widgets() {
 		// ImGui::InputScalar("debug_vals[2]", ImGuiDataType_U64,
 		// 	&global_settings.debug_vals[2], &size_t_step);
 
-		ImGui::DragScalar("chunk_dim", ImGuiDataType_S32,
-			&global_settings.chunk_dim,
+		ImGui::DragScalar("map_unit_resolution", ImGuiDataType_S32,
+			&global_settings.map_unit_resolution,
 			1.0f,
-			&global_settings.chunk_dim_min,
-			&global_settings.chunk_dim_max);
+			&global_settings.map_unit_resolution_min,
+			&global_settings.map_unit_resolution_max);
+
+		ImGui::DragScalar("map_width_in_units", ImGuiDataType_S32,
+			&global_settings.map_width_in_units,
+			1.0f,
+			&global_settings.map_width_in_units_min,
+			&global_settings.map_width_in_units_max);
+
+		ImGui::DragScalar("map_height_in_units", ImGuiDataType_S32,
+			&global_settings.map_height_in_units,
+			1.0f,
+			&global_settings.map_height_in_units_min,
+			&global_settings.map_height_in_units_max);
 
 		ImGui::Checkbox("generate_with_gpu",
 			&global_settings.generate_with_gpu);

@@ -140,6 +140,14 @@ inline glm::u8vec3 color_hex_to_u8vec3(uint32_t hex) {
 	);
 }
 
+inline constexpr uint32_t rgba_to_abgr(uint32_t hex) {
+	return
+		((hex & 0x00'00'00'ffu) << 24u) |
+		((hex & 0x00'00'ff'00u) <<  8u) |
+		((hex & 0x00'ff'00'00u) >>  8u) |
+		((hex & 0xff'00'00'00u) >> 24u);
+}
+
 uint32_t hsv_to_rgb(float h, float s, float v);
 
 inline glm::vec3 vec2_to_vec3(const glm::vec2& vec) {
