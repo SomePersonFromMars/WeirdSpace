@@ -16,7 +16,10 @@ app_t::app_t()
 			glm::vec3(142.284409, 29.795422, -4.808842),
 			// 2*PI, 6.0f,
 			5.851774, 5.900709,
-			90.0f)
+			90.0f,
+			0.1f,
+			400.0f
+			)
 	,map_generator(&map_storage)
 	,world_generator(
 			map_storage,
@@ -68,36 +71,40 @@ void app_t::loop() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, window_width, window_height);
 
-		glm::mat4 projection_matrix = camera.get_projection_matrix(
-				window_width, window_height);
-		glm::mat4 view_matrix = camera.get_view_matrix();
-		glm::mat4 model_matrix = glm::mat4(1);
-
+		const glm::mat4 projection_matrix
+			= camera.calculate_projection_matrix(get_window_aspect_ratio());
+		const glm::mat4 view_matrix = camera.calculate_view_matrix();
+		const frustum_t camera_frustum
+			= camera.calculate_frustum_planes(get_window_aspect_ratio());
 		const glm::vec3 light_pos
 			= camera.get_position() + glm::vec3(0, 5, 0);
 
-		for (auto &p : world_buffer.chunks) {
-			chunk_t &chunk = p.second;
-			if (not chunk.is_rendering_enabled())
-				continue;
-			model_matrix[3][0] = p.first.x * chunk_t::WIDTH;
-			model_matrix[3][2] = p.first.y * chunk_t::DEPTH;
-			chunk.draw(
-				projection_matrix, view_matrix, model_matrix, light_pos);
+		for (auto &[buffer_pos_XZ, chunk] : world_buffer.chunks) {
+			const glm::vec3 buffer_pos_XYZ = {
+				static_cast<float>(buffer_pos_XZ.x),
+				0.0f,
+				static_cast<float>(buffer_pos_XZ.y)
+			};
+			chunk.draw_if_visible(
+				projection_matrix,
+				view_matrix,
+				light_pos,
+				buffer_pos_XYZ,
+				camera_frustum);
 
-			// if (p.first.x == 0) {
+			// if (buffer_pos_XZ.x == 0) {
 			// 	model_matrix[3][0] = world_buffer.width * chunk_t::WIDTH;
 			// 	chunk.draw(
 			// 		projection_matrix, view_matrix, model_matrix, light_pos);
 			// }
-			// if (p.first.x == world_buffer.width-1) {
+			// if (buffer_pos_XZ.x == world_buffer.width-1) {
 			// 	model_matrix[3][0] = -1 * chunk_t::WIDTH;
 			// 	chunk.draw(
 			// 		projection_matrix, view_matrix, model_matrix, light_pos);
 			// }
 		}
 
-		// player.draw(light_pos, projection_matrix, view_matrix);
+		player.draw(light_pos, projection_matrix, view_matrix);
 
 		in_loop_update_imgui();
 
@@ -120,8 +127,8 @@ void app_t::loop() {
 						camera.get_position().y,
 						camera.get_position().z);
 				fprintf(stderr, ", angle=(%f, %f)",
-						camera.get_horizontal_angle(),
-						camera.get_vertical_angle());
+						camera.get_horizontal_rotation_angle(),
+						camera.get_vertical_rotation_angle());
 				fprintf(stderr, ", fps_cnt=%f\n",
 						fps_cnt);
 			}
@@ -132,11 +139,11 @@ void app_t::loop() {
 		glfwPollEvents();
 		callbacks_strct.handle_input();
 
-		// player.update_physics(delta_time);
+		player.update_physics(delta_time);
 
-		// if (camera.get_following_mode())
-		// 	camera.follow(delta_time,
-		// 			player.get_position() + glm::vec3(0.5, 1, 0));
+		if (camera.get_following_mode())
+			camera.follow(delta_time,
+					player.get_position() + glm::vec3(0.5, 1, 0));
 
 		std::this_thread::sleep_until(frame_end_time);
 	}
@@ -221,8 +228,8 @@ void app_t::init_world_blocks() {
 	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
 		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
 			world_generator.gen_chunk({x, z});
-			world_buffer.chunks[ivec2(x, z)].enable_rendering(
-				x < 4 and z < 4);
+			// world_buffer.chunks[ivec2(x, z)].enable_rendering(
+			// 	x < 4 and z < 4);
 		}
 	}
 

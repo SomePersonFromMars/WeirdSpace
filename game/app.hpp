@@ -53,6 +53,7 @@ private:
 	GLFWwindow* window;
 	GLint window_width = 1920;
 	GLint window_height = 1080;
+	inline float get_window_aspect_ratio() const;
 
 	// Settings
 	const glm::vec3 background_color;
@@ -80,5 +81,10 @@ private:
 	// Callbacks
 	callbacks_strct_t callbacks_strct;
 };
+
+inline float app_t::get_window_aspect_ratio() const {
+	return
+		static_cast<float>(window_width) / static_cast<float>(window_height);
+}
 
 #endif

@@ -13,6 +13,7 @@ add_executable(weird_space
 
 	callbacks.cpp
 	camera.cpp
+	bounding_volume.cpp
 	chunk.cpp
 	world_buffer.cpp
 	world_generator.cpp

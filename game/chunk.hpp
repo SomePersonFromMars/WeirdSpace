@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 
 #include "shader_world.hpp"
+#include <geometry.hpp>
 
 enum class block_type : uint8_t {
 	none = 0,
@@ -22,6 +23,7 @@ struct chunk_t {
 	static constexpr int WIDTH = 256;
 	static constexpr int HEIGHT = 128;
 	static constexpr int DEPTH = 256;
+	static const glm::ivec3 DIMENSIONS;
 
 	block_type content[WIDTH][HEIGHT][DEPTH];
 	// Neighbors order:
@@ -37,7 +39,6 @@ struct chunk_t {
 	void clear_cpu_preprocessing_data();
 	void preprocess_on_cpu();
 	void send_preprocessed_to_gpu();
-	inline void enable_rendering(bool enable);
 	inline bool is_rendering_enabled() const;
 
 	void draw(
@@ -45,11 +46,20 @@ struct chunk_t {
 		const glm::mat4 &view_matrix,
 		const glm::mat4 &model_matrix,
 		const glm::vec3 &light_pos
+	) const;
+
+	void draw_if_visible(
+		const glm::mat4 &projection_matrix,
+		const glm::mat4 &view_matrix,
+		const glm::vec3 &light_pos,
+		const glm::vec3 &buffer_chunk_position_XYZ,
+		const frustum_t &camera_frustum
 	);
 
 private:
 	bool preprocessing_data_available = false;
 	bool rendering_enabled = true;
+	inline void enable_rendering(bool enable);
 
 	static shader_world_t *pshader;
 

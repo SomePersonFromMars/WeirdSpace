@@ -5,9 +5,17 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include <geometry.hpp>
+
 struct camera_t {
 	// Constructor
-	camera_t(glm::vec3 pos, float h_angle, float v_angle, float fov);
+	camera_t(
+		glm::vec3 pos,
+		float horizontal_rotation_angle,
+		float vertical_rotation_angle,
+		float fov,
+		float near_clip_plane_dist,
+		float far_clip_plane_dist);
 
 	// Speed
 	// `x` units per second
@@ -33,19 +41,23 @@ struct camera_t {
 
 	// Getters
 	inline const glm::vec3& get_position() const;
-	inline float get_horizontal_angle() const;
-	inline float get_vertical_angle() const;
+	inline float get_horizontal_rotation_angle() const;
+	inline float get_vertical_rotation_angle() const;
 	inline bool get_following_mode() const;
-	glm::mat4 get_view_matrix();
-	glm::mat4 get_projection_matrix(
-			GLint window_width, GLint window_height) const;
+
+	// Calculation functions
+	glm::mat4 calculate_view_matrix();
+	glm::mat4 calculate_projection_matrix(float aspect) const;
+	frustum_t calculate_frustum_planes(float aspect);
 
 private:
-	// Static state
+	// State
 	glm::vec3 position;
-	float horizontal_angle;
-	float vertical_angle;
+	float horizontal_rotation_angle;
+	float vertical_rotation_angle;
 	float fov;
+	float near_clip_plane_dist;
+	float far_clip_plane_dist;
 	bool following_mode = true;
 	float target_dist = 10.0f;
 
@@ -58,18 +70,17 @@ private:
 	glm::vec3 direction_vec;
 	glm::vec3 right_vec;
 	glm::vec3 up_vec;
-
 	void update_rotation_vectors();
 };
 
 inline const glm::vec3& camera_t::get_position() const {
 	return position;
 }
-inline float camera_t::get_horizontal_angle() const {
-	return horizontal_angle;
+inline float camera_t::get_horizontal_rotation_angle() const {
+	return horizontal_rotation_angle;
 }
-inline float camera_t::get_vertical_angle() const {
-	return vertical_angle;
+inline float camera_t::get_vertical_rotation_angle() const {
+	return vertical_rotation_angle;
 }
 inline bool camera_t::get_following_mode() const {
 	return following_mode;

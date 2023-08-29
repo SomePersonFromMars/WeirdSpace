@@ -32,4 +32,32 @@ bool intersect_full_box_full_polygon(
 		std::vector<glm::dvec2> points
 		);
 
+struct plane_t {
+	// Unit vector
+	glm::vec3 normal = { 0.f, 1.f, 0.f }; // unit vector
+	// Distance from the world origin to the nearest point in the plane
+	float distance = 0.f;        // Distance with origin
+
+	plane_t() = default;
+	inline plane_t(const glm::vec3& p1, const glm::vec3& norm)
+		:normal(glm::normalize(norm))
+		,distance(glm::dot(normal, p1))
+	{  }
+
+	inline float get_signed_distance_to_plane(const glm::vec3& point) const {
+		return glm::dot(normal, point) - distance;
+	}
+};
+
+struct frustum_t {
+	plane_t top_face;
+	plane_t bottom_face;
+
+	plane_t right_face;
+	plane_t left_face;
+
+	plane_t far_face;
+	plane_t near_face;
+};
+
 #endif

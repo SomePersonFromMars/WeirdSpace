@@ -4,9 +4,11 @@
 
 #include <texture_loader.hpp>
 #include <useful.hpp>
-
 #include <settings.hpp>
 
+#include "bounding_volume.hpp"
+
+const glm::ivec3 chunk_t::DIMENSIONS = { WIDTH, HEIGHT, DEPTH };
 shader_world_t *chunk_t::pshader;
 GLuint chunk_t::texture_id;
 GLuint chunk_t::block_model_uniform_buffer_id;
@@ -275,7 +277,7 @@ void chunk_t::draw(
 	const glm::mat4 &view_matrix,
 	const glm::mat4 &model_matrix,
 	const glm::vec3 &light_pos
-	) {
+	) const {
 	glUseProgram(pshader->program_id);
 
 	glUniformMatrix4fv(pshader->model_matrix_uniform,
@@ -302,4 +304,33 @@ void chunk_t::draw(
 		positions_instanced_buffer.size()/3
 	);
 	glBindVertexArray(0);
+}
+
+void chunk_t::draw_if_visible(
+		const glm::mat4 &projection_matrix,
+		const glm::mat4 &view_matrix,
+		const glm::vec3 &light_pos,
+		const glm::vec3 &buffer_chunk_position_XYZ,
+		const frustum_t &camera_frustum) {
+	const glm::vec3 chunk_pos_world_coords_XYZ = {
+		buffer_chunk_position_XYZ.x * chunk_t::WIDTH,
+		buffer_chunk_position_XYZ.y * chunk_t::HEIGHT,
+		buffer_chunk_position_XYZ.z * chunk_t::DEPTH };
+	const glm::mat4 model_matrix = {
+		{ 1, 0, 0, 0 },
+		{ 0, 1, 0, 0 },
+		{ 0, 0, 1, 0 },
+		glm::vec4(chunk_pos_world_coords_XYZ, 1.0f)
+	};
+	const AABB_t bounding_box(
+		chunk_pos_world_coords_XYZ,
+		chunk_pos_world_coords_XYZ + static_cast<glm::vec3>(DIMENSIONS));
+	enable_rendering(bounding_box.is_on_frustum(camera_frustum));
+	if (is_rendering_enabled()) {
+		draw(
+			projection_matrix,
+			view_matrix,
+			model_matrix,
+			light_pos);
+	}
 }
