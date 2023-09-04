@@ -2,18 +2,24 @@
 #ifndef WORLD_BUFFER_HPP
 #define WORLD_BUFFER_HPP
 
+#include <vector>
 #include <map>
+#include <functional>
+
 #include <useful.hpp>
+#include <expiration_queue.hpp>
 #include "chunk.hpp"
 
 struct world_buffer_t {
 	// World dimensions in chunks
 	const int width = 6;
+	const int height = 1;
 	const int depth = 6;
 
 	std::map<glm::ivec2, chunk_t, vec2_cmp_t<int>> chunks;
-
 	inline block_type& get(glm::ivec3 pos);
+
+	inline void for_each_active_chunk(const std::function<void(chunk_t&)> f);
 
 	// `pos` - Right-bottom-front rectangle position
 	// `dimensions` - POSITIVE rectangle dimensions in XY plane
@@ -23,6 +29,7 @@ struct world_buffer_t {
 
 private:
 	block_type void_block = block_type::none;
+	// expiration_queue_t expiration_queue;
 };
 
 inline block_type& world_buffer_t::get(glm::ivec3 pos) {

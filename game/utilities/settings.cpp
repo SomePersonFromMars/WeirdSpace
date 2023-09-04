@@ -38,6 +38,8 @@ void settings_t::save_settings_to_file() {
 	WRITE_FIELD( generate_with_gpu )
 	WRITE_FIELD( triple_map_size )
 	WRITE_FIELD( draw_player )
+	WRITE_FIELD( max_preprocessed_chunks_cnt )
+	WRITE_FIELD( font_global_scale )
 #ifdef DEBUG
 	WRITE_FIELD( enable_breakpoints )
 #endif
@@ -86,6 +88,8 @@ void settings_t::load_settings_from_file() {
 		READ_FIELD( generate_with_gpu )
 		READ_FIELD( triple_map_size )
 		READ_FIELD( draw_player )
+		READ_FIELD( max_preprocessed_chunks_cnt )
+		READ_FIELD( font_global_scale )
 #ifdef DEBUG
 		READ_FIELD( enable_breakpoints )
 #endif

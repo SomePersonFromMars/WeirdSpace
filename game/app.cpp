@@ -18,7 +18,8 @@ app_t::app_t()
 			5.851774, 5.900709,
 			90.0f,
 			0.1f,
-			400.0f
+			// 400.0f
+			static_cast<float>(chunk_t::WIDTH)
 			)
 	,map_generator(&map_storage)
 	,world_generator(

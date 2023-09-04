@@ -1,5 +1,7 @@
 #include "imgui_basic_controls.hpp"
 
+#include <settings.hpp>
+
 void imgui_basic_controls::init_imgui(GLFWwindow *glfw_window) {
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -10,7 +12,8 @@ void imgui_basic_controls::init_imgui(GLFWwindow *glfw_window) {
 	// Setup Dear ImGui style
 	// ImGui::StyleColorsDark();
 	ImGui::StyleColorsClassic();
-	ImGui::GetIO().FontGlobalScale = 2.0f;
+	// ImGui::GetIO().FontGlobalScale = 2.0f;
+	ImGui::GetIO().FontGlobalScale = global_settings.font_global_scale;
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(glfw_window, true);

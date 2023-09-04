@@ -81,6 +81,12 @@ void global_settings_gui::draw_imgui_widgets() {
 
 		ImGui::Checkbox("draw_player",
 			&global_settings.draw_player);
+
+		ImGui::DragScalar("font_global_scale", ImGuiDataType_Float,
+			&global_settings.font_global_scale,
+			0.0002f,
+			&global_settings.font_global_scale_min,
+			&global_settings.font_global_scale_max);
 	}
 
 	if (ImGui::CollapsingHeader("Rivers and climate")) {

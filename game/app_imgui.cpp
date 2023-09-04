@@ -63,6 +63,14 @@ void app_t::draw_game_specific_imgui_widgets() {
 		}
 	}
 
+	if (ImGui::CollapsingHeader("Settings")) {
+		ImGui::DragScalar("max_preprocessed_chunks_cnt", ImGuiDataType_U64,
+			&global_settings.max_preprocessed_chunks_cnt,
+			1.0f,
+			&global_settings.max_preprocessed_chunks_cnt_min,
+			&global_settings.max_preprocessed_chunks_cnt_max);
+	}
+
 	if (ImGui::CollapsingHeader("Outputs")) {
 		const double FPS = 1.0 / delta_time;
 		ImGui::Text("FPS: %f", FPS);

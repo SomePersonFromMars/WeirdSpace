@@ -20,4 +20,6 @@ map_height_in_units 1
 generate_with_gpu 1
 triple_map_size 0
 draw_player 0
+max_preprocessed_chunks_cnt 25
+font_global_scale 2
 enable_breakpoints 0
