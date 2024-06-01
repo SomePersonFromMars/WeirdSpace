@@ -62,8 +62,6 @@ private:
 	glm::vec3 camera_pos = {0, 0, 0};
 	float camera_zoom = 1;
 
-	std::chrono::time_point<std::chrono::high_resolution_clock> timer_logging;
-	double timer_fps_cnter;
 	double delta_time;
 
 	glm::mat4 MVPb;

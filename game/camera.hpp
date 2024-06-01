@@ -17,6 +17,9 @@ struct camera_t {
 		float near_clip_plane_dist,
 		float far_clip_plane_dist);
 
+    // Setup
+    void init_cyclicness(float cyclic_world_width_);
+
 	// Speed
 	// `x` units per second
 	static constexpr float moving_speed_normal = 2.0f;
@@ -43,6 +46,7 @@ struct camera_t {
 	inline const glm::vec3& get_position() const;
 	inline float get_horizontal_rotation_angle() const;
 	inline float get_vertical_rotation_angle() const;
+    inline float get_far_clip_plane_dist() const;
 	inline bool get_following_mode() const;
 
 	// Calculation functions
@@ -58,8 +62,10 @@ private:
 	float fov;
 	float near_clip_plane_dist;
 	float far_clip_plane_dist;
+    float cyclic_world_width = 0;
 	bool following_mode = true;
 	float target_dist = 10.0f;
+    void normalize_cyclic_position();
 
 	// Kinematic state
 	float moving_speed = moving_speed_normal;
@@ -81,6 +87,9 @@ inline float camera_t::get_horizontal_rotation_angle() const {
 }
 inline float camera_t::get_vertical_rotation_angle() const {
 	return vertical_rotation_angle;
+}
+inline float camera_t::get_far_clip_plane_dist() const {
+	return far_clip_plane_dist;
 }
 inline bool camera_t::get_following_mode() const {
 	return following_mode;

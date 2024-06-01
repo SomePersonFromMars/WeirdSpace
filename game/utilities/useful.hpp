@@ -2,10 +2,11 @@
 #ifndef USEFUL_HPP
 #define USEFUL_HPP
 
+#include <cstdio>
 #include <glm/glm.hpp>
 
-#define DEBUG
 #ifdef DEBUG
+    #define DEBUGONLY(x) x
 	#define PRINT_NL printf("\n")
 	#define PRINT_D(var) printf(#var " = %d\n", var)
 	#define PRINT_LD(var) printf(#var " = %ld\n", var)
@@ -22,12 +23,13 @@
 	#define WHERE printf("%s:%d\n", __FILE__, __LINE__)
 	#define GL_GET_ERROR WHERE; PRINT_U(glGetError())
 	#include <csignal>
-	extern bool enable_breakpoints;
 	#define BREAKPOINT (enable_breakpoints) ? std::raise(SIGINT) : 0
 	#define BREAKPOINT_IF(expr) (expr) ? (BREAKPOINT) : 0
 #else
+    #define DEBUGONLY(x)
 	#define PRINT_NL
 	#define PRINT_D(var)
+	#define PRINT_LD(var)
 	#define PRINT_U(var)
 	#define PRINT_LU(var)
 	#define PRINT_ZU(var)
@@ -37,6 +39,7 @@
 	#define BREAKPOINT
 	#define BREAKPOINT_IF(expr)
 #endif
+extern bool enable_breakpoints;
 
 [[maybe_unused]] constexpr std::size_t INVALID_ID
 	= std::numeric_limits<std::size_t>::max();
@@ -155,6 +158,10 @@ inline glm::vec3 vec2_to_vec3(const glm::vec2& vec) {
 	return glm::vec3(vec.x, vec.y, 0.0f);
 }
 
+template<class T>
+inline T len_sq(const glm::tvec3<T, glm::highp> &vec) {
+    return vec.x*vec.x + vec.y*vec.y + vec.z*vec.z;
+}
 inline long long len_sq(const glm::ivec2 &vec) {
 	return vec.x*vec.x + vec.y*vec.y;
 }
@@ -170,15 +177,6 @@ inline bool same_direction_knowing_same_line(
 	return
 		sign_of(v.x) == sign_of(w.x) &&
 		sign_of(v.y) == sign_of(w.y);
-}
-
-// Warning! This gives only the length in 2D,
-// casting the vector to XY plane
-inline long long len_sq(const glm::ivec3& vec) {
-	using ll = long long;
-	return
-		static_cast<ll>(vec.x)*static_cast<ll>(vec.x) +
-		static_cast<ll>(vec.y)*static_cast<ll>(vec.y);
 }
 
 template<class T, class S>

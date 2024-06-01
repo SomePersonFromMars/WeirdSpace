@@ -83,10 +83,21 @@ void player_t::deinit_gl() {
 	glDeleteVertexArrays(1, &vao_id);
 }
 
-void player_t::draw(
+void player_t::draw_cyclic(
 	const glm::vec3 &light_pos,
 	const glm::mat4 &projection_matrix,
 	const glm::mat4 &view_matrix
+	) {
+    draw_single(light_pos, projection_matrix, view_matrix, world_buffer.get_buffer_width() * chunk_t::WIDTH);
+    draw_single(light_pos, projection_matrix, view_matrix, 0);
+    draw_single(light_pos, projection_matrix, view_matrix, -world_buffer.get_buffer_width() * chunk_t::WIDTH);
+}
+
+void player_t::draw_single(
+	const glm::vec3 &light_pos,
+	const glm::mat4 &projection_matrix,
+	const glm::mat4 &view_matrix,
+    const float      off_x
 	) {
 	// Shader
 	glUseProgram(shader.program_id);
@@ -95,7 +106,7 @@ void player_t::draw(
 	glm::mat4 model_matrix(1);
 	model_matrix = glm::translate(
 			model_matrix,
-			position + glm::vec3((1.0f-hitbox_dimensions.x)/-2.0f, 0, 0)
+			position + glm::vec3((1.0f-hitbox_dimensions.x)/-2.0f, 0, 0) + glm::vec3(off_x, 0, 0)
 		);
 
 	glUniformMatrix4fv(shader.model_matrix_uniform,
@@ -231,7 +242,7 @@ glm::bvec2 player_t::move_by(glm::vec2 offset) {
 	}
 
 	position.x = mod_f(position.x,
-			static_cast<float>(world_buffer.width*chunk_t::WIDTH));
+			static_cast<float>(world_buffer.get_buffer_width()*chunk_t::WIDTH));
 	return has_collided;
 }
 

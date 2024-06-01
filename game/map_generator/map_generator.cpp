@@ -1116,7 +1116,7 @@ void map_generator_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 }
 
 void map_generator_t::generate_map() {
-	printf("\n");
+    PRINT_NL;
 	std::mt19937 gen(seed_voronoi);
 	PRINT_LU(seed_voronoi);
 	generate_continents(gen);

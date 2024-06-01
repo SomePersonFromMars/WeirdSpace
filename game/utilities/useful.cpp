@@ -2,6 +2,8 @@
 
 #ifdef DEBUG
 	bool enable_breakpoints = true;
+#else
+	bool enable_breakpoints = false;
 #endif
 
 int floor_div(int num, int den) {

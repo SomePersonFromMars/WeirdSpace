@@ -22,6 +22,16 @@ void app_t::draw_playground_specific_imgui_widgets() {
 			soft_reload_procedure();
 	}
 	if (ImGui::CollapsingHeader("Outputs")) {
+        const auto now = std::chrono::high_resolution_clock::now();
+        static auto last_update = now;
+		static double fps_cnt = 1.0 / delta_time;
+        using namespace std::chrono_literals;
+        if ((now - last_update) >= 500ms) {
+            last_update = now;
+            fps_cnt = 1.0 / delta_time;
+        }
+
+		ImGui::Text("FPS: %f", fps_cnt);
 		ImGui::Text("mp: {%f, %f}", mp.x, mp.y);
 		ImGui::Text("win: {%d, %d}",
 			window_width, window_height);
@@ -31,7 +41,9 @@ void app_t::draw_playground_specific_imgui_widgets() {
 void app_t::in_loop_update_imgui() {
 	imgui_basic_controls::begin_drawing();
 
+#ifdef DEBUG
 	imgui_basic_controls::draw_demo_windows();
+#endif
 	global_settings_gui::draw_imgui_widgets();
 	draw_playground_specific_imgui_widgets();
 

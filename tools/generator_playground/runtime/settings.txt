@@ -14,7 +14,7 @@ draw_temperature 0
 draw_humidity 0
 humidity_scale 15
 temperature_exp 1.5
-map_unit_resolution 2048
+map_unit_resolution 512
 map_width_in_units 2
 map_height_in_units 1
 generate_with_gpu 1
@@ -22,4 +22,4 @@ triple_map_size 0
 draw_player 0
 max_preprocessed_chunks_cnt 25
 font_global_scale 2
-enable_breakpoints 0
+enable_breakpoints 1

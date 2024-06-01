@@ -2,8 +2,6 @@
 #ifndef APP_HPP
 #define APP_HPP
 
-#include <chrono>
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -60,16 +58,6 @@ private:
 
 	// Time related
 	double delta_time = 0.0;
-	std::chrono::time_point<std::chrono::high_resolution_clock>
-		timer, now;
-	long int elapsed;
-
-	// Camera
-	camera_t camera;
-
-	// World map
-	map_storage_t map_storage;
-	map_generator_t map_generator;
 
 	// 3D world objects
 	shader_A_t shader_A;
@@ -77,6 +65,13 @@ private:
 	world_buffer_t world_buffer;
 	world_generator_t world_generator;
 	player_t player;
+
+	// Camera
+	camera_t camera;
+
+	// World map
+	map_storage_t map_storage;
+	map_generator_t map_generator;
 
 	// Callbacks
 	callbacks_strct_t callbacks_strct;

@@ -5,7 +5,15 @@ if (OPENMP_FOUND)
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    add_compile_options(${CUSTOM_DEBUG_FLAGS})
+endif()
+
 # Map generator playground
+add_custom_target(link_generator_playground_runtime_dir ALL
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+    "${CMAKE_SOURCE_DIR}/tools/generator_playground/runtime" "${CMAKE_BINARY_DIR}/tools/generator_playground/runtime")
+
 add_executable(generator_playground
 	generator_playground.cpp
 	app.cpp

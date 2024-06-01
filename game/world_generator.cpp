@@ -1,4 +1,5 @@
 #include "world_generator.hpp"
+#include <random>
 
 world_generator_t::world_generator_t(
 		map_storage_t &map_storage,
@@ -6,10 +7,14 @@ world_generator_t::world_generator_t(
 	:map_storage{map_storage}
 	,buffer{buffer}
 {
+}
+
+void world_generator_t::load_settings() {
 	noise.reseed(1234);
-	noise.border_end = float(buffer.width*chunk_t::WIDTH) * noise_pos_mult;
+	noise.border_end = float(buffer.get_buffer_width()*chunk_t::WIDTH) * noise_pos_mult;
 	noise.border_beg = noise.border_end;
 	noise.border_beg -= float(chunk_t::WIDTH)*0.5 * noise_pos_mult;
+    random_generator = std::mt19937(1234);
 }
 
 void world_generator_t::gen_chunk(const glm::ivec2 &chunk_pos) {
@@ -36,8 +41,36 @@ void world_generator_t::gen_chunk(const glm::ivec2 &chunk_pos) {
 			// int y = ( (p*3.0-1.0) * static_cast<float>(chunk.HEIGHT) );
 			int y = ( (p) * static_cast<float>(chunk.HEIGHT) ) + 1;
 			y = std::min(y, chunk.HEIGHT-1);
-			while (y > 0)
-				chunk.content AT3(x, y, z) = block_type::sand, --y;
+
+            if (
+                std::uniform_int_distribution<int>(1, 1000)(random_generator) <= 1 and
+                y >= chunk.HEIGHT/2)
+                place_cactus(chunk, x, y+1, z);
+
+			while (y >= 0)
+                chunk.set_block(x, y--, z, block_type::sand);
 		}
 	}
+}
+
+void world_generator_t::place_cactus(chunk_t &chunk, int x, int y, int z) {
+    chunk.set_block(x, y, z, block_type::cactus);
+    chunk.set_block(x, y+1, z, block_type::cactus);
+
+    const int direction = std::uniform_int_distribution<int>(0, 1)(random_generator);
+
+    switch (direction) {
+        case 0:
+            chunk.set_block(x-1, y+1, z, block_type::cactus);
+            chunk.set_block(x+1, y+1, z, block_type::cactus);
+            chunk.set_block(x-1, y+2, z, block_type::cactus);
+            chunk.set_block(x+1, y+2, z, block_type::cactus);
+            break;
+        case 1:
+            chunk.set_block(x, y+1, z-1, block_type::cactus);
+            chunk.set_block(x, y+1, z+1, block_type::cactus);
+            chunk.set_block(x, y+2, z-1, block_type::cactus);
+            chunk.set_block(x, y+2, z+1, block_type::cactus);
+            break;
+    }
 }

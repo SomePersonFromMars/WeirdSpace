@@ -18,7 +18,13 @@ camera_t::camera_t(
 	,fov{fov}
 	,near_clip_plane_dist{near_clip_plane_dist}
 	,far_clip_plane_dist{far_clip_plane_dist}
-{ }
+{
+}
+
+void camera_t::init_cyclicness(float cyclic_world_width_) {
+    cyclic_world_width = cyclic_world_width_;
+    normalize_cyclic_position();
+}
 
 void camera_t::rotate_up(float delta_time) {
 	rotation_vectors_outdated = true;
@@ -40,30 +46,56 @@ void camera_t::rotate_left(float delta_time) {
 void camera_t::move_forward(float delta_time) {
 	update_rotation_vectors();
 	position += direction_vec * delta_time * moving_speed;
+    normalize_cyclic_position();
 	if (get_following_mode())
 		target_dist -= delta_time * moving_speed;
 }
 void camera_t::move_backward(float delta_time) {
 	update_rotation_vectors();
 	position -= direction_vec * delta_time * moving_speed;
+    normalize_cyclic_position();
 	if (get_following_mode())
 		target_dist += delta_time * moving_speed;
 }
 void camera_t::move_right(float delta_time) {
 	update_rotation_vectors();
 	position += right_vec * delta_time * moving_speed;
+    normalize_cyclic_position();
 }
 void camera_t::move_left(float delta_time) {
 	update_rotation_vectors();
 	position -= right_vec * delta_time * moving_speed;
+    normalize_cyclic_position();
 }
 
 void camera_t::follow(float delta_time, glm::vec3 target) {
 	update_rotation_vectors();
 
+    // Find the closest cyclic target copy
+    const glm::vec3 original_target = target;
+    glm::vec3 candidate_target;
+    float l_sq = len_sq(position - target);
+    float candidate_l_sq;
+
+    candidate_target = original_target - glm::vec3(cyclic_world_width, 0, 0);
+    candidate_l_sq = len_sq(position - candidate_target);
+    if (candidate_l_sq < l_sq) {
+        target = candidate_target;
+        l_sq = candidate_l_sq;
+    }
+
+    candidate_target = original_target + glm::vec3(cyclic_world_width, 0, 0);
+    candidate_l_sq = len_sq(position - candidate_target);
+    if (candidate_l_sq < l_sq) {
+        target = candidate_target;
+        l_sq = candidate_l_sq;
+    }
+
+    // Smoothly get closer to the target
 	const glm::vec3 new_pos = target - direction_vec * target_dist;
 	// position = new_pos; // Instant motion
 	position = lerp(position, new_pos, delta_time*2.0f); // Smooth motion
+    normalize_cyclic_position();
 }
 
 void camera_t::switch_following_mode() {
@@ -100,7 +132,7 @@ frustum_t camera_t::calculate_frustum_planes(float aspect) {
 	update_rotation_vectors();
 
 	frustum_t frustum;
-	const float halv_v_side = far_clip_plane_dist * std::tan(fov * 0.5f);
+	const float halv_v_side = far_clip_plane_dist * std::tan(glm::radians(fov) * 0.5f);
 	const float half_h_side = halv_v_side * aspect;
 	const glm::vec3 front_mult_far = far_clip_plane_dist * direction_vec;
 
@@ -124,6 +156,10 @@ frustum_t camera_t::calculate_frustum_planes(float aspect) {
 		glm::cross(front_mult_far + up_vec * halv_v_side, right_vec) };
 
 	return frustum;
+}
+
+void camera_t::normalize_cyclic_position() {
+    position.x = mod_f(position.x, cyclic_world_width);
 }
 
 void camera_t::update_rotation_vectors() {

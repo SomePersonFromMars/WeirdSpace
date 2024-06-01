@@ -39,6 +39,16 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 	)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1 CACHE BOOL "Enable/Disable output of compile commands during generation." FORCE)
+
+set(CUSTOM_DEBUG_FLAGS
+    -DDEBUG
+    -Wall
+    # -Wshadow
+    -Wextra
+    -Wpedantic
+    -pedantic)
+
 add_subdirectory(game)
 add_subdirectory(tools/obj_dump)
 add_subdirectory(tools/generator_playground)

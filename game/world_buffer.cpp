@@ -1,4 +1,11 @@
 #include "world_buffer.hpp"
+#include "settings.hpp"
+
+void world_buffer_t::load_settings() {
+    width = global_settings.map_width_in_units * global_settings.map_unit_resolution / chunk_t::WIDTH;
+    height = 1;
+    depth = global_settings.map_height_in_units * global_settings.map_unit_resolution / chunk_t::DEPTH;
+}
 
 bool world_buffer_t::collision_check_XY_rect(
 		glm::vec3 pos, glm::vec2 dimensions) {

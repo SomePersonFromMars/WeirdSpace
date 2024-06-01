@@ -5,7 +5,15 @@ if (OPENMP_FOUND)
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    add_compile_options(${CUSTOM_DEBUG_FLAGS})
+endif()
+
 # Weird Space
+add_custom_target(link_game_runtime_dir ALL
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+    "${CMAKE_SOURCE_DIR}/game/runtime" "${CMAKE_BINARY_DIR}/game/runtime")
+
 add_executable(weird_space
 	weird_space.cpp
 	app.cpp

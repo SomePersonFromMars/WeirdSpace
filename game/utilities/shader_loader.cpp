@@ -5,7 +5,6 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <algorithm>
 #include <sstream>
 using namespace std;
 
@@ -23,7 +22,7 @@ GLuint compile_shader(const char *file_path, GLenum shader_type) {
 		shader_source = sstr.str();
 		shader_source_fstream.close();
 	} else {
-		printf("Impossible to open %s.\n", file_path);
+		fprintf(stderr, "Impossible to open %s.\n", file_path);
 		getchar();
 		return 0;
 	}

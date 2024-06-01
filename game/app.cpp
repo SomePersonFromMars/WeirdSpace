@@ -1,5 +1,6 @@
 #include "app.hpp"
 
+#include <chrono>
 #include <cstdlib>
 #include <thread>
 
@@ -12,20 +13,22 @@ using namespace glm;
 // App
 app_t::app_t()
 	:background_color{color_hex_to_vec3(SKY_COLOR)}
-	,camera(
-			glm::vec3(142.284409, 29.795422, -4.808842),
-			// 2*PI, 6.0f,
-			5.851774, 5.900709,
-			90.0f,
-			0.1f,
-			// 400.0f
-			static_cast<float>(chunk_t::WIDTH)
-			)
-	,map_generator(&map_storage)
 	,world_generator(
 			map_storage,
 			world_buffer)
 	,player(shader_A, world_buffer)
+	,camera(
+            glm::vec3(
+                0.0,
+                100.0,
+                0.0
+                ),
+			5.851774, 5.900709,
+			90.0f,
+			0.1f,
+			static_cast<float>(chunk_t::WIDTH) * 10
+			)
+	,map_generator(&map_storage)
 	,callbacks_strct(
 			window_width,
 			window_height,
@@ -42,19 +45,17 @@ void app_t::init() {
 	init_callbacks();
 	init_imgui();
 
-	init_camera();
-
 	init_map_related();
 	init_world_blocks();
+
+	init_camera();
 
 	init_player();
 }
 
 // Loop
 void app_t::loop() {
-	std::chrono::time_point<std::chrono::high_resolution_clock>
-		timer_logging = std::chrono::high_resolution_clock::now();
-	double timer_fps_cnter = glfwGetTime();
+    auto timer_fps_cnter = std::chrono::high_resolution_clock::now();
 
 	while (glfwWindowShouldClose(window) == GLFW_FALSE) {
 		constexpr auto frame_min_duration
@@ -86,54 +87,31 @@ void app_t::loop() {
 				0.0f,
 				static_cast<float>(buffer_pos_XZ.y)
 			};
-			chunk.draw_if_visible(
+            const float world_buffer_width = world_buffer.get_world_width();
+
+            chunk.calculate_preprocessing_priority(
+                    buffer_pos_XYZ,
+                    world_buffer_width,
+                    camera);
+
+			chunk.draw_cyclicly_if_visible(
 				projection_matrix,
 				view_matrix,
 				light_pos,
 				buffer_pos_XYZ,
+                world_buffer_width,
 				camera_frustum);
-
-			// if (buffer_pos_XZ.x == 0) {
-			// 	model_matrix[3][0] = world_buffer.width * chunk_t::WIDTH;
-			// 	chunk.draw(
-			// 		projection_matrix, view_matrix, model_matrix, light_pos);
-			// }
-			// if (buffer_pos_XZ.x == world_buffer.width-1) {
-			// 	model_matrix[3][0] = -1 * chunk_t::WIDTH;
-			// 	chunk.draw(
-			// 		projection_matrix, view_matrix, model_matrix, light_pos);
-			// }
 		}
 
-		player.draw(light_pos, projection_matrix, view_matrix);
+		player.draw_cyclic(light_pos, projection_matrix, view_matrix);
 
 		in_loop_update_imgui();
 
-		double fps_cnt;
-		{ // FPS cnter
-			const double now = glfwGetTime();
-			delta_time = now - timer_fps_cnter;
-			fps_cnt = 1.0 / delta_time;
-			timer_fps_cnter = now;
-		}
-		{ // Debug output
-			const auto now = std::chrono::high_resolution_clock::now();
-			const auto delta_time = now - timer_logging;
-			using namespace std::chrono_literals;
-			if (delta_time >= 500ms) {
-				timer_logging = now;
-
-				fprintf(stderr, "pos=(%f, %f, %f)",
-						camera.get_position().x,
-						camera.get_position().y,
-						camera.get_position().z);
-				fprintf(stderr, ", angle=(%f, %f)",
-						camera.get_horizontal_rotation_angle(),
-						camera.get_vertical_rotation_angle());
-				fprintf(stderr, ", fps_cnt=%f\n",
-						fps_cnt);
-			}
-		}
+        const auto now = std::chrono::high_resolution_clock::now();
+        delta_time =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - timer_fps_cnter).count()
+            / 1000.0;
+        timer_fps_cnter = now;
 
 		glfwSwapBuffers(window);
 
@@ -198,7 +176,8 @@ void app_t::init_opengl_etc() {
 }
 
 void app_t::init_camera() {
-	camera.switch_following_mode();
+    camera.init_cyclicness(world_buffer.get_world_width());
+	// camera.switch_following_mode();
 }
 
 void app_t::init_map_related() {
@@ -224,38 +203,15 @@ void app_t::init_world_blocks() {
 
 	chunk_t::init_gl_static(&shader_world);
 
-	const int CHUNKS_X_CNT = world_buffer.width;
-	const int CHUNKS_Z_CNT = world_buffer.depth;
+    world_buffer.load_settings();
+	const int CHUNKS_X_CNT = world_buffer.get_buffer_width();
+	const int CHUNKS_Z_CNT = world_buffer.get_buffer_depth();
+    world_generator.load_settings();
 	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
 		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
 			world_generator.gen_chunk({x, z});
-			// world_buffer.chunks[ivec2(x, z)].enable_rendering(
-			// 	x < 4 and z < 4);
 		}
 	}
-
-	// World end border
-	// chunk_t &first_chunk = world_buffer.chunks[glm::ivec2(0, 0)];
-	// chunk_t &last_chunk = world_buffer.chunks[glm::ivec2(
-	// 		world_buffer.width-1, 0)];
-	// for (int x = 0; x < 1; ++x)
-	// 	for (int y = 60; y < chunk_t::HEIGHT; ++y)
-	// 		for (int z = 3; z < chunk_t::DEPTH; ++z) {
-	// 			int _x = x;
-	// 			if (first_chunk.content[_x][y][z] == block_type::none)
-	// 				first_chunk.content[_x][y][z] = block_type::brick;
-
-	// 			_x = chunk_t::WIDTH-1-x;
-	// 			if (last_chunk.content[_x][y][z] == block_type::none)
-	// 				last_chunk.content[_x][y][z] = block_type::brick;
-	// 		}
-	// for (int z = 1; z <= 2; ++z)
-	// 	for (int x = 142; x >= 140; --x)
-	// 		for (int y = 19; y <= 30; ++y)
-	// 			world_buffer.get(glm::ivec3(x, y, z)) = block_type::brick;
-	// for (int x = 142; x >= 140; --x)
-	// 	for (int y = 19; y <= 22; ++y)
-	// 		world_buffer.get(glm::ivec3(x, y, 0)) = block_type::brick;
 
 	for (int x = 0; x < CHUNKS_X_CNT; ++x) {
 		for (int z = 0; z < CHUNKS_Z_CNT; ++z) {
@@ -264,7 +220,7 @@ void app_t::init_world_blocks() {
 				chunk.neighbors[0] = &world_buffer.chunks[glm::ivec2(x-1, z)];
 			else if (x == 0)
 				chunk.neighbors[0] = &world_buffer.chunks[glm::ivec2(
-						world_buffer.width-1, z)];
+						world_buffer.get_buffer_width()-1, z)];
 			if (x < CHUNKS_X_CNT-1)
 				chunk.neighbors[1] = &world_buffer.chunks[glm::ivec2(x+1, z)];
 			else if (x == CHUNKS_X_CNT-1)
@@ -285,8 +241,10 @@ void app_t::init_player() {
 	player.init_gl();
 
 	// player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT, 0.5};
-	player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT,
-		float(chunk_t::DEPTH/2)+0.5};
+	// player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT,
+	// 	float(chunk_t::DEPTH/2)+0.5};
+	player.debug_position = {chunk_t::WIDTH/2.0 + chunk_t::WIDTH*3, chunk_t::HEIGHT,
+		float(chunk_t::DEPTH + world_buffer.get_world_depth())/2.0f + 0.5};
 	// player.debug_position = {0, chunk_t::HEIGHT, 0.5};
 	player.set_position(player.debug_position);
 }

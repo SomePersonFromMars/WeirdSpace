@@ -22,10 +22,16 @@ struct player_t {
 	// Rendering
 	void init_gl();
 	void deinit_gl();
-	void draw(
+	void draw_cyclic(
 		const glm::vec3 &light_pos,
 		const glm::mat4 &projection_matrix,
 		const glm::mat4 &view_matrix
+	);
+	void draw_single(
+		const glm::vec3 &light_pos,
+		const glm::mat4 &projection_matrix,
+		const glm::mat4 &view_matrix,
+        const float      off_x
 	);
 
 	// Movement

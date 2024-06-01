@@ -7,6 +7,7 @@
 #include <settings.hpp>
 
 #include "bounding_volume.hpp"
+#include "camera.hpp"
 
 const glm::ivec3 chunk_t::DIMENSIONS = { WIDTH, HEIGHT, DEPTH };
 shader_world_t *chunk_t::pshader;
@@ -119,6 +120,52 @@ chunk_t::~chunk_t() {
 	glDeleteVertexArrays(1, &vao_id);
 }
 
+void chunk_t::calculate_preprocessing_priority(
+        const glm::vec3 &buffer_chunk_position_XYZ,
+        const float      world_buffer_width,
+        const camera_t &camera) {
+
+	const glm::vec3 base_chunk_pos_world_coords_XYZ = {
+		buffer_chunk_position_XYZ.x * chunk_t::WIDTH,
+		buffer_chunk_position_XYZ.y * chunk_t::HEIGHT,
+		buffer_chunk_position_XYZ.z * chunk_t::DEPTH };
+
+    const float A_priority = calculate_single_preprocessing_priority(
+        base_chunk_pos_world_coords_XYZ - glm::vec3(world_buffer_width, 0, 0),
+        camera);
+
+    const float B_priority = calculate_single_preprocessing_priority(
+        base_chunk_pos_world_coords_XYZ,
+        camera);
+
+    const float C_priority = calculate_single_preprocessing_priority(
+        base_chunk_pos_world_coords_XYZ + glm::vec3(world_buffer_width, 0, 0),
+        camera);
+
+    preprocessing_priority = std::max(std::max(A_priority, B_priority), C_priority);
+}
+
+float chunk_t::calculate_single_preprocessing_priority(
+        const glm::vec3 &chunk_copy_world_position_XYZ,
+        const camera_t &camera) {
+    // Temporary solution of calculating the preprocessing priority
+    glm::vec3 mid_chunk_pos =
+        chunk_copy_world_position_XYZ +
+        glm::vec3(WIDTH, HEIGHT, DEPTH) * 0.5f;
+    const glm::vec3 &camera_pos = camera.get_position();
+    const glm::vec3 off = mid_chunk_pos - camera_pos;
+    const float off_len = std::sqrt(off.x*off.x + off.y*off.y + off.z*off.z);
+
+    const float priority =
+        std::max(
+            1.0f - off_len / camera.get_far_clip_plane_dist(),
+            0.0f
+            );
+
+    return priority;
+}
+
+
 void chunk_t::clear_cpu_preprocessing_data() {
 	positions_instanced_buffer.clear();
 	blocks_types_instanced_buffer.clear();
@@ -159,10 +206,10 @@ void chunk_t::preprocess_on_cpu() {
 					if (content[x][y-1][z] != block_type::none)
 						faces_mask &= ~(1<<4);
 				} else {
-					if (neighbors[2] != nullptr
-						&& neighbors[2]->content[x][HEIGHT-1][z]
-						!= block_type::none)
-						faces_mask &= ~(1<<4);
+					// if (neighbors[2] != nullptr
+					// 	&& neighbors[2]->content[x][HEIGHT-1][z]
+					// 	!= block_type::none)
+                    faces_mask &= ~(1<<4);
 				}
 				if (y < HEIGHT-1) {
 					if (content[x][y+1][z] != block_type::none)
@@ -223,9 +270,9 @@ void chunk_t::preprocess_on_cpu() {
 		}
 	}
 
-	average_faces_visible /= visible_blocks_cnt;
-	PRINT_F(average_faces_visible);
-	PRINT_F(visible_blocks_cnt);
+	// average_faces_visible /= visible_blocks_cnt;
+	// PRINT_F(average_faces_visible);
+	// PRINT_F(visible_blocks_cnt);
 }
 
 void chunk_t::send_preprocessed_to_gpu() {
@@ -306,31 +353,68 @@ void chunk_t::draw(
 	glBindVertexArray(0);
 }
 
-void chunk_t::draw_if_visible(
+void chunk_t::draw_cyclicly_if_visible(
 		const glm::mat4 &projection_matrix,
 		const glm::mat4 &view_matrix,
 		const glm::vec3 &light_pos,
 		const glm::vec3 &buffer_chunk_position_XYZ,
+        const float      world_buffer_width,
 		const frustum_t &camera_frustum) {
-	const glm::vec3 chunk_pos_world_coords_XYZ = {
+
+	const glm::vec3 base_chunk_pos_world_coords_XYZ = {
 		buffer_chunk_position_XYZ.x * chunk_t::WIDTH,
 		buffer_chunk_position_XYZ.y * chunk_t::HEIGHT,
 		buffer_chunk_position_XYZ.z * chunk_t::DEPTH };
+
+    const bool A_visible = draw_single_copy_if_visible(
+        projection_matrix,
+        view_matrix,
+        light_pos,
+        base_chunk_pos_world_coords_XYZ - glm::vec3(world_buffer_width, 0, 0),
+        camera_frustum);
+
+    const bool B_visible = draw_single_copy_if_visible(
+        projection_matrix,
+        view_matrix,
+        light_pos,
+        base_chunk_pos_world_coords_XYZ,
+        camera_frustum);
+
+    const bool C_visible = draw_single_copy_if_visible(
+        projection_matrix,
+        view_matrix,
+        light_pos,
+        base_chunk_pos_world_coords_XYZ + glm::vec3(world_buffer_width, 0, 0),
+        camera_frustum);
+
+    rendering_enabled_info = A_visible or B_visible or C_visible;
+}
+
+bool chunk_t::draw_single_copy_if_visible(
+		const glm::mat4 &projection_matrix,
+		const glm::mat4 &view_matrix,
+		const glm::vec3 &light_pos,
+		const glm::vec3 &chunk_copy_world_position_XYZ,
+		const frustum_t &camera_frustum) {
+
 	const glm::mat4 model_matrix = {
 		{ 1, 0, 0, 0 },
 		{ 0, 1, 0, 0 },
 		{ 0, 0, 1, 0 },
-		glm::vec4(chunk_pos_world_coords_XYZ, 1.0f)
+		glm::vec4(chunk_copy_world_position_XYZ, 1.0f)
 	};
+
 	const AABB_t bounding_box(
-		chunk_pos_world_coords_XYZ,
-		chunk_pos_world_coords_XYZ + static_cast<glm::vec3>(DIMENSIONS));
-	enable_rendering(bounding_box.is_on_frustum(camera_frustum));
-	if (is_rendering_enabled()) {
+		chunk_copy_world_position_XYZ,
+		chunk_copy_world_position_XYZ + static_cast<glm::vec3>(DIMENSIONS));
+
+	if (bounding_box.is_on_frustum(camera_frustum)) {
 		draw(
 			projection_matrix,
 			view_matrix,
 			model_matrix,
 			light_pos);
-	}
+        return true;
+	} else
+	    return false;
 }

@@ -1,5 +1,6 @@
 #include "app.hpp"
 
+#include <chrono>
 #include <cstdlib>
 #include <thread>
 
@@ -24,8 +25,8 @@ void app_t::init() {
 
 // Loop
 void app_t::loop() {
-	timer_logging = std::chrono::high_resolution_clock::now();
-	timer_fps_cnter = glfwGetTime();
+	// timer_logging = std::chrono::high_resolution_clock::now();
+    auto timer_fps_cnter = std::chrono::high_resolution_clock::now();
 	delta_time = 0.0;
 
 	while (glfwWindowShouldClose(window) == GLFW_FALSE) {
@@ -49,25 +50,11 @@ void app_t::loop() {
 		in_loop_draw_map();
 		in_loop_update_imgui();
 
-		double fps_cnt;
-		{ // FPS cnter
-			const double now = glfwGetTime();
-			delta_time = now - timer_fps_cnter;
-			fps_cnt = 1.0 / delta_time;
-			timer_fps_cnter = now;
-		}
-		{ // Debug output
-			const auto now = std::chrono::high_resolution_clock::now();
-			const auto delta_time_n = now - timer_logging;
-			using namespace std::chrono_literals;
-			if (delta_time_n >= 500ms) {
-				timer_logging = now;
-
-				WHERE;
-				fprintf(stderr, "fps_cnt=%f\n", fps_cnt);
-				PRINT_U(glGetError());
-			}
-		}
+        const auto now = std::chrono::high_resolution_clock::now();
+        delta_time =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - timer_fps_cnter).count()
+            / 1000.0;
+        timer_fps_cnter = now;
 
 		// Swap buffers
 		glfwSwapBuffers(window);

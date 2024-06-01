@@ -1,6 +1,6 @@
 #version 330 core
 
-// There is no per vertex data, but gl_VertexID
+// No per-vertex data, just gl_VertexID.
 // in int gl_VertexID;
 
 // Instance data
@@ -17,11 +17,12 @@ out vec3 fragment_pos_worldspace;
 out vec3 fragment_normal_worldspace;
 // out vec4 gl_Position // Vertex clip space position
 
+// Needs to be updated manually every time block_type::cnt changes
+#define BLOCKS_CNT 4u
 #define BLOCK_VERTICES_CNT (6u*2u*3u)
 layout (std140) uniform block_model {
 	vec4 vertices_positions    [BLOCK_VERTICES_CNT];
-	vec4 vertices_uvs_combined [BLOCK_VERTICES_CNT*2u];	// Where 1 is
-														// block_type::cnt-1
+	vec4 vertices_uvs_combined [BLOCK_VERTICES_CNT*(BLOCKS_CNT-1u)];
 	vec4 vertices_normals      [BLOCK_VERTICES_CNT];
 };
 
