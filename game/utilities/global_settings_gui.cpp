@@ -1,24 +1,77 @@
 #include "global_settings_gui.hpp"
-#include "imgui_basic_controls.hpp"
+#include "imgui.h"
 #include "settings.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <string>
+#include <utility>
 using namespace glm;
 
 #include "useful.hpp"
 
-void global_settings_gui::draw_imgui_widgets() {
-	ImGui::SeparatorText("Global settings");
-
+void global_settings_gui::draw_global_settings_controls() {
 	if (ImGui::CollapsingHeader("Global settings controls")) {
+		ImGui::DragScalar("font_global_scale", ImGuiDataType_Float,
+			&global_settings.font_global_scale,
+			0.1f,
+			&global_settings.font_global_scale_min,
+			&global_settings.font_global_scale_max);
+
 		if (ImGui::Button("Save"))
 			global_settings.save_settings_to_file();
-		if (ImGui::Button("Load"))
+        ImGui::SameLine();
+		if (ImGui::Button("Soft load settings"))
 			global_settings.load_settings_from_file();
-	}
+        ImGui::SameLine();
+		if (ImGui::Button("Load & reload application"))
+			global_settings.request_global_reload();
 
-	if (ImGui::CollapsingHeader(
+        ImGui::Text("Predefined maps/settings:");
+        ImGui::Text("Best view in GAME ITSELF:");
+        {
+            const char * const configs_names[] {
+                "desert1.txt",
+                "desert2.txt",
+                "huge_mountains1.txt",
+                "huge_mountains2.txt",
+                "random_desert.txt",
+            };
+            for (std::size_t i = 0; i < ARR_SIZE(configs_names); ++i) {
+                if (ImGui::Button(configs_names[i])) {
+                    global_settings.load_settings_from_file((std::string("runtime/predefined_maps/") + std::string(configs_names[i])).c_str());
+                    global_settings.request_possibly_no_restart_reload();
+                }
+            }
+        }
+
+        ImGui::Text("Best view in GENERATOR PLAYGROUND:");
+        {
+            const char * const configs_names[] {
+                "evolving_GPU_continents1.txt",
+                "evolving_GPU_continents2.txt",
+
+                "big_continent_with_rivers1.txt",
+                "big_continent_with_rivers2.txt",
+                "continents_with_rivers1.txt",
+                "continents_with_rivers2.txt",
+
+                "random_continents_with_rivers_and_humidity.txt",
+                "random_continents_with_rivers_and_temperature.txt",
+                "random_GPU_continents.txt",
+            };
+            for (std::size_t i = 0; i < ARR_SIZE(configs_names); ++i) {
+                if (ImGui::Button(configs_names[i])) {
+                    global_settings.load_settings_from_file((std::string("runtime/predefined_maps/") + std::string(configs_names[i])).c_str());
+                    global_settings.request_possibly_no_restart_reload();
+                }
+            }
+        }
+	}
+}
+
+void global_settings_gui::draw_general_settings() {
+	if (ImGui::TreeNode(
 				"General" /* , ImGuiTreeNodeFlags_DefaultOpen */)) {
 		// constexpr std::size_t size_t_step = 1;
 		// ImGui::InputScalar("debug_vals[0]", ImGuiDataType_U64,
@@ -67,6 +120,12 @@ void global_settings_gui::draw_imgui_widgets() {
 			&global_settings.super_voro_cnt_min,
 			&global_settings.super_voro_cnt_max);
 
+		ImGui::DragScalar("land_probability", ImGuiDataType_Float,
+			&global_settings.land_probability,
+			0.01f,
+			&global_settings.land_probability_min,
+			&global_settings.land_probability_max);
+
 		ImGui::Checkbox("draw_mid_polygons",
 			&global_settings.draw_mid_polygons);
 
@@ -79,17 +138,22 @@ void global_settings_gui::draw_imgui_widgets() {
 			&global_settings.replace_seed_min,
 			&global_settings.replace_seed_max);
 
+        if (ImGui::Button("Fill in current seed")) {
+            global_settings.request_replace_seed_overwrite();
+        }
+
 		ImGui::Checkbox("draw_player",
 			&global_settings.draw_player);
 
-		ImGui::DragScalar("font_global_scale", ImGuiDataType_Float,
-			&global_settings.font_global_scale,
-			0.0002f,
-			&global_settings.font_global_scale_min,
-			&global_settings.font_global_scale_max);
-	}
+		ImGui::Checkbox("dynamic_map",
+			&global_settings.dynamic_map);
 
-	if (ImGui::CollapsingHeader("Rivers and climate")) {
+        ImGui::TreePop();
+	}
+}
+
+void global_settings_gui::draw_rivers_and_climate_settings() {
+	if (ImGui::TreeNode("Rivers and climate")) {
 		ImGui::DragScalar("river_joints_R", ImGuiDataType_Double,
 			&global_settings.river_joints_R,
 			0.0002f,
@@ -137,5 +201,24 @@ void global_settings_gui::draw_imgui_widgets() {
 			0.0002f,
 			&global_settings.temperature_exp_min,
 			&global_settings.temperature_exp_max);
+        ImGui::TreePop();
 	}
+}
+
+void global_settings_gui::draw_imgui_widgets() {
+	ImGui::SeparatorText("Global settings");
+
+// #ifdef DEBUG
+//     draw_global_settings_controls();
+//     draw_general_settings();
+//     draw_rivers_and_climate_settings();
+// #endif
+
+// #ifndef DEBUG
+    draw_global_settings_controls();
+	if (ImGui::CollapsingHeader("Advanced - global settings", ImGuiTreeNodeFlags_Bullet)) {
+        draw_general_settings();
+        draw_rivers_and_climate_settings();
+    }
+// #endif
 }

@@ -1,13 +1,11 @@
-font_global_scale 2
 sky_color 16567442
 light_color 16242093
 render_distance 10
-max_preprocessed_chunks_cnt 25
 
 terrain_height_in_blocks 32
-default_player_position[0] 112.932
+default_player_position[0] 182.961
 default_player_position[1] 32
-default_player_position[2] 97.5
+default_player_position[2] 107.5
 
 draw_player 1
 draw_mid_polygons 0
@@ -16,7 +14,7 @@ dynamic_map 0
 generate_with_gpu 0
 triple_map_size 1
 
-replace_seed 1717484782292
+replace_seed 1717482684685
 voro_cnt 176
 super_voro_cnt 18
 land_probability 0.25
@@ -29,12 +27,7 @@ river_joints_R 0.0106
 river_start_prob 12
 river_branch_prob 100
 river_color 3768720
-draw_temperature 0
-draw_humidity 1
+draw_temperature 1
+draw_humidity 0
 humidity_scale 15
 temperature_exp 1.5
-
-enable_breakpoints 0
-debug_vals[0] 7
-debug_vals[1] 0
-debug_vals[2] 0

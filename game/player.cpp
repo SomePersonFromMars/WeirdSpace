@@ -84,20 +84,20 @@ void player_t::deinit_gl() {
 }
 
 void player_t::draw_cyclic(
-	const glm::vec3 &light_pos,
 	const glm::mat4 &projection_matrix,
-	const glm::mat4 &view_matrix
+	const glm::mat4 &view_matrix,
+    const shader_A_fragment_common_uniforms_t &common_uniforms
 	) {
-    draw_single(light_pos, projection_matrix, view_matrix, world_buffer.get_buffer_width() * chunk_t::WIDTH);
-    draw_single(light_pos, projection_matrix, view_matrix, 0);
-    draw_single(light_pos, projection_matrix, view_matrix, -world_buffer.get_buffer_width() * chunk_t::WIDTH);
+    draw_single(projection_matrix, view_matrix, world_buffer.get_buffer_width() * chunk_t::WIDTH,  common_uniforms);
+    draw_single(projection_matrix, view_matrix, 0,                                                 common_uniforms);
+    draw_single(projection_matrix, view_matrix, -world_buffer.get_buffer_width() * chunk_t::WIDTH, common_uniforms);
 }
 
 void player_t::draw_single(
-	const glm::vec3 &light_pos,
 	const glm::mat4 &projection_matrix,
 	const glm::mat4 &view_matrix,
-    const float      off_x
+    const float      off_x,
+    const shader_A_fragment_common_uniforms_t &common_uniforms
 	) {
 	// Shader
 	glUseProgram(shader.program_id);
@@ -116,13 +116,7 @@ void player_t::draw_single(
 	glUniformMatrix4fv(shader.projection_matrix_uniform,
 			1, GL_FALSE, &projection_matrix[0][0]);
 
-	const glm::vec3 light_color = color_hex_to_vec3(LIGHT_COLOR);
-	glUniform3f(shader.light_pos_worldspace_uniform,
-			light_pos.x, light_pos.y, light_pos.z);
-	glUniform3f(shader.light_color_uniform,
-			light_color.x,
-			light_color.y,
-			light_color.z);
+    shader.common_fragment_uniforms_locations.send_values(common_uniforms);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture_id);

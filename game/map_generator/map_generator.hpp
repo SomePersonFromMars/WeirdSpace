@@ -29,6 +29,7 @@ struct map_generator_t {
 	inline double get_ratio_hw() const;
 	inline bool are_tour_path_points_generated() const;
 	std::pair<glm::dvec2, glm::dvec2> get_tour_path_points(const double off);
+    inline std::mt19937::result_type get_current_voronoi_seed() const;
 
 	std::size_t * const debug_vals = global_settings.debug_vals;
 
@@ -127,6 +128,7 @@ private:
 	const std::function<double(const long long)> get_tour_path_point_y;
 	std::mt19937::result_type seed_voronoi;
 	cyclic_noise_t noise;
+    long app_start_ms = -1;
 
 	// Voronoi diagram
 	std::size_t voro_cnt;
@@ -174,6 +176,10 @@ inline double map_generator_t::get_ratio_hw() const {
 
 inline bool map_generator_t::are_tour_path_points_generated() const {
 	return tour_path_points.size() > 0;
+}
+
+inline std::mt19937::result_type map_generator_t::get_current_voronoi_seed() const {
+    return seed_voronoi;
 }
 
 inline glm::dvec2 map_generator_t::space_to_map_coords(glm::dvec2 pos) const {

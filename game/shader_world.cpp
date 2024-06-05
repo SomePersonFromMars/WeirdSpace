@@ -27,12 +27,7 @@ void shader_world_t::init() {
 	model_matrix_uniform = glGetUniformLocation(program_id, "M");
 	projection_matrix_uniform = glGetUniformLocation(program_id, "P");
 
-	light_pos_worldspace_uniform = glGetUniformLocation(program_id,
-			"light_pos_worldspace");
-	light_color_uniform = glGetUniformLocation(program_id,
-			"light_color");
-	texture_sampler_uniform = glGetUniformLocation(program_id,
-			"texture_sampler");
+    common_fragment_uniforms_locations.init(program_id);
 }
 
 void shader_world_t::deinit() {

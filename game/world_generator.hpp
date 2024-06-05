@@ -29,6 +29,7 @@ private:
 	world_buffer_t &buffer;
 	cyclic_noise_t noise;
     std::mt19937 random_generator;
+    int terrain_height;
 };
 
 #endif

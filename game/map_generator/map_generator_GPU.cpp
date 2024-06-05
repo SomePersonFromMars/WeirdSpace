@@ -1,5 +1,6 @@
 #include "map_generator.hpp"
 
+#include <ratio>
 #include <settings.hpp>
 #include <useful.hpp>
 #include <shader_loader.hpp>
@@ -60,7 +61,7 @@ void map_generator_t::set_uniforms() {
 	const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::high_resolution_clock::now().time_since_epoch()
 			).count();
-	static auto app_start_ms = now_ms;
+    if (app_start_ms == -1) app_start_ms = now_ms;
 	const auto elapsed_ms = now_ms - app_start_ms;
 	const float t = float(elapsed_ms);
 #if PROG == 1

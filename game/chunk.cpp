@@ -323,7 +323,7 @@ void chunk_t::draw(
 	const glm::mat4 &projection_matrix,
 	const glm::mat4 &view_matrix,
 	const glm::mat4 &model_matrix,
-	const glm::vec3 &light_pos
+    const shader_A_fragment_common_uniforms_t &common_uniforms
 	) const {
 	glUseProgram(pshader->program_id);
 
@@ -334,11 +334,7 @@ void chunk_t::draw(
 	glUniformMatrix4fv(pshader->projection_matrix_uniform,
 		1, GL_FALSE, &projection_matrix[0][0]);
 
-	const glm::vec3 light_color = color_hex_to_vec3(LIGHT_COLOR);
-	glUniform3f(pshader->light_pos_worldspace_uniform,
-		light_pos.x, light_pos.y, light_pos.z);
-	glUniform3f(pshader->light_color_uniform,
-		light_color.x, light_color.y, light_color.z);
+    pshader->common_fragment_uniforms_locations.send_values(common_uniforms);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -356,7 +352,7 @@ void chunk_t::draw(
 void chunk_t::draw_cyclicly_if_visible(
 		const glm::mat4 &projection_matrix,
 		const glm::mat4 &view_matrix,
-		const glm::vec3 &light_pos,
+        const shader_A_fragment_common_uniforms_t &common_uniforms,
 		const glm::vec3 &buffer_chunk_position_XYZ,
         const float      world_buffer_width,
 		const frustum_t &camera_frustum) {
@@ -369,21 +365,21 @@ void chunk_t::draw_cyclicly_if_visible(
     const bool A_visible = draw_single_copy_if_visible(
         projection_matrix,
         view_matrix,
-        light_pos,
+        common_uniforms,
         base_chunk_pos_world_coords_XYZ - glm::vec3(world_buffer_width, 0, 0),
         camera_frustum);
 
     const bool B_visible = draw_single_copy_if_visible(
         projection_matrix,
         view_matrix,
-        light_pos,
+        common_uniforms,
         base_chunk_pos_world_coords_XYZ,
         camera_frustum);
 
     const bool C_visible = draw_single_copy_if_visible(
         projection_matrix,
         view_matrix,
-        light_pos,
+        common_uniforms,
         base_chunk_pos_world_coords_XYZ + glm::vec3(world_buffer_width, 0, 0),
         camera_frustum);
 
@@ -393,7 +389,7 @@ void chunk_t::draw_cyclicly_if_visible(
 bool chunk_t::draw_single_copy_if_visible(
 		const glm::mat4 &projection_matrix,
 		const glm::mat4 &view_matrix,
-		const glm::vec3 &light_pos,
+        const shader_A_fragment_common_uniforms_t &common_uniforms,
 		const glm::vec3 &chunk_copy_world_position_XYZ,
 		const frustum_t &camera_frustum) {
 
@@ -413,7 +409,7 @@ bool chunk_t::draw_single_copy_if_visible(
 			projection_matrix,
 			view_matrix,
 			model_matrix,
-			light_pos);
+			common_uniforms);
         return true;
 	} else
 	    return false;

@@ -46,15 +46,16 @@ private:
 
 	// Specific operations
 	void draw_game_specific_imgui_widgets();
+    void draw_game_settings();
+    void draw_outputs();
+    void draw_chunks_info();
+    void move_player_to_camera();
 
 	// Window
 	GLFWwindow* window;
 	GLint window_width = 1920;
 	GLint window_height = 1080;
 	inline float get_window_aspect_ratio() const;
-
-	// Settings
-	const glm::vec3 background_color;
 
 	// Time related
 	double delta_time = 0.0;

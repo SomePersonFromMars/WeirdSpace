@@ -1,0 +1,33 @@
+sky_color 13233650
+light_color 16777215
+render_distance 20
+
+terrain_height_in_blocks 128
+default_player_position[0] 200
+default_player_position[1] 128
+default_player_position[2] 231.5
+
+draw_player 1
+draw_mid_polygons 0
+dynamic_map 0
+
+generate_with_gpu 1
+triple_map_size 0
+
+replace_seed 1692555248454
+voro_cnt 217
+super_voro_cnt 3
+land_probability 0.25
+map_unit_resolution 512
+map_width_in_units 2
+map_height_in_units 2
+
+generate_rivers 1
+river_joints_R 0.0106
+river_start_prob 12
+river_branch_prob 100
+river_color 3768720
+draw_temperature 1
+draw_humidity 0
+humidity_scale 15
+temperature_exp 1.5

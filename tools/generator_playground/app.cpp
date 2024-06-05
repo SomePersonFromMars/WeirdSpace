@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "settings.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -42,6 +43,9 @@ void app_t::loop() {
 			soft_reload_procedure();
 		}
 
+        if (global_settings.dynamic_map)
+            reload_procedure();
+
 		in_loop_parse_input();
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -56,9 +60,21 @@ void app_t::loop() {
             / 1000.0;
         timer_fps_cnter = now;
 
+        global_settings.supply_new_replace_seed(map_generator.get_current_voronoi_seed());
+
+        if (global_settings.is_global_reload_pending())
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+        if (global_settings.is_possibly_no_restart_reload_pending()) {
+            global_settings.mark_possibly_no_restart_reload_completed();
+            if (not global_settings.dynamic_map)
+                reload_procedure();
+        }
+
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
 		std::this_thread::sleep_until(frame_end_time);
 	}
 }
@@ -68,6 +84,7 @@ void app_t::deinit() {
 	deinit_imgui();
 	deinit_map_generator();
 	deinit_opengl_etc();
+
 	global_settings.save_settings_to_file();
 }
 
@@ -149,7 +166,8 @@ void app_t::init_opengl_etc() {
 // Loop subfunctions
 void app_t::in_loop_parse_input() {
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		reload_procedure();
+        if (not global_settings.dynamic_map)
+            reload_procedure();
 	}
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
 		camera_pos = vec3(0);

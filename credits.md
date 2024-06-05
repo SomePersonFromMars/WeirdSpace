@@ -5,3 +5,4 @@
     - https://learnopengl.com/Guest-Articles/2021/Scene/Frustum-Culling
 3. http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/
 4. https://github.com/ashima/webgl-noise
+5. https://iquilezles.org/articles/fog/

@@ -15,6 +15,8 @@ void world_generator_t::load_settings() {
 	noise.border_beg = noise.border_end;
 	noise.border_beg -= float(chunk_t::WIDTH)*0.5 * noise_pos_mult;
     random_generator = std::mt19937(1234);
+    terrain_height = global_settings.terrain_height_in_blocks;
+    assert(terrain_height <= chunk_t::HEIGHT);
 }
 
 void world_generator_t::gen_chunk(const glm::ivec2 &chunk_pos) {
@@ -38,13 +40,13 @@ void world_generator_t::gen_chunk(const glm::ivec2 &chunk_pos) {
 				x + chunk_pos.x*chunk.WIDTH,
 				3) / 255.0f;
 
-			// int y = ( (p*3.0-1.0) * static_cast<float>(chunk.HEIGHT) );
-			int y = ( (p) * static_cast<float>(chunk.HEIGHT) ) + 1;
-			y = std::min(y, chunk.HEIGHT-1);
+			// int y = ( (p*3.0-1.0) * static_cast<float>(terrain_height) );
+			int y = ( (p) * static_cast<float>(terrain_height) ) + 1;
+			y = std::min(y, terrain_height-1);
 
             if (
                 std::uniform_int_distribution<int>(1, 1000)(random_generator) <= 1 and
-                y >= chunk.HEIGHT/2)
+                y >= terrain_height/2)
                 place_cactus(chunk, x, y+1, z);
 
 			while (y >= 0)

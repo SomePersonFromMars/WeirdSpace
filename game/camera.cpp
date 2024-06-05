@@ -1,24 +1,28 @@
+#include "chunk.hpp"
 #include "camera.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
 
 #include <useful.hpp>
+#include "settings.hpp"
 
 camera_t::camera_t(
 		glm::vec3 pos,
 		float horizontal_rotation_angle,
 		float vertical_rotation_angle,
 		float fov,
-		float near_clip_plane_dist,
-		float far_clip_plane_dist)
+		float near_clip_plane_dist)
 	:position{pos}
 	,horizontal_rotation_angle{horizontal_rotation_angle}
 	,vertical_rotation_angle{vertical_rotation_angle}
 	,fov{fov}
 	,near_clip_plane_dist{near_clip_plane_dist}
-	,far_clip_plane_dist{far_clip_plane_dist}
 {
+}
+
+void camera_t::load_settings() {
+    far_clip_plane_dist = global_settings.render_distance * chunk_t::WIDTH;
 }
 
 void camera_t::init_cyclicness(float cyclic_world_width_) {

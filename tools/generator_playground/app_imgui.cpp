@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "imgui.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -18,6 +19,7 @@ void app_t::draw_playground_specific_imgui_widgets() {
 	if (ImGui::CollapsingHeader("Generator controls")) {
 		if (ImGui::Button("Reload"))
 			reload_procedure();
+        ImGui::SameLine();
 		if (ImGui::Button("Soft reload"))
 			soft_reload_procedure();
 	}

@@ -4,6 +4,7 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include "shader_A.hpp"
 
 // Usage is the same as shader_A_t
 struct shader_world_t {
@@ -27,9 +28,9 @@ struct shader_world_t {
 	GLuint view_matrix_uniform;
 	GLuint model_matrix_uniform;
 	GLuint projection_matrix_uniform;
-	GLuint light_pos_worldspace_uniform;
-	GLuint light_color_uniform;
 	GLuint texture_sampler_uniform;
+
+    shader_A_fragment_common_uniforms_locations_t common_fragment_uniforms_locations;
 };
 
 #endif

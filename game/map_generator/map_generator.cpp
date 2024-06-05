@@ -199,7 +199,7 @@ void map_generator_t::generate_continents(std::mt19937 &gen) {
 		if (super_voro_rep[i] != i)
 			continue;
 
-		if (j <= super_voro_cnt * 25 / 100)
+		if (j <= super_voro_cnt * global_settings.land_probability)
 			plate.type = plate_t::LAND;
 		else
 			plate.type = plate_t::WATER;
@@ -1119,6 +1119,7 @@ void map_generator_t::generate_map() {
     PRINT_NL;
 	std::mt19937 gen(seed_voronoi);
 	PRINT_LU(seed_voronoi);
+    // printf("seed_voronoi = %lu\n", seed_voronoi);
 	generate_continents(gen);
 
 	if (not global_settings.generate_with_gpu) {

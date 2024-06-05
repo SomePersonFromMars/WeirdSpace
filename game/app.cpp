@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "shader_A.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -12,21 +13,19 @@ using namespace glm;
 
 // App
 app_t::app_t()
-	:background_color{color_hex_to_vec3(SKY_COLOR)}
-	,world_generator(
+	:world_generator(
 			map_storage,
 			world_buffer)
 	,player(shader_A, world_buffer)
 	,camera(
             glm::vec3(
-                0.0,
-                100.0,
-                0.0
+                // 0.0, 100.0, 0.0
+                902, 126, 77
                 ),
 			5.851774, 5.900709,
 			90.0f,
-			0.1f,
-			static_cast<float>(chunk_t::WIDTH) * 10
+			0.1f
+			// static_cast<float>(chunk_t::WIDTH) * 16
 			)
 	,map_generator(&map_storage)
 	,callbacks_strct(
@@ -65,6 +64,7 @@ void app_t::loop() {
 		const auto frame_end_time
 			= frame_beg_time + frame_min_duration;
 
+        const glm::vec3 background_color = color_hex_to_vec3(global_settings.sky_color);
 		glClearColor(background_color.x, background_color.y, background_color.z,
 				0.0f);
 		glEnable(GL_DEPTH_TEST);
@@ -73,13 +73,34 @@ void app_t::loop() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, window_width, window_height);
 
+        camera.load_settings();
 		const glm::mat4 projection_matrix
 			= camera.calculate_projection_matrix(get_window_aspect_ratio());
 		const glm::mat4 view_matrix = camera.calculate_view_matrix();
 		const frustum_t camera_frustum
 			= camera.calculate_frustum_planes(get_window_aspect_ratio());
-		const glm::vec3 light_pos
-			= camera.get_position() + glm::vec3(0, 5, 0);
+
+		// const glm::vec3 light_pos
+		// 	= camera.get_position() + glm::vec3(0, 5, 0);
+
+        const shader_A_fragment_common_uniforms_t shader_A_fragment_common_uniforms {
+            // camera_pos_worldspace:
+            camera.get_position(),
+
+            // light_pos_worldspace:
+            // camera.get_position() + glm::vec3(0, 5, 0),
+            // glm::vec3(0, chunk_t::HEIGHT, world_buffer.get_world_depth()),
+            camera.get_position() + glm::vec3(8, 5, 5),
+
+            // sun_direction_worldspace:
+            glm::normalize(-glm::vec3(-15, 5, 10)),
+
+            // light_color:
+            color_hex_to_vec3(global_settings.light_color),
+
+            // fog_color:
+            color_hex_to_vec3(global_settings.sky_color),
+        };
 
 		for (auto &[buffer_pos_XZ, chunk] : world_buffer.chunks) {
 			const glm::vec3 buffer_pos_XYZ = {
@@ -97,13 +118,13 @@ void app_t::loop() {
 			chunk.draw_cyclicly_if_visible(
 				projection_matrix,
 				view_matrix,
-				light_pos,
+				shader_A_fragment_common_uniforms,
 				buffer_pos_XYZ,
                 world_buffer_width,
 				camera_frustum);
 		}
 
-		player.draw_cyclic(light_pos, projection_matrix, view_matrix);
+		player.draw_cyclic(projection_matrix, view_matrix, shader_A_fragment_common_uniforms);
 
 		in_loop_update_imgui();
 
@@ -112,6 +133,17 @@ void app_t::loop() {
             std::chrono::duration_cast<std::chrono::milliseconds>(now - timer_fps_cnter).count()
             / 1000.0;
         timer_fps_cnter = now;
+
+        global_settings.supply_new_replace_seed(map_generator.get_current_voronoi_seed());
+
+        if (
+            global_settings.is_global_reload_pending() or
+            global_settings.is_possibly_no_restart_reload_pending()
+            ) {
+            global_settings.mark_possibly_no_restart_reload_completed();
+            global_settings.request_global_reload();
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+        }
 
 		glfwSwapBuffers(window);
 
@@ -176,6 +208,7 @@ void app_t::init_opengl_etc() {
 }
 
 void app_t::init_camera() {
+    camera.load_settings();
     camera.init_cyclicness(world_buffer.get_world_width());
 	// camera.switch_following_mode();
 }
@@ -243,9 +276,13 @@ void app_t::init_player() {
 	// player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT, 0.5};
 	// player.debug_position = {chunk_t::WIDTH/2.0, chunk_t::HEIGHT,
 	// 	float(chunk_t::DEPTH/2)+0.5};
-	player.debug_position = {chunk_t::WIDTH/2.0 + chunk_t::WIDTH*3, chunk_t::HEIGHT,
-		float(chunk_t::DEPTH + world_buffer.get_world_depth())/2.0f + 0.5};
+	// player.debug_position = {chunk_t::WIDTH/2.0 + chunk_t::WIDTH*3, chunk_t::HEIGHT,
+	// 	float(chunk_t::DEPTH + world_buffer.get_world_depth())/2.0f + 0.5};
+    // player.debug_position = {200.0, chunk_t::HEIGHT, 231.5};
 	// player.debug_position = {0, chunk_t::HEIGHT, 0.5};
+    player.debug_position[0] = global_settings.default_player_position[0];
+    player.debug_position[1] = global_settings.default_player_position[1];
+    player.debug_position[2] = global_settings.default_player_position[2];
 	player.set_position(player.debug_position);
 }
 

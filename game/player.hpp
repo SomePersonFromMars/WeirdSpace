@@ -2,8 +2,6 @@
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
-#include <vector>
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -23,15 +21,15 @@ struct player_t {
 	void init_gl();
 	void deinit_gl();
 	void draw_cyclic(
-		const glm::vec3 &light_pos,
-		const glm::mat4 &projection_matrix,
-		const glm::mat4 &view_matrix
-	);
-	void draw_single(
-		const glm::vec3 &light_pos,
 		const glm::mat4 &projection_matrix,
 		const glm::mat4 &view_matrix,
-        const float      off_x
+        const shader_A_fragment_common_uniforms_t &common_uniforms
+	);
+	void draw_single(
+		const glm::mat4 &projection_matrix,
+		const glm::mat4 &view_matrix,
+        const float      off_x,
+        const shader_A_fragment_common_uniforms_t &common_uniforms
 	);
 
 	// Movement

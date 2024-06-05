@@ -14,10 +14,10 @@ struct camera_t {
 		float horizontal_rotation_angle,
 		float vertical_rotation_angle,
 		float fov,
-		float near_clip_plane_dist,
-		float far_clip_plane_dist);
+		float near_clip_plane_dist);
 
     // Setup
+    void load_settings();
     void init_cyclicness(float cyclic_world_width_);
 
 	// Speed

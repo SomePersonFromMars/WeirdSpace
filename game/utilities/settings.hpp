@@ -18,40 +18,6 @@
 // #define TEXTURE_BLOCKS_COMBINED_PATH "runtime/sand.png"
 #define TEXTURE_PLAYER_PATH "runtime/player.png"
 
-#define ATMOSPHERE 4
-#if ATMOSPHERE == 1
-	// Soft-blue, soft-yellow
-	#define SKY_COLOR 0xd7e6e8
-	#define LIGHT_COLOR 0xfce7b5
-#endif
-#if ATMOSPHERE == 2
-	// Soft-blue, soft-blue
-	// #define SKY_COLOR 0x00ccff // Blue
-	// #define SKY_COLOR 0x9deff9
-	#define SKY_COLOR 0xc9edf2
-	// #define SKY_COLOR 0xd7e6e8 // Soft-blue
-
-	// #define LIGHT_COLOR 0xeafcfa // Soft-blue
-	// #define LIGHT_COLOR 0xedfcfa
-	// #define LIGHT_COLOR 0xf4fcfb
-	#define LIGHT_COLOR 0xffffff // White
-#endif
-#if ATMOSPHERE == 3
-	// Orange sunset
-	#define SKY_COLOR 0xfcb967
-	#define LIGHT_COLOR 0xf7d5ad
-#endif
-#if ATMOSPHERE == 4
-	// Soft orange desert
-	#define SKY_COLOR 0xfccc92
-	#define LIGHT_COLOR 0xf7d5ad
-#endif
-#if ATMOSPHERE == 5
-	// Contrast
-	#define SKY_COLOR 0x000000
-	#define LIGHT_COLOR 0xffffff
-#endif
-
 #define SHADER_MAP_STORAGE_VERTEX_PATH "runtime/shader_map_vertex.glsl"
 #define SHADER_MAP_STORAGE_FRAGMENT_PATH "runtime/shader_map_fragment.glsl"
 
@@ -76,37 +42,100 @@ extern struct settings_t {
 	static constexpr T name##_min = min; \
 	static constexpr T name##_max = max;
 
-	FIELD(std::size_t, voro_cnt                   , 240,      3,    240*2)
-	FIELD(std::size_t, super_voro_cnt             , 80,       3,    240*2)
+    // World rendering and preprocessing
+	FIELD(float      , font_global_scale          , 1.5f,     1.0f, 2.0f)
+	FIELD(uint32_t   , sky_color                  , 0xfccc92, 0,    0xffffff)
+	FIELD(uint32_t   , light_color                , 0xf7d5ad, 0,    0xffffff)
+	FIELD(float      , render_distance            , 8.0f,     1.0f, 32.0f)
+	FIELD(std::size_t, max_preprocessed_chunks_cnt, 25,       1,    10'000)
+
+    // World shape and world experience
+	FIELD(int        , terrain_height_in_blocks   , 64,        1,    128)
+    float default_player_position[3]              {200.0f, 128.0f, 231.5f};
+
+    // On top of map and map experience
+	FIELD(bool       , draw_player                , true,    0,    1)
 	FIELD(bool       , draw_mid_polygons          , false,    0,    1)
-	FIELD(std::size_t, replace_seed               , 0,        0,    ULLONG_MAX)
-	FIELD(double     , river_joints_R             , 0.015,    0.0,  1.0)
-	FIELD(int        , river_start_prob           , 20,       0,    100)
-	FIELD(int        , river_branch_prob          , 20,       0,    100)
-	FIELD(uint32_t   , river_color                , 0x477199, 0,    0xffffff)
-	FIELD(bool       , generate_rivers            , false,    0,    1)
-	FIELD(bool       , draw_temperature           , false,    0,    1)
-	FIELD(bool       , draw_humidity              , false,    0,    1)
-	FIELD(int        , humidity_scale             , 5,        0,    200)
-	FIELD(double     , temperature_exp            , 4.0,      0.01, 100.0)
-	FIELD(int        , map_unit_resolution        , 256,      1,    4096)
-	FIELD(int        , map_width_in_units         , 2,        1,    4096)
-	FIELD(int        , map_height_in_units        , 1,        1,    4096)
+	FIELD(bool       , dynamic_map                , false,    0,    1)
+
+    // Map rendering
 	FIELD(bool       , generate_with_gpu          , true,     0,    1)
 	FIELD(bool       , triple_map_size            , false,    0,    1)
-	FIELD(bool       , draw_player                , false,    0,    1)
-	FIELD(std::size_t, max_preprocessed_chunks_cnt, 25,       1,    10'000)
-	FIELD(float      , font_global_scale          , 1.5f,     1.0f, 2.0f)
-	size_t debug_vals[3] {
-		7,
-		0,
-		0
-	};
+
+    // Map shape
+	FIELD(std::size_t, replace_seed               , 0,        0,    ULLONG_MAX)
+	FIELD(std::size_t, voro_cnt                   , 402,      3,    240*2)
+	FIELD(std::size_t, super_voro_cnt             , 22,       3,    240*2)
+    FIELD(float      , land_probability           , 0.8f,     0.0f, 1.0f)
+	FIELD(int        , map_unit_resolution        , 512,      1,    4096)
+	FIELD(int        , map_width_in_units         , 4,        1,    4096)
+	FIELD(int        , map_height_in_units        , 2,        1,    4096)
+
+    // Rivers and climate
+	FIELD(bool       , generate_rivers            , true,     0,    1)
+	FIELD(double     , river_joints_R             , 0.0106,   0.0,  1.0)
+	FIELD(int        , river_start_prob           , 12,       0,    100)
+	FIELD(int        , river_branch_prob          , 20,       0,    100)
+	FIELD(uint32_t   , river_color                , 0x477199, 0,    0xffffff)
+	FIELD(bool       , draw_temperature           , false,    0,    1)
+	FIELD(bool       , draw_humidity              , true,     0,    1)
+	FIELD(int        , humidity_scale             , 5,        0,    200)
+	FIELD(double     , temperature_exp            , 4.0,      0.01, 100.0)
+
+    // Others
+	size_t debug_vals[3]                          {7, 0, 0};
 #undef FIELD
 
 	static constexpr char settings_file_path[] = "runtime/settings.txt";
+
 	void save_settings_to_file();
-	void load_settings_from_file();
+	void load_settings_from_file(const char * const path = settings_file_path);
+
+    inline void request_global_reload();
+    inline bool is_global_reload_pending() const;
+    inline void mark_global_reload_completed();
+
+    inline void request_possibly_no_restart_reload();
+    inline bool is_possibly_no_restart_reload_pending() const;
+    inline void mark_possibly_no_restart_reload_completed();
+
+    inline void request_replace_seed_overwrite();
+    inline void supply_new_replace_seed(std::size_t new_replace_seed);
+
+private:
+    bool global_reload_requested = false;
+    bool possibly_no_restart_reload_requested = false;
+    bool replace_seed_overwrite_requested = false;
 } global_settings;
+
+inline void settings_t::request_global_reload() {
+    global_reload_requested = true;
+}
+inline void settings_t::mark_global_reload_completed() {
+    global_reload_requested = false;
+}
+inline bool settings_t::is_global_reload_pending() const {
+    return global_reload_requested;
+}
+
+inline void settings_t::request_possibly_no_restart_reload() {
+    possibly_no_restart_reload_requested = true;
+}
+inline void settings_t::mark_possibly_no_restart_reload_completed() {
+    possibly_no_restart_reload_requested = false;
+}
+inline bool settings_t::is_possibly_no_restart_reload_pending() const {
+    return possibly_no_restart_reload_requested;
+}
+
+inline void settings_t::request_replace_seed_overwrite() {
+    replace_seed_overwrite_requested = true;
+}
+inline void settings_t::supply_new_replace_seed(std::size_t new_replace_seed) {
+    if (replace_seed_overwrite_requested) {
+        replace_seed_overwrite_requested = false;
+        replace_seed = new_replace_seed;
+    }
+}
 
 #endif

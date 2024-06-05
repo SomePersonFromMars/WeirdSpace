@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 
 #include "shader_world.hpp"
+#include "shader_A.hpp"
 #include "camera.hpp"
 #include <geometry.hpp>
 
@@ -26,7 +27,7 @@ enum class block_type : uint8_t {
 struct chunk_t {
     // Settings
 	static constexpr int WIDTH = 32;
-	static constexpr int HEIGHT = 32;
+	static constexpr int HEIGHT = 128;
 	static constexpr int DEPTH = 32;
 	static const glm::ivec3 DIMENSIONS;
 
@@ -52,13 +53,13 @@ struct chunk_t {
 		const glm::mat4 &projection_matrix,
 		const glm::mat4 &view_matrix,
 		const glm::mat4 &model_matrix,
-		const glm::vec3 &light_pos
+        const shader_A_fragment_common_uniforms_t &common_uniforms
 	) const;
 
 	void draw_cyclicly_if_visible(
 		const glm::mat4 &projection_matrix,
 		const glm::mat4 &view_matrix,
-		const glm::vec3 &light_pos,
+        const shader_A_fragment_common_uniforms_t &common_uniforms,
 		const glm::vec3 &buffer_chunk_position_XYZ,
         const float      world_buffer_width,
 		const frustum_t &camera_frustum
@@ -82,7 +83,7 @@ private:
     bool draw_single_copy_if_visible(
 		const glm::mat4 &projection_matrix,
 		const glm::mat4 &view_matrix,
-		const glm::vec3 &light_pos,
+        const shader_A_fragment_common_uniforms_t &common_uniforms,
 		const glm::vec3 &chunk_copy_world_position_XYZ,
 		const frustum_t &camera_frustum
         );
