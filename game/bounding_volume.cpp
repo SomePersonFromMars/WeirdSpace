@@ -1,3 +1,6 @@
+// Copyright (C) 2024, Kacper Orszulak
+// GNU General Public License v3.0+ (see LICENSE.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 #include "bounding_volume.hpp"
 
 bool AABB_t::is_on_or_forward_plane(const plane_t& plane) const {

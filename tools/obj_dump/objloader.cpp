@@ -1,3 +1,6 @@
+// Copyright (C) 2024, Kacper Orszulak
+// GNU General Public License v3.0+ (see LICENSE.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 #include <vector>
 #include <stdio.h>
 #include <string>
@@ -6,6 +9,8 @@
 #include <glm/glm.hpp>
 
 #include "objloader.hpp"
+
+// Credits: https://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/
 
 // Very, VERY simple OBJ loader.
 // Here is a short list of features a real function would provide :

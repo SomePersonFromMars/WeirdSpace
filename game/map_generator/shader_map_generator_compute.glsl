@@ -1,3 +1,6 @@
+// Copyright (C) 2024, Kacper Orszulak
+// GNU General Public License v3.0+ (see LICENSE.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 #version 450 core
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
