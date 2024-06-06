@@ -6,6 +6,7 @@ uniform float t;
 
 const float PI = 3.14159265359;
 
+// BEGINNING of "webgl-noise" code
 // Description : Array and textureless GLSL 2D/3D/4D simplex
 //               noise functions.
 //      Author : Ian McEwan, Ashima Arts.
@@ -105,6 +106,7 @@ float snoise(vec3 v) {
 	return 105.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),
 				dot(p2,x2), dot(p3,x3) ) );
 }
+// END of "webgl-noise" code
 
 // Source: https://thebookofshaders.com/13/
 #define OCTAVES 4
