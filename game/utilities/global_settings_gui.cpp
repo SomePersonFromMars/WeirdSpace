@@ -8,13 +8,15 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
-#include <utility>
 using namespace glm;
 
 #include "useful.hpp"
 
 void global_settings_gui::draw_global_settings_controls() {
-	if (ImGui::CollapsingHeader("Global settings controls")) {
+	if (ImGui::CollapsingHeader(
+            "Global settings controls",
+            ImGuiTreeNodeFlags_DefaultOpen
+        )) {
 		ImGui::DragScalar("font_global_scale", ImGuiDataType_Float,
 			&global_settings.font_global_scale,
 			0.1f,
@@ -30,6 +32,7 @@ void global_settings_gui::draw_global_settings_controls() {
 		if (ImGui::Button("Load & reload application"))
 			global_settings.request_global_reload();
 
+        ImGui::Separator();
         ImGui::Text("Predefined maps/settings:");
         ImGui::Text("Best view in GAME ITSELF:");
         {
@@ -54,8 +57,6 @@ void global_settings_gui::draw_global_settings_controls() {
                 "evolving_GPU_continents1.txt",
                 "evolving_GPU_continents2.txt",
 
-                "big_continent_with_rivers1.txt",
-                "big_continent_with_rivers2.txt",
                 "continents_with_rivers1.txt",
                 "continents_with_rivers2.txt",
 

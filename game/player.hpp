@@ -52,7 +52,7 @@ private:
 	shader_A_t &shader;
 	world_buffer_t &world_buffer;
 
-	const float move_speed_normal = 3.0f;
+	const float move_speed_normal = 9.0f;
 	const float move_speed_accelerated = 30.0f;
 	float move_speed = move_speed_normal;
 
@@ -144,6 +144,8 @@ inline void player_t::enable_moving_acceleration(bool enable) {
 
 inline void player_t::switch_fly_mode() {
 	fly_mode = !fly_mode;
+    if (fly_mode)
+        speed = glm::vec2(0.0f);
 }
 
 inline void player_t::move_by_queued(glm::vec2 offset) {

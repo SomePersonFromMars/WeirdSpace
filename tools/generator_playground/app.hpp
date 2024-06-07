@@ -5,8 +5,6 @@
 #ifndef APP_HPP
 #define APP_HPP
 
-#include <chrono>
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -50,6 +48,7 @@ private:
 	void deinit_map_generator();
 
 	void draw_playground_specific_imgui_widgets();
+    void draw_playground_instructions();
 	void soft_reload_procedure();
 	void reload_procedure();
 

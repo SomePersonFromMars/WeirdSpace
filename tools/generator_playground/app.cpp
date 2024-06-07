@@ -172,7 +172,7 @@ void app_t::in_loop_parse_input() {
         if (not global_settings.dynamic_map)
             reload_procedure();
 	}
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
 		camera_pos = vec3(0);
 		camera_zoom = 1;
 	}
@@ -195,7 +195,7 @@ void app_t::in_loop_parse_input() {
 	{
 		// const float move_off = delta_time * 0.5;
 		const double move_off = delta_time * 4.0;
-		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS) {
+		if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
 			// line_pos.x -= move_off;
 			line_off -= move_off;
 		}
@@ -221,10 +221,10 @@ void app_t::in_loop_parse_input() {
 	// }
 
 	const float zoom_off = delta_time * 1.0;
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS or glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
 		camera_zoom *= 1+zoom_off;
 	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS or glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
 		camera_zoom *= 1-zoom_off;
 	}
 

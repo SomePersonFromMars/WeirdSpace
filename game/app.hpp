@@ -52,6 +52,7 @@ private:
     void draw_game_settings();
     void draw_outputs();
     void draw_chunks_info();
+    void draw_game_instructions();
     void move_player_to_camera();
 
 	// Window

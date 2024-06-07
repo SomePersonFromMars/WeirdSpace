@@ -4,6 +4,7 @@
 #include "app.hpp"
 #include "imgui.h"
 
+#include <chrono>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
@@ -19,7 +20,10 @@ void app_t::init_imgui() {
 void app_t::draw_playground_specific_imgui_widgets() {
 	ImGui::SeparatorText("Playground specific");
 
-	if (ImGui::CollapsingHeader("Generator controls")) {
+	if (ImGui::CollapsingHeader(
+            "Generator controls"
+            , ImGuiTreeNodeFlags_DefaultOpen
+            )) {
 		if (ImGui::Button("Reload"))
 			reload_procedure();
         ImGui::SameLine();
@@ -43,14 +47,39 @@ void app_t::draw_playground_specific_imgui_widgets() {
 	}
 }
 
+void app_t::draw_playground_instructions() {
+	ImGui::SeparatorText("Instructions");
+	ImGui::Text("Keybindings:");
+    ImGui::BulletText("Camera movement:");
+    ImGui::Indent();
+    ImGui::BulletText("Use ARROW keys to move.");
+    ImGui::BulletText("Use R key to reset view.");
+    ImGui::BulletText("Use W/S or +/- keys to zoom in/out.");
+    ImGui::Unindent();
+    ImGui::BulletText("Generator controls:");
+    ImGui::Indent();
+    ImGui::BulletText("Use SPACE to regenerate (update) the map.");
+    ImGui::Unindent();
+    ImGui::BulletText("Player movement (if visible):");
+    ImGui::Indent();
+    ImGui::BulletText("Use J/L keys to move left/right.");
+    ImGui::Unindent();
+
+    ImGui::NewLine();
+}
+
 void app_t::in_loop_update_imgui() {
 	imgui_basic_controls::begin_drawing();
 
 #ifdef DEBUG
 	imgui_basic_controls::draw_demo_windows();
 #endif
-	global_settings_gui::draw_imgui_widgets();
-	draw_playground_specific_imgui_widgets();
+    if (ImGui::Begin("Instructions, More Worlds & Settings")) {
+        draw_playground_instructions();
+        global_settings_gui::draw_imgui_widgets();
+        draw_playground_specific_imgui_widgets();
+        ImGui::End();
+    }
 
 	imgui_basic_controls::end_drawing();
 }

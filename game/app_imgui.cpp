@@ -26,16 +26,22 @@ void app_t::in_loop_update_imgui() {
 #ifdef DEBUG
 	imgui_basic_controls::draw_demo_windows();
 #endif
-	global_settings_gui::draw_imgui_widgets();
-	draw_game_specific_imgui_widgets();
+    static bool open_window = false;
+    if (ImGui::Begin("Instructions, More Worlds & Settings")) {
+        ImGui::SetWindowCollapsed(true, ImGuiCond_FirstUseEver);
+        draw_game_instructions();
+        global_settings_gui::draw_imgui_widgets();
+        draw_game_specific_imgui_widgets();
+        ImGui::End();
+    }
 
 	imgui_basic_controls::end_drawing();
 }
 
 void app_t::draw_game_settings() {
 	if (ImGui::CollapsingHeader(
-            "Settings" //,
-            // ImGuiTreeNodeFlags_DefaultOpen
+            "Settings"
+            , ImGuiTreeNodeFlags_DefaultOpen
             )) {
 		// ImGui::DragScalar("max_preprocessed_chunks_cnt", ImGuiDataType_U64,
 		// 	&global_settings.max_preprocessed_chunks_cnt,
@@ -196,6 +202,28 @@ void app_t::draw_chunks_info() {
 		}
         ImGui::TreePop();
 	}
+}
+
+void app_t::draw_game_instructions() {
+	ImGui::SeparatorText("Instructions");
+	ImGui::Text("Keybindings:");
+    ImGui::BulletText("Player movement:");
+    ImGui::Indent();
+    ImGui::BulletText("Use ARROW KEYS to move up/left/down/right.");
+    ImGui::BulletText("Use SPACE to jump.");
+    ImGui::BulletText("Use F to switch flying.");
+    ImGui::BulletText("Hold Z to accelerate movement.");
+    ImGui::BulletText("Use R to return to the starting position.");
+    ImGui::Unindent();
+    ImGui::BulletText("Camera movement:");
+    ImGui::Indent();
+    ImGui::BulletText("Use G to switch player following.");
+    ImGui::BulletText("Use W/A/S/D to move.");
+    ImGui::BulletText("Use I/J/K/L or NUMPAD to rotate.");
+    ImGui::BulletText("Hold L-SHIFT or SEMICOLON (;) to accelerate movement.");
+    ImGui::Unindent();
+
+    ImGui::NewLine();
 }
 
 void app_t::draw_game_specific_imgui_widgets() {

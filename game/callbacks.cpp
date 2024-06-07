@@ -2,6 +2,7 @@
 // GNU General Public License v3.0+ (see LICENSE.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #include "callbacks.hpp"
+#include "GLFW/glfw3.h"
 
 #include <useful.hpp>
 
@@ -30,20 +31,20 @@ void callbacks_strct_t::init_gl(GLFWwindow *window) {
 }
 
 void callbacks_strct_t::handle_input() {
-	camera.enable_moving_acceleration(key_holded[GLFW_KEY_K]);
-	camera.enable_rotation_acceleration(key_holded[GLFW_KEY_LEFT_SHIFT]);
+	camera.enable_moving_acceleration(  key_holded[GLFW_KEY_LEFT_SHIFT] or key_holded[GLFW_KEY_SEMICOLON]);
+	camera.enable_rotation_acceleration(key_holded[GLFW_KEY_LEFT_SHIFT] or key_holded[GLFW_KEY_SEMICOLON]);
 	player.enable_moving_acceleration(key_holded[GLFW_KEY_Z]);
 
-	if (key_holded[GLFW_KEY_UP])
+	if (key_holded[GLFW_KEY_KP_8] or key_holded[GLFW_KEY_I])
 		camera.rotate_up(delta_time);
 
-	if (key_holded[GLFW_KEY_DOWN])
+	if (key_holded[GLFW_KEY_KP_2] or key_holded[GLFW_KEY_K])
 		camera.rotate_down(delta_time);
 
-	if (key_holded[GLFW_KEY_RIGHT])
+	if (key_holded[GLFW_KEY_KP_6] or key_holded[GLFW_KEY_L])
 		camera.rotate_right(delta_time);
 
-	if (key_holded[GLFW_KEY_LEFT])
+	if (key_holded[GLFW_KEY_KP_4] or key_holded[GLFW_KEY_J])
 		camera.rotate_left(delta_time);
 
 
@@ -60,46 +61,20 @@ void callbacks_strct_t::handle_input() {
 		camera.move_left(delta_time);
 
 
-	if (key_holded[GLFW_KEY_KP_8])
+	if (key_holded[GLFW_KEY_UP])
 		player.move_up(delta_time);
 
-	if (key_holded[GLFW_KEY_KP_2])
+	if (key_holded[GLFW_KEY_DOWN])
 		player.move_down(delta_time);
 
-	if (key_holded[GLFW_KEY_KP_6])
+	if (key_holded[GLFW_KEY_RIGHT])
 		player.move_right(delta_time);
 
-	if (key_holded[GLFW_KEY_KP_4])
+	if (key_holded[GLFW_KEY_LEFT])
 		player.move_left(delta_time);
 
-	if (key_holded[GLFW_KEY_KP_0])
+	if (key_holded[GLFW_KEY_SPACE])
 		player.jump(delta_time);
-
-
-	[[maybe_unused]] const float off = 3.0 * delta_time;
-	if (key_holded[GLFW_KEY_KP_7]) {
-		// player.move_by({off, off});
-		player.move_up(delta_time);
-		player.move_left(delta_time);
-	}
-
-	if (key_holded[GLFW_KEY_KP_1]) {
-		// player.move_by({off, -off});
-		player.move_down(delta_time);
-		player.move_left(delta_time);
-	}
-
-	if (key_holded[GLFW_KEY_KP_9]) {
-		// player.move_by({-off, off});
-		player.move_up(delta_time);
-		player.move_right(delta_time);
-	}
-
-	if (key_holded[GLFW_KEY_KP_3]) {
-		// player.move_by({-off, -off});
-		player.move_down(delta_time);
-		player.move_right(delta_time);
-	}
 }
 
 void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, int height) {
@@ -129,10 +104,10 @@ void key_callback(GLFWwindow *window,
 			case GLFW_KEY_ESCAPE:
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
 				break;
-			case GLFW_KEY_F:
+			case GLFW_KEY_G:
 				camera.switch_following_mode();
 				break;
-			case GLFW_KEY_G:
+			case GLFW_KEY_F:
 				player.switch_fly_mode();
 				break;
 			case GLFW_KEY_R:
