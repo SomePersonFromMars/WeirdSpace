@@ -1,7 +1,10 @@
 build*/
 .cache
+out
 
 *.vim
 *.swp
+.vs
+/CMakeSettings.json
 
 *tmp*

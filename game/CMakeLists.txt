@@ -51,3 +51,5 @@ add_executable(weird_space
 target_link_libraries(weird_space
 	${ALL_LIBS}
 	)
+
+add_dependencies(weird_space link_game_runtime_dir)

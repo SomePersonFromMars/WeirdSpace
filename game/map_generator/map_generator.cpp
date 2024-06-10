@@ -5,6 +5,10 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cmath>
+#ifdef _MSC_VER
+	#include <corecrt_math_defines.h>
+#endif
 #include <functional>
 #include <ctime>
 #include <chrono>
@@ -914,7 +918,7 @@ void map_generator_t::draw_map_cpu([[maybe_unused]] std::mt19937 &gen) {
 	std::chrono::high_resolution_clock clock;
 	const auto timer_start = clock.now();
 	#pragma omp parallel for schedule (dynamic, 8)
-	for (std::size_t y = 0; y < static_cast<std::size_t>(height); ++y) {
+	for (int y = 0; y < height; ++y) {
 		for (std::size_t x = 0; x < static_cast<std::size_t>(width) / 3; ++x) {
 			const dvec2 p = map_to_space_coords(dvec2(x+width/3, y));
 

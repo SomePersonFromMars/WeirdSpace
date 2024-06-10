@@ -39,3 +39,5 @@ add_executable(generator_playground
 target_link_libraries(generator_playground
 	${ALL_LIBS}
 	)
+
+add_dependencies(generator_playground link_generator_playground_runtime_dir)

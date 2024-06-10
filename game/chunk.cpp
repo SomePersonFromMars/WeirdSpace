@@ -12,6 +12,11 @@
 #include "bounding_volume.hpp"
 #include "camera.hpp"
 
+#ifdef _MSC_VER
+	#include <intrin.h>
+	#define __builtin_popcount __popcnt
+#endif
+
 const glm::ivec3 chunk_t::DIMENSIONS = { WIDTH, HEIGHT, DEPTH };
 shader_world_t *chunk_t::pshader;
 GLuint chunk_t::texture_id;

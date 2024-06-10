@@ -32,8 +32,8 @@ void app_t::in_loop_update_imgui() {
         draw_game_instructions();
         global_settings_gui::draw_imgui_widgets();
         draw_game_specific_imgui_widgets();
-        ImGui::End();
     }
+	ImGui::End();
 
 	imgui_basic_controls::end_drawing();
 }
