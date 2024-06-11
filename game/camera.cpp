@@ -26,6 +26,8 @@ camera_t::camera_t(
 
 void camera_t::load_settings() {
     far_clip_plane_dist = global_settings.render_distance * chunk_t::WIDTH;
+    moving_speed_normal = global_settings.camera_moving_speed_normal;
+    rotation_speed_normal = global_settings.camera_rotation_speed_normal;
 }
 
 void camera_t::init_cyclicness(float cyclic_world_width_) {

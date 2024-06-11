@@ -46,44 +46,46 @@ extern struct settings_t {
 	static constexpr T name##_max = max;
 
     // World rendering and preprocessing
-	FIELD(float      , font_global_scale          , 1.5f,     1.0f, 2.0f)
-	FIELD(uint32_t   , sky_color                  , 0xfccc92, 0,    0xffffff)
-	FIELD(uint32_t   , light_color                , 0xf7d5ad, 0,    0xffffff)
-	FIELD(float      , render_distance            , 8.0f,     1.0f, 32.0f)
-	FIELD(std::size_t, max_preprocessed_chunks_cnt, 25,       1,    10'000)
+	FIELD(float      , font_global_scale            , 1.5f,     1.0f, 2.0f)
+	FIELD(uint32_t   , sky_color                    , 0xfccc92, 0,    0xffffff)
+	FIELD(uint32_t   , light_color                  , 0xf7d5ad, 0,    0xffffff)
+	FIELD(float      , render_distance              , 8.0f,     1.0f, 32.0f)
+	FIELD(float      , camera_rotation_speed_normal , 1.5f,     0.0f, 8.0f)
+	FIELD(float      , camera_moving_speed_normal   , 9.0f,     0.0f, 64.0f)
+	FIELD(std::size_t, max_preprocessed_chunks_cnt  , 25,       1,    10'000)
 
     // World shape and world experience
-	FIELD(int        , terrain_height_in_blocks   , 64,        1,    128)
-    float default_player_position[3]              {200.0f, 128.0f, 231.5f};
+	FIELD(int        , terrain_height_in_blocks     , 64,        1,    128)
+    float default_player_position[3]                {200.0f, 128.0f, 231.5f};
 
     // On top of map and map experience
-	FIELD(bool       , draw_player                , true,    0,    1)
-	FIELD(bool       , draw_mid_polygons          , false,    0,    1)
-	FIELD(bool       , dynamic_map                , false,    0,    1)
+	FIELD(bool       , draw_player                  , true,    0,    1)
+	FIELD(bool       , draw_mid_polygons            , false,    0,    1)
+	FIELD(bool       , dynamic_map                  , false,    0,    1)
 
     // Map rendering
-	FIELD(bool       , generate_with_gpu          , true,     0,    1)
-	FIELD(bool       , triple_map_size            , false,    0,    1)
+	FIELD(bool       , generate_with_gpu            , true,     0,    1)
+	FIELD(bool       , triple_map_size              , false,    0,    1)
 
     // Map shape
-	FIELD(std::size_t, replace_seed               , 0,        0,    ULLONG_MAX)
-	FIELD(std::size_t, voro_cnt                   , 402,      3,    240*2)
-	FIELD(std::size_t, super_voro_cnt             , 22,       3,    240*2)
-    FIELD(float      , land_probability           , 0.8f,     0.0f, 1.0f)
-	FIELD(int        , map_unit_resolution        , 512,      1,    4096)
-	FIELD(int        , map_width_in_units         , 4,        1,    4096)
-	FIELD(int        , map_height_in_units        , 2,        1,    4096)
+	FIELD(std::size_t, replace_seed                 , 0,        0,    ULLONG_MAX)
+	FIELD(std::size_t, voro_cnt                     , 402,      3,    240*2)
+	FIELD(std::size_t, super_voro_cnt               , 22,       3,    240*2)
+    FIELD(float      , land_probability             , 0.8f,     0.0f, 1.0f)
+	FIELD(int        , map_unit_resolution          , 512,      1,    4096)
+	FIELD(int        , map_width_in_units           , 4,        1,    4096)
+	FIELD(int        , map_height_in_units          , 2,        1,    4096)
 
     // Rivers and climate
-	FIELD(bool       , generate_rivers            , true,     0,    1)
-	FIELD(double     , river_joints_R             , 0.0106,   0.0,  1.0)
-	FIELD(int        , river_start_prob           , 12,       0,    100)
-	FIELD(int        , river_branch_prob          , 20,       0,    100)
-	FIELD(uint32_t   , river_color                , 0x477199, 0,    0xffffff)
-	FIELD(bool       , draw_temperature           , false,    0,    1)
-	FIELD(bool       , draw_humidity              , true,     0,    1)
-	FIELD(int        , humidity_scale             , 5,        0,    200)
-	FIELD(double     , temperature_exp            , 4.0,      0.01, 100.0)
+	FIELD(bool       , generate_rivers              , true,     0,    1)
+	FIELD(double     , river_joints_R               , 0.0106,   0.0,  1.0)
+	FIELD(int        , river_start_prob             , 12,       0,    100)
+	FIELD(int        , river_branch_prob            , 20,       0,    100)
+	FIELD(uint32_t   , river_color                  , 0x477199, 0,    0xffffff)
+	FIELD(bool       , draw_temperature             , false,    0,    1)
+	FIELD(bool       , draw_humidity                , true,     0,    1)
+	FIELD(int        , humidity_scale               , 5,        0,    200)
+	FIELD(double     , temperature_exp              , 4.0,      0.01, 100.0)
 
     // Others
 	size_t debug_vals[3]                          {7, 0, 0};

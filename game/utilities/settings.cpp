@@ -23,6 +23,8 @@ void settings_t::save_settings_to_file() {
 	WRITE_FIELD( sky_color )
 	WRITE_FIELD( light_color )
 	WRITE_FIELD( render_distance )
+	WRITE_FIELD( camera_rotation_speed_normal )
+	WRITE_FIELD( camera_moving_speed_normal )
 	WRITE_FIELD( max_preprocessed_chunks_cnt )
     file << '\n';
 
@@ -92,6 +94,8 @@ void settings_t::load_settings_from_file(const char * const path) {
         READ_FIELD( sky_color )
         READ_FIELD( light_color )
         READ_FIELD( render_distance )
+        READ_FIELD( camera_rotation_speed_normal )
+        READ_FIELD( camera_moving_speed_normal )
         READ_FIELD( max_preprocessed_chunks_cnt )
 
         READ_FIELD( terrain_height_in_blocks )

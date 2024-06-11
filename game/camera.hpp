@@ -25,10 +25,10 @@ struct camera_t {
 
 	// Speed
 	// `x` units per second
-	static constexpr float moving_speed_normal = 9.0f;
-	static constexpr float moving_speed_accelerated = 256.0f;
-	static constexpr float rotation_speed_normal = 1.5f;
-	static constexpr float rotation_speed_accelerated = 4.0f;
+	float moving_speed_normal = 9.0f;
+	float moving_speed_accelerated = 256.0f;
+	float rotation_speed_normal = 1.5f;
+	float rotation_speed_accelerated = 4.0f;
 
 	// Interface
 	// Operations

@@ -253,6 +253,16 @@ void app_t::draw_game_specific_imgui_widgets() {
 			&global_settings.terrain_height_in_blocks_min,
 			&global_settings.terrain_height_in_blocks_max);
 
+		ImGui::SliderFloat("camera_moving_speed_normal",
+			&global_settings.camera_moving_speed_normal,
+			global_settings.camera_moving_speed_normal_min,
+			global_settings.camera_moving_speed_normal_max);
+
+		ImGui::SliderFloat("camera_rotation_speed_normal",
+			&global_settings.camera_rotation_speed_normal,
+			global_settings.camera_rotation_speed_normal_min,
+			global_settings.camera_rotation_speed_normal_max);
+
         if (ImGui::Button("Move player to camera")) {
             move_player_to_camera();
         }
