@@ -24,9 +24,7 @@ All I can say for now is that the *space* in this game is going to be *weird*.
 - [WeirdSpace](#weirdspace)
 - [Contents](#contents)
 - [Showcase of Implemented Features](#showcase-of-implemented-features)
-- [Credits](#credits)
-  - [External Libraries Used in This Project](#external-libraries-used-in-this-project)
-  - [Sources of Knowledge and Code Samples Used in This Project](#sources-of-knowledge-and-code-samples-used-in-this-project)
+- [How to Run This Code](#how-to-run-this-code)
 - [How to Build It](#how-to-build-it)
   - [Debian-Based Linux Distros](#debian-based-linux-distros)
   - [Windows](#windows)
@@ -34,6 +32,9 @@ All I can say for now is that the *space* in this game is going to be *weird*.
     - [Required Software](#required-software)
     - [Compilation](#compilation)
   - [Other OSes/IDEs/Platforms](#other-osesidesplatforms)
+- [Credits](#credits)
+  - [External Libraries Used in This Project](#external-libraries-used-in-this-project)
+  - [Sources of Knowledge and Code Samples Used in This Project](#sources-of-knowledge-and-code-samples-used-in-this-project)
 
 <br/>
 <br/>
@@ -156,7 +157,7 @@ Generating maps on a GPU, instead of a CPU, allows for interesting features like
 <br/>
 <br/>
 
-Do not hesitate to try some features yourself! A GUI tool is available in the executables to tweak the settings. There are predefined presets with interesting settings and maps. Some settings are best viewed in the `weird_space` executable and others in the `generator_playground` executable, although both are compatible with both executables. All binaries for both Linux and Windows are available on the Releases page (note that the Windows binary requires a runtime to be installed as described there).
+Do not hesitate to try some features yourself! A GUI tool is available in the executables to tweak the settings. There are predefined presets with interesting settings and maps. Some settings are best viewed in the `weird_space` executable and others in the `generator_playground` executable, although both are compatible with both executables.
 
 <p>
   <div align="center">
@@ -169,31 +170,8 @@ Do not hesitate to try some features yourself! A GUI tool is available in the ex
 <br/>
 <br/>
 
-<br/>
-<br/>
-
-# Credits
-## External Libraries Used in This Project
-* OpenGL extension loading: [GLEW](https://github.com/nigels-com/glew)
-* Windows, input: [GLFW](https://www.glfw.org/)
-* Math library: [GLM](https://github.com/g-truc/glm)
-* Temporary debug GUI: [Dear ImGui](https://github.com/ocornut/imgui)
-* Image loading: [stb](https://github.com/nothings/stb)
-* CPU noise generation: [siv::PerlinNoise](https://github.com/Reputeless/PerlinNoise)
-* Delaunay triangulation: [delaunator-cpp](https://github.com/delfrrr/delaunator-cpp)
-
-## Sources of Knowledge and Code Samples Used in This Project
-* OpenGL knowledge:
-    * *OpenGL Superbible: Comprehensive Tutorial and Reference (7th Edition)*
-    * [OpenGL Tutorial](http://www.opengl-tutorial.org/)
-    * [Learn OpenGL](https://learnopengl.com/)
-        - [Frustum Culling](https://learnopengl.com/Guest-Articles/2021/Scene/Frustum-Culling)
-* Procedural generation:
-    * [Polygon Map Generation by Red Blob Games](http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/)
-    * GPU noise: [webgl-noise by Ashima](https://github.com/ashima/webgl-noise)
-    * River networks inspired by [Daniel Andrino](https://github.com/dandrino/terrain-erosion-3-ways/tree/master?tab=readme-ov-file#river-networks)
-    * [Fractal Brownian Motion from *The Book of Shaders*](https://thebookofshaders.com/13/)
-    * [Fog effect by Inigo Quilez](https://iquilezles.org/articles/fog/)
+# How to Run This Code
+All binaries for both Linux and Windows are available on the **Releases** page (note that the Windows binary requires a runtime to be installed as described there).
 
 <br/>
 <br/>
@@ -254,6 +232,32 @@ Open the "x64 Native Tools Command Prompt for VS 2022" app and then:
 
 ## Other OSes/IDEs/Platforms
 Instructions from [this tutorial](https://www.opengl-tutorial.org/beginners-tutorials/tutorial-1-opening-a-window/) will *probably* work.
+
+<br/>
+<br/>
+
+# Credits
+## External Libraries Used in This Project
+* OpenGL extension loading: [GLEW](https://github.com/nigels-com/glew)
+* Windows, input: [GLFW](https://www.glfw.org/)
+* Math library: [GLM](https://github.com/g-truc/glm)
+* Temporary debug GUI: [Dear ImGui](https://github.com/ocornut/imgui)
+* Image loading: [stb](https://github.com/nothings/stb)
+* CPU noise generation: [siv::PerlinNoise](https://github.com/Reputeless/PerlinNoise)
+* Delaunay triangulation: [delaunator-cpp](https://github.com/delfrrr/delaunator-cpp)
+
+## Sources of Knowledge and Code Samples Used in This Project
+* OpenGL knowledge:
+    * *OpenGL Superbible: Comprehensive Tutorial and Reference (7th Edition)*
+    * [OpenGL Tutorial](http://www.opengl-tutorial.org/)
+    * [Learn OpenGL](https://learnopengl.com/)
+        - [Frustum Culling](https://learnopengl.com/Guest-Articles/2021/Scene/Frustum-Culling)
+* Procedural generation:
+    * [Polygon Map Generation by Red Blob Games](http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/)
+    * GPU noise: [webgl-noise by Ashima](https://github.com/ashima/webgl-noise)
+    * River networks inspired by [Daniel Andrino](https://github.com/dandrino/terrain-erosion-3-ways/tree/master?tab=readme-ov-file#river-networks)
+    * [Fractal Brownian Motion from *The Book of Shaders*](https://thebookofshaders.com/13/)
+    * [Fog effect by Inigo Quilez](https://iquilezles.org/articles/fog/)
 
 <br/>
 <br/>
