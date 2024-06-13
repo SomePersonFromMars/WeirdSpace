@@ -28,7 +28,7 @@ struct AABB_t : public bounding_volume_t {
 	glm::vec3 extents { 0.f, 0.f, 0.f };
 
 	inline AABB_t(const glm::vec3& min, const glm::vec3& max);
-	// See https://gdbooks.gitbooks.io/3dcollisions/content/Chapter2/static_aabb_plane.html
+	// Source: https://gdbooks.gitbooks.io/3dcollisions/content/Chapter2/static_aabb_plane.html
 	bool is_on_or_forward_plane(const plane_t& plane) const final;
 };
 

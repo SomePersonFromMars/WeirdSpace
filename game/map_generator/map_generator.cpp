@@ -288,7 +288,8 @@ void map_generator_t::generate_grid_intersections() {
 	}
 }
 
-// https://github.com/dandrino/terrain-erosion-3-ways/tree/master
+// Credits:
+// https://github.com/dandrino/terrain-erosion-3-ways/tree/master?tab=readme-ov-file#river-networks
 // https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
 void map_generator_t::generate_joints(
 		std::mt19937 &gen) {

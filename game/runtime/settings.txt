@@ -1,8 +1,8 @@
-font_global_scale 1.5
+font_global_scale 1
 sky_color 13233650
 light_color 16777215
-render_distance 5.854
-camera_rotation_speed_normal 3.071
+render_distance 20
+camera_rotation_speed_normal 0.828
 camera_moving_speed_normal 8.242
 max_preprocessed_chunks_cnt 25
 
