@@ -50,10 +50,6 @@ float snoise(vec3 v) {
 	vec3 i1 = min( g.xyz, l.zxy );
 	vec3 i2 = max( g.xyz, l.zxy );
 
-	//   x0 = x0 - 0.0 + 0.0 * C.xxx;
-	//   x1 = x0 - i1  + 1.0 * C.xxx;
-	//   x2 = x0 - i2  + 2.0 * C.xxx;
-	//   x3 = x0 - 1.0 + 3.0 * C.xxx;
 	vec3 x1 = x0 - i1 + C.xxx;
 	vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
 	vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
@@ -82,8 +78,6 @@ float snoise(vec3 v) {
 	vec4 b0 = vec4( x.xy, y.xy );
 	vec4 b1 = vec4( x.zw, y.zw );
 
-	//vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
-	//vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
 	vec4 s0 = floor(b0)*2.0 + 1.0;
 	vec4 s1 = floor(b1)*2.0 + 1.0;
 	vec4 sh = -step(h, vec4(0.0));
@@ -156,19 +150,6 @@ void main(void) {
 	uv.x *= ratio_wh;
 	uv *= 2.0;
 
-	/*
-	// float noise = snoise(uv);
-	// float noise = fbm(uv);
-	float noise = fbm_warped(vec3(uv, vec2(t / 10000.0)));
-	noise += 1.0;
-	noise /= 2.0;
-	noise = 1.0 - noise;
-	noise = noise * 110.0 / 360.0 + 160.0 / 360.0;
-
-	// color = vec4(noise);
-	color = vec4(hsv_to_rgb(vec3(noise, 0.7, 1.0)), 0.0);
-	*/
-
 	const vec2 P = uv;
 	const float radius = (ratio_wh * 2.0) / 2.0 / PI;
 
@@ -178,7 +159,6 @@ void main(void) {
 			sin(angle + 2.0 * off) * radius + off,
 			cos(angle + 2.0 * off) * radius + 2.0 * off,
 			P.y + off);
-	// const float noise_val = fbm_warped(vec3(P * 3.0, t / 10000.0)) + 0.5;
 	const float noise_val = fbm_warped(Q * 0.5) + 0.5;
 	color = vec4(noise_val, noise_val, noise_val, 1.0);
 

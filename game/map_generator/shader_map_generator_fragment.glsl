@@ -56,10 +56,6 @@ float snoise(vec3 v) {
 	vec3 i1 = min( g.xyz, l.zxy );
 	vec3 i2 = max( g.xyz, l.zxy );
 
-	//   x0 = x0 - 0.0 + 0.0 * C.xxx;
-	//   x1 = x0 - i1  + 1.0 * C.xxx;
-	//   x2 = x0 - i2  + 2.0 * C.xxx;
-	//   x3 = x0 - 1.0 + 3.0 * C.xxx;
 	vec3 x1 = x0 - i1 + C.xxx;
 	vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
 	vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
@@ -88,8 +84,6 @@ float snoise(vec3 v) {
 	vec4 b0 = vec4( x.xy, y.xy );
 	vec4 b1 = vec4( x.zw, y.zw );
 
-	//vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
-	//vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
 	vec4 s0 = floor(b0)*2.0 + 1.0;
 	vec4 s1 = floor(b1)*2.0 + 1.0;
 	vec4 sh = -step(h, vec4(0.0));
@@ -154,16 +148,6 @@ float usual_noise(vec2 P) {
 	return fbm_warped(vec3(P * 3.0, t / 10000.0)) + 0.5;
 }
 
-// float cyclic_noise_cyllinder(vec2 P) {
-// 	const float radius = space_max.x / 2.0 / PI;
-// 	const float angle = P.x / radius;
-// 	const vec3 Q = vec3(
-// 			sin(angle) * radius + t / 10000.0,
-// 			cos(angle) * radius + t / 10000.0,
-// 			P.y);
-// 	return fbm_warped(Q * 3.0) + 0.5;
-// }
-
 float cyclic_noise_heuristic(vec2 P) {
 	const float width = space_max.x;
 	P.x -= floor(P.x / width) * width;
@@ -188,8 +172,6 @@ void main(void) {
 	}
 
 	const vec2 P = fs_in.pos - vec2(space_max.x, 0.0);
-	// const float noise_val = usual_noise(P);
-	// const float noise_val = cyclic_noise_cyllinder(P);
 	const float noise_val = cyclic_noise_heuristic(P);
 
 	float noised_elevation
@@ -201,9 +183,7 @@ void main(void) {
 	if (hue < 0.5) hue = 0.15 + 0.25 * hue;
 	else hue = 0.0 + 1.0 * hue;
 
-	// color.rgb = vec3(elevation);
 	color.rgb = hsv_to_rgb(
 		(1.0 - hue) * 240.0 / 360.0, 0.6, 0.8);
 	color.a = noised_elevation;
-	// color = vec4(noise_val, noise_val, noise_val, 1.0);
 }
