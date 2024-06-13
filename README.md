@@ -1,11 +1,10 @@
 # WeirdSpace
 
-<p align="center">
-  <video controls width="80%" autoplay muted loop>
-    <source src="media/recordings/huge_mountains2.webm" type="video/webm" />
-  </video>
-  <br/>
-  <em> Nice landscape from the game. </em>
+<p>
+  
+  [huge_mountains2.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/28471047-9cc5-45b6-afcc-37abf861082b)
+  
+  <div align="center"> <em> Nice landscape from the game. </em> </div>
 </p>
 
 <br/>
@@ -65,12 +64,11 @@ Each chunk is preprocessed before rendering in such a way that only potentially 
 
 One of the *weird* concepts of this game is to mix 3D with 2D, so the player moves only in the XY plane.
 
-<p align="center">
-  <video controls width="80%" autoplay muted loop>
-    <source src="media/recordings/walking_and_collisions.webm" type="video/webm" />
-  </video>
-  <br/>
-  <em> Player movement and collisions. </em>
+<p>
+  
+  [walking_and_collisions.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/71f64cd8-5734-4aed-bdd6-0420dfb8da9f)
+  
+  <div align="center"> <em> Player movement and collisions. </em> </div>
 </p>
 <br/>
 <br/>
@@ -132,29 +130,28 @@ Maps are cyclic in the X-axis, allowing them to be projected onto a cylinder. Th
 
 It is planned that the player will move not just in an XY plane but along a curve, as visualized in the generator playground, making the game even *weirder*:
 
-<p align="center">
-  <video controls width="90%" autoplay muted loop>
-    <source src="media/recordings/continents_with_rivers1.webm" type="video/webm" />
-  </video>
-  <br/>
-  <em> Player moving along a predefined curve. </em>
+<p>
+
+  [continents_with_rivers1.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/96adfc2d-3afd-4243-af33-19fa23a6be47)
+  
+  <div align="center"> <em> Player moving along a predefined curve. </em> </div>
 </p>
 <br/>
 <br/>
 
 Generating maps on a GPU, instead of a CPU, allows for interesting features like dynamically evolving maps. This enables the creation of worlds that gradually change throughout gameplay (*weird*, isn't it?).
 
-<p align="center">
-  <video controls width="80%" autoplay muted loop>
-    <source src="media/recordings/evolving_GPU_continents1.webm" type="video/webm" />
-  </video>
+<p>
+
+  [evolving_GPU_continents1.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/cf9a3ad0-eb56-4514-a4d8-538b7bf6a2c5)
+
   <br/>
   <br/>
-  <video controls width="80%" autoplay muted loop>
-    <source src="media/recordings/evolving_GPU_continents2.webm" type="video/webm" />
-  </video>
+  
+  [evolving_GPU_continents2.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/dd4821a9-993a-4523-bbb5-197a697a6659)
+
   <br/>
-  <em> Map dynamically evolving due to GPU map generation. </em>
+  <div align="center"> <em> Map dynamically evolving due to GPU map generation. </em> </div>
 </p>
 <br/>
 <br/>
