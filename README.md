@@ -1,8 +1,8 @@
 # WeirdSpace
 
 <p>
-  
-  [huge_mountains2.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/28471047-9cc5-45b6-afcc-37abf861082b)
+
+  https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/5d2e9244-83fe-4eb9-998a-322dc860c361
   
   <div align="center"> <em> Nice landscape from the game. </em> </div>
 </p>
@@ -11,7 +11,7 @@
 
 The concept for this game is to create it "by hand", meaning no game engine is used. My goal is to write code optimized specifically for this game, minimizing the use of external code. When external code is used, it is highly specific and unlikely to need further optimization.
 
-For now, this is a simple voxel-based, Minecraft-like draft of an open-world adventure game. A quite good map (planet) generator has also been implemented.
+For now, this is a simple voxel-based, Minecraft-like **early version** of an open-world adventure game. A fairly good map (planet) generator has also been implemented.
 
 I have many plans for the game's content, but I prefer not to reveal too much until I have time to implement them, as I develop this code in my spare time.
 
@@ -66,9 +66,9 @@ Each chunk is preprocessed before rendering in such a way that only potentially 
 One of the *weird* concepts of this game is to mix 3D with 2D, so the player moves only in the XY plane.
 
 <p>
-  
-  [walking_and_collisions.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/71f64cd8-5734-4aed-bdd6-0420dfb8da9f)
-  
+
+  https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/34fb461d-bc82-4b72-922f-2a5d74dd8be9
+
   <div align="center"> <em> Player movement and collisions. </em> </div>
 </p>
 <br/>
@@ -133,8 +133,8 @@ It is planned that the player will move not just in an XY plane but along a curv
 
 <p>
 
-  [continents_with_rivers1.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/96adfc2d-3afd-4243-af33-19fa23a6be47)
-  
+  https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/6e3e0e7f-b141-4988-950c-ac473383e130
+
   <div align="center"> <em> Player moving along a predefined curve. </em> </div>
 </p>
 <br/>
@@ -143,14 +143,14 @@ It is planned that the player will move not just in an XY plane but along a curv
 Generating maps on a GPU, instead of a CPU, allows for interesting features like dynamically evolving maps. This enables the creation of worlds that gradually change throughout gameplay (*weird*, isn't it?).
 
 <p>
-
-  [evolving_GPU_continents1.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/cf9a3ad0-eb56-4514-a4d8-538b7bf6a2c5)
+  
+  https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/354f3d95-aad8-4b3f-ae81-27e46605d7bf
 
   <br/>
   <br/>
   
-  [evolving_GPU_continents2.webm](https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/dd4821a9-993a-4523-bbb5-197a697a6659)
-
+  https://github.com/SomePersonFromMars/WeirdSpace/assets/42392219/fddef179-9170-4e10-b16c-dc6261708f0c
+  
   <br/>
   <div align="center"> <em> Map dynamically evolving due to GPU map generation. </em> </div>
 </p>
