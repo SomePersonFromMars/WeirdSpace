@@ -45,14 +45,16 @@ extern struct settings_t {
 	static constexpr T name##_min = min; \
 	static constexpr T name##_max = max;
 
-    // World rendering and preprocessing
+    // World rendering
 	FIELD(float      , font_global_scale            , 1.5f,     1.0f, 2.0f)
 	FIELD(uint32_t   , sky_color                    , 0xfccc92, 0,    0xffffff)
 	FIELD(uint32_t   , light_color                  , 0xf7d5ad, 0,    0xffffff)
-	FIELD(float      , render_distance              , 8.0f,     1.0f, 32.0f)
 	FIELD(float      , camera_rotation_speed_normal , 1.5f,     0.0f, 8.0f)
 	FIELD(float      , camera_moving_speed_normal   , 9.0f,     0.0f, 64.0f)
-	FIELD(std::size_t, max_preprocessed_chunks_cnt  , 25,       1,    10'000)
+
+    // Chunks rendering and preprocessing
+	FIELD(float      , render_distance              , 3.0f,     1.0f, 32.0f)
+	FIELD(std::size_t, max_preprocessed_chunks_cnt  , 200,      1,    100'000)
 
     // World shape and world experience
 	FIELD(int        , terrain_height_in_blocks     , 64,        1,    128)
@@ -107,10 +109,16 @@ extern struct settings_t {
     inline void request_replace_seed_overwrite();
     inline void supply_new_replace_seed(std::size_t new_replace_seed);
 
+    // TODO: Load such settings better.
+    inline void mark_chunks_rendering_settings_updated();
+    inline bool are_chunks_rendering_settings_updated() const;
+    inline void mark_chunks_rendering_settings_applied();
+
 private:
     bool global_reload_requested = false;
     bool possibly_no_restart_reload_requested = false;
     bool replace_seed_overwrite_requested = false;
+    bool new_chunks_rendering_settings_pending = false;
 } global_settings;
 
 inline void settings_t::request_global_reload() {
@@ -141,6 +149,16 @@ inline void settings_t::supply_new_replace_seed(std::size_t new_replace_seed) {
         replace_seed_overwrite_requested = false;
         replace_seed = new_replace_seed;
     }
+}
+
+inline void settings_t::mark_chunks_rendering_settings_updated() {
+    new_chunks_rendering_settings_pending = true;
+}
+inline bool settings_t::are_chunks_rendering_settings_updated() const {
+    return new_chunks_rendering_settings_pending;
+}
+inline void settings_t::mark_chunks_rendering_settings_applied() {
+    new_chunks_rendering_settings_pending = false;
 }
 
 #endif

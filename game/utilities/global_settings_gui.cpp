@@ -14,8 +14,10 @@ using namespace glm;
 
 void global_settings_gui::draw_global_settings_controls() {
 	if (ImGui::CollapsingHeader(
-            "Global settings controls",
-            ImGuiTreeNodeFlags_DefaultOpen
+            "Global settings controls"
+#ifndef DEBUG
+            , ImGuiTreeNodeFlags_DefaultOpen
+#endif
         )) {
 		ImGui::DragScalar("font_global_scale", ImGuiDataType_Float,
 			&global_settings.font_global_scale,

@@ -26,7 +26,7 @@ struct world_generator_t {
 	float noise_pos_mult = 1.0/512.0*8.0;
 
 private:
-    void place_cactus(chunk_t &chunk, int x, int y, int z);
+    void place_cactus(chunk_content_t &chunk_content, int x, int y, int z);
 
 	map_storage_t &map_storage;
 	world_buffer_t &buffer;

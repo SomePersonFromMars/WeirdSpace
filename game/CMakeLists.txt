@@ -22,7 +22,9 @@ add_executable(weird_space
 	callbacks.cpp
 	camera.cpp
 	bounding_volume.cpp
-	chunk.cpp
+    # chunk.cpp
+    chunk_content.cpp
+    chunk_rendering.cpp
 	world_buffer.cpp
 	world_generator.cpp
 	player.cpp

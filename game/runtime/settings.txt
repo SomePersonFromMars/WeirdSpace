@@ -1,10 +1,10 @@
-font_global_scale 1
+font_global_scale 1.5
 sky_color 13233650
 light_color 16777215
-render_distance 20
-camera_rotation_speed_normal 0.828
-camera_moving_speed_normal 8.242
-max_preprocessed_chunks_cnt 25
+render_distance 8.327
+camera_rotation_speed_normal 1.5
+camera_moving_speed_normal 9
+max_preprocessed_chunks_cnt 4225
 
 terrain_height_in_blocks 128
 default_player_position[0] 200

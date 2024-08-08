@@ -7,17 +7,17 @@
 #include <useful.hpp>
 
 callbacks_strct_t::callbacks_strct_t(
-		GLint &window_width,
-		GLint &window_height,
-		double &delta_time,
-		camera_t &camera,
-		player_t &player
+		GLint &window_width_,
+		GLint &window_height_,
+		double &delta_time_,
+		camera_t &camera_,
+		player_t &player_
 	)
-	:window_width{window_width}
-	,window_height{window_height}
-	,delta_time{delta_time}
-	,camera{camera}
-	,player{player}
+	:window_width{window_width_}
+	,window_height{window_height_}
+	,delta_time{delta_time_}
+	,camera{camera_}
+	,player{player_}
 { }
 
 void callbacks_strct_t::init_gl(GLFWwindow *window) {

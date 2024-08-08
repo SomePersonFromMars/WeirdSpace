@@ -289,9 +289,9 @@ void app_t::deinit_opengl_etc() {
 
 
 // Callbacks
-callbacks_strct_t::callbacks_strct_t(GLint &window_width, GLint &window_height)
-	:window_width{window_width}
-	,window_height{window_height}
+callbacks_strct_t::callbacks_strct_t(GLint &window_width_, GLint &window_height_)
+	:window_width{window_width_}
+	,window_height{window_height_}
 {  }
 
 void framebuffer_size_callback(

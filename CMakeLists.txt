@@ -11,6 +11,9 @@ find_package(OpenGL REQUIRED)
 add_subdirectory (external)
 
 include_directories(
+    # Supress external libraries warnings (https://stackoverflow.com/a/26297816).
+    # TODO: Make it work in MSVC.
+    SYSTEM
 	external/glfw-3.3.7/include/
 	external/glm-0.9.7.1/
 	external/glew-1.13.0/include/
@@ -46,10 +49,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1 CACHE BOOL "Enable/Disable output of compile
 set(CUSTOM_DEBUG_FLAGS
     -DDEBUG
     -Wall
-    # -Wshadow
+    -Wshadow
     -Wextra
     -Wpedantic
-    -pedantic)
+    -pedantic
+)
 
 add_subdirectory(game)
 add_subdirectory(tools/obj_dump)

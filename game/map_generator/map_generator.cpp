@@ -28,10 +28,10 @@ using namespace glm;
 #include <delaunator.hpp>
 
 // Constructor
-map_generator_t::map_generator_t(map_storage_t * const map_storage)
-	:map_storage{map_storage}
-	,width{map_storage->get_width()}
-	,height{map_storage->get_height()}
+map_generator_t::map_generator_t(map_storage_t * const map_storage_)
+	:map_storage{map_storage_}
+	,width{map_storage_->get_width()}
+	,height{map_storage_->get_height()}
 	,get_tour_path_point_x { [this] (const long long id) -> double {
 		const double duplicate_off_x = diagram.space_max_x_duplicate_off;
 		const auto [plane_id, point_id]

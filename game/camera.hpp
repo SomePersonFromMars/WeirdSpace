@@ -20,15 +20,8 @@ struct camera_t {
 		float near_clip_plane_dist);
 
     // Setup
-    void load_settings();
+    void load_settings(float aspect);
     void init_cyclicness(float cyclic_world_width_);
-
-	// Speed
-	// `x` units per second
-	float moving_speed_normal = 9.0f;
-	float moving_speed_accelerated = 256.0f;
-	float rotation_speed_normal = 1.5f;
-	float rotation_speed_accelerated = 4.0f;
 
 	// Interface
 	// Operations
@@ -69,6 +62,14 @@ private:
 	bool following_mode = true;
 	float target_dist = 10.0f;
     void normalize_cyclic_position();
+    void calculate_far_clip_plane_dist_from_visibility_distance(float visibility_distance, float aspect);
+
+	// Speed
+	// `x` units per second
+	float moving_speed_normal = 9.0f;
+	float moving_speed_accelerated = 256.0f;
+	float rotation_speed_normal = 1.5f;
+	float rotation_speed_accelerated = 4.0f;
 
 	// Kinematic state
 	float moving_speed = moving_speed_normal;

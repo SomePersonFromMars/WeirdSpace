@@ -4,6 +4,7 @@
 #include "player.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include "chunk.hpp"
 #include "texture_loader.hpp"
 
 #ifdef DEBUG
@@ -12,9 +13,9 @@
 
 const glm::vec2 player_t::hitbox_dimensions(0.8, 1.7);
 
-player_t::player_t(shader_A_t &shader, world_buffer_t &world_buffer)
-	:shader{shader}
-	,world_buffer{world_buffer}
+player_t::player_t(shader_A_t &shader_, world_buffer_t &world_buffer_)
+	:shader{shader_}
+	,world_buffer{world_buffer_}
 {  }
 
 void player_t::init_gl() {
@@ -91,9 +92,9 @@ void player_t::draw_cyclic(
 	const glm::mat4 &view_matrix,
     const shader_A_fragment_common_uniforms_t &common_uniforms
 	) {
-    draw_single(projection_matrix, view_matrix, world_buffer.get_buffer_width() * chunk_t::WIDTH,  common_uniforms);
+    draw_single(projection_matrix, view_matrix, world_buffer.get_buffer_width() * chunk_content_t::WIDTH,  common_uniforms);
     draw_single(projection_matrix, view_matrix, 0,                                                 common_uniforms);
-    draw_single(projection_matrix, view_matrix, -world_buffer.get_buffer_width() * chunk_t::WIDTH, common_uniforms);
+    draw_single(projection_matrix, view_matrix, -world_buffer.get_buffer_width() * chunk_content_t::WIDTH, common_uniforms);
 }
 
 void player_t::draw_single(
@@ -239,7 +240,7 @@ glm::bvec2 player_t::move_by(glm::vec2 offset) {
 	}
 
 	position.x = mod_f(position.x,
-			static_cast<float>(world_buffer.get_buffer_width()*chunk_t::WIDTH));
+			static_cast<float>(world_buffer.get_buffer_width()*chunk_content_t::WIDTH));
 	return has_collided;
 }
 

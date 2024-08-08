@@ -5,9 +5,6 @@
 #ifndef USEFUL_HPP
 #define USEFUL_HPP
 
-#include <cstdio>
-#include <glm/glm.hpp>
-
 #ifdef DEBUG
     #define DEBUGONLY(x) x
 	#define PRINT_NL printf("\n")
@@ -17,6 +14,8 @@
 	#define PRINT_LU(var) printf(#var " = %lu\n", var)
 	#define PRINT_ZU(var) printf(#var " = %zu\n", var)
 	#define PRINT_F(var) printf(#var " = %f\n", var)
+	#define PRINT_IVEC2(vec) \
+		printf(#vec " = (%d, %d)\n", vec.x, vec.y)
 	#define PRINT_VEC2(vec) \
 		printf(#vec " = (%f, %f)\n", vec.x, vec.y)
 	#define PRINT_VEC3(vec) \
@@ -37,6 +36,10 @@
 	#define PRINT_LU(var)
 	#define PRINT_ZU(var)
 	#define PRINT_F(var)
+	#define PRINT_IVEC2(vec)
+	#define PRINT_VEC2(vec)
+	#define PRINT_VEC3(vec)
+	#define PRINT_VEC4(vec)
 	#define WHERE
 	#define GL_GET_ERROR
 	#define BREAKPOINT
@@ -44,8 +47,14 @@
 #endif
 extern bool enable_breakpoints;
 
+#include <limits>
+#include <cstdio>
+#include <cassert>
+#include <glm/glm.hpp>
+
 [[maybe_unused]] constexpr std::size_t INVALID_ID
 	= std::numeric_limits<std::size_t>::max();
+[[maybe_unused]] extern const glm::ivec2 INVALID_IVEC2;
 
 #define ARR_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
@@ -59,8 +68,12 @@ extern bool enable_breakpoints;
 	[static_cast<size_t>((y%My+My)%My)] \
 	[static_cast<size_t>((z%Mz+Mz)%Mz)]
 
+template<class T>
+inline T mod(const T &a, const T &m) {
+    return (a%m+m)%m;
+}
 template<class F>
-inline F mod_f(F a, F m) {
+inline F mod_f(const F &a, const F &m) {
 	static_assert(std::is_floating_point_v<F>);
 	assert(m > F(0));
 
@@ -161,6 +174,10 @@ inline glm::vec3 vec2_to_vec3(const glm::vec2& vec) {
 	return glm::vec3(vec.x, vec.y, 0.0f);
 }
 
+template<class T>
+inline T pow_two(const T &x) {
+    return x*x;
+}
 template<class T>
 inline T len_sq(const glm::tvec3<T, glm::highp> &vec) {
     return vec.x*vec.x + vec.y*vec.y + vec.z*vec.z;

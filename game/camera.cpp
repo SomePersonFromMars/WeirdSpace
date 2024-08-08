@@ -11,21 +11,23 @@
 #include "settings.hpp"
 
 camera_t::camera_t(
-		glm::vec3 pos,
-		float horizontal_rotation_angle,
-		float vertical_rotation_angle,
-		float fov,
-		float near_clip_plane_dist)
-	:position{pos}
-	,horizontal_rotation_angle{horizontal_rotation_angle}
-	,vertical_rotation_angle{vertical_rotation_angle}
-	,fov{fov}
-	,near_clip_plane_dist{near_clip_plane_dist}
+		glm::vec3 pos_,
+		float horizontal_rotation_angle_,
+		float vertical_rotation_angle_,
+		float fov_degrees,
+		float near_clip_plane_dist_)
+	:position{pos_}
+	,horizontal_rotation_angle{horizontal_rotation_angle_}
+	,vertical_rotation_angle{vertical_rotation_angle_}
+	,fov{glm::radians(fov_degrees)}
+	,near_clip_plane_dist{near_clip_plane_dist_}
 {
 }
 
-void camera_t::load_settings() {
-    far_clip_plane_dist = global_settings.render_distance * chunk_t::WIDTH;
+void camera_t::load_settings(float aspect) {
+    calculate_far_clip_plane_dist_from_visibility_distance(
+            global_settings.render_distance * chunk_content_t::WIDTH,
+            aspect);
     moving_speed_normal = global_settings.camera_moving_speed_normal;
     rotation_speed_normal = global_settings.camera_rotation_speed_normal;
 }
@@ -130,10 +132,10 @@ glm::mat4 camera_t::calculate_view_matrix() {
 
 glm::mat4 camera_t::calculate_projection_matrix(float aspect) const {
 	return glm::perspective(
-			glm::radians(fov),
+			fov,
 			aspect,
 			near_clip_plane_dist,
-			far_clip_plane_dist
+			get_far_clip_plane_dist()
 		);
 }
 
@@ -141,9 +143,9 @@ frustum_t camera_t::calculate_frustum_planes(float aspect) {
 	update_rotation_vectors();
 
 	frustum_t frustum;
-	const float halv_v_side = far_clip_plane_dist * std::tan(glm::radians(fov) * 0.5f);
+	const float halv_v_side = get_far_clip_plane_dist() * std::tan(fov * 0.5f);
 	const float half_h_side = halv_v_side * aspect;
-	const glm::vec3 front_mult_far = far_clip_plane_dist * direction_vec;
+	const glm::vec3 front_mult_far = get_far_clip_plane_dist() * direction_vec;
 
 	frustum.near_face = {
 		get_position() + near_clip_plane_dist * direction_vec,
@@ -169,6 +171,15 @@ frustum_t camera_t::calculate_frustum_planes(float aspect) {
 
 void camera_t::normalize_cyclic_position() {
     position.x = mod_f(position.x, cyclic_world_width);
+}
+// TODO: Verify this formula empirically.
+void camera_t::calculate_far_clip_plane_dist_from_visibility_distance(
+        float visibility_distance,
+        float aspect)
+{
+    far_clip_plane_dist
+        = visibility_distance
+        / std::sqrt( pow_two(std::tan(fov/2.0f)) * (1.0f/aspect + 1.0f) + 1.0f );
 }
 
 void camera_t::update_rotation_vectors() {

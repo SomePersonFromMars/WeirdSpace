@@ -9,6 +9,8 @@
 	bool enable_breakpoints = false;
 #endif
 
+const glm::ivec2 INVALID_IVEC2(std::numeric_limits<int>::max());
+
 int floor_div(int num, int den) {
 	if ((num^den) > 0)
 		return num/den;
