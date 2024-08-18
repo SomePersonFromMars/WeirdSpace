@@ -1,1 +1,1 @@
-../map_generator/shader_map_fragment.glsl
+../procedural_map/shader_map_fragment.glsl

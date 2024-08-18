@@ -1,1 +1,1 @@
-../shader_A_fragment.glsl
+../common_shading/shader_A_fragment.glsl

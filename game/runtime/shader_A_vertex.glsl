@@ -1,1 +1,1 @@
-../shader_A_vertex.glsl
+../common_shading/shader_A_vertex.glsl

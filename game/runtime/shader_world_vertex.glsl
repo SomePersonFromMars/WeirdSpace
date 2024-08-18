@@ -1,1 +1,1 @@
-../shader_world_vertex.glsl
+../world/shader_world_vertex.glsl

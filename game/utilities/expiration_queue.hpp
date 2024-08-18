@@ -8,7 +8,8 @@
 #include <vector>
 #include <functional>
 #include <utility>
-#include <useful.hpp>
+
+#include <utilities/useful.hpp>
 
 class expiration_queue_t {
     public:

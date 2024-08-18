@@ -1,0 +1,102 @@
+// Copyright (C) 2024, Kacper Orszulak
+// GNU General Public License v3.0+ (see LICENSE.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#pragma once
+#ifndef CAMERA_HPP
+#define CAMERA_HPP
+
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+
+#include <utilities/math/geometry.hpp>
+
+struct camera_t {
+    // Constructor
+    camera_t(
+            glm::vec3 pos,
+            float horizontal_rotation_angle,
+            float vertical_rotation_angle,
+            float fov,
+            float near_clip_plane_dist);
+
+    // Setup
+    void load_settings(float aspect);
+    void init_cyclicness(float cyclic_world_width_);
+
+    // Interface
+    // Operations
+    void rotate_up     (float delta_time);
+    void rotate_down   (float delta_time);
+    void rotate_right  (float delta_time);
+    void rotate_left   (float delta_time);
+    void move_forward  (float delta_time);
+    void move_backward (float delta_time);
+    void move_right    (float delta_time);
+    void move_left     (float delta_time);
+    void follow        (float delta_time, glm::vec3 target);
+    void switch_following_mode();
+    void enable_moving_acceleration   (bool enable);
+    void enable_rotation_acceleration (bool enable);
+
+    // Getters
+    inline const glm::vec3& get_position() const;
+    inline float get_horizontal_rotation_angle() const;
+    inline float get_vertical_rotation_angle() const;
+    inline float get_far_clip_plane_dist() const;
+    inline bool get_following_mode() const;
+
+    // Calculation functions
+    glm::mat4 calculate_view_matrix();
+    glm::mat4 calculate_projection_matrix(float aspect) const;
+    frustum_t calculate_frustum_planes(float aspect);
+
+    private:
+    // State
+    glm::vec3 position;
+    float horizontal_rotation_angle;
+    float vertical_rotation_angle;
+    float fov;
+    float near_clip_plane_dist;
+    float far_clip_plane_dist;
+    float cyclic_world_width = 0;
+    bool following_mode = true;
+    float target_dist = 10.0f;
+    void normalize_cyclic_position();
+    void calculate_far_clip_plane_dist_from_visibility_distance(float visibility_distance, float aspect);
+
+    // Speed
+    // `x` units per second
+    float moving_speed_normal = 9.0f;
+    float moving_speed_accelerated = 256.0f;
+    float rotation_speed_normal = 1.5f;
+    float rotation_speed_accelerated = 4.0f;
+
+    // Kinematic state
+    float moving_speed = moving_speed_normal;
+    float rotation_speed = rotation_speed_normal;
+
+    // Rotation vectors
+    bool rotation_vectors_outdated = true;
+    glm::vec3 direction_vec;
+    glm::vec3 right_vec;
+    glm::vec3 up_vec;
+    void update_rotation_vectors();
+};
+
+inline const glm::vec3& camera_t::get_position() const {
+    return position;
+}
+inline float camera_t::get_horizontal_rotation_angle() const {
+    return horizontal_rotation_angle;
+}
+inline float camera_t::get_vertical_rotation_angle() const {
+    return vertical_rotation_angle;
+}
+inline float camera_t::get_far_clip_plane_dist() const {
+    return far_clip_plane_dist;
+}
+inline bool camera_t::get_following_mode() const {
+    return following_mode;
+}
+
+#endif

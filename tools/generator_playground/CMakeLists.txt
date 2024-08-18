@@ -1,8 +1,8 @@
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -15,29 +15,31 @@ add_custom_target(link_generator_playground_runtime_dir ALL
     "${CMAKE_SOURCE_DIR}/tools/generator_playground/runtime" "${CMAKE_BINARY_DIR}/tools/generator_playground/runtime")
 
 add_executable(generator_playground
-	generator_playground.cpp
-	app.cpp
-	app_imgui.cpp
-	app_generator.cpp
-	line.cpp
+    generator_playground.cpp
+    app.cpp
+    app_imgui.cpp
+    app_generator.cpp
+    line.cpp
 
-	map_generator/noise.cpp
-	map_generator/voronoi.cpp
-	map_generator/map_storage.cpp
-	map_generator/map_generator.cpp
-	map_generator/map_generator_cpu_drawing_helpers.cpp
-	map_generator/map_generator_tour.cpp
-	map_generator/map_generator_GPU.cpp
+    procedural_map/noise.cpp
+    procedural_map/voronoi.cpp
+    procedural_map/map_storage.cpp
+    procedural_map/map_generator.cpp
+    procedural_map/map_generator_cpu_drawing_helpers.cpp
+    procedural_map/map_generator_tour.cpp
+    procedural_map/map_generator_GPU.cpp
 
-	utilities/settings.cpp
-	utilities/useful.cpp
-	utilities/imgui_basic_controls.cpp
-	utilities/global_settings_gui.cpp
-	utilities/geometry.cpp
-	utilities/shader_loader.cpp
-	)
+    settings/settings.cpp
+    settings/global_settings_gui.cpp
+
+    utilities/math/geometry.cpp
+
+    utilities/useful.cpp
+    utilities/imgui_basic_controls.cpp
+    utilities/shader_loader.cpp
+)
 target_link_libraries(generator_playground
-	${ALL_LIBS}
-	)
+    ${ALL_LIBS}
+)
 
 add_dependencies(generator_playground link_generator_playground_runtime_dir)

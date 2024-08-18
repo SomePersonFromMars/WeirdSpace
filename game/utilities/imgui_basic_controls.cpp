@@ -3,7 +3,7 @@
 
 #include "imgui_basic_controls.hpp"
 
-#include <settings.hpp>
+#include <settings/settings.hpp>
 
 void imgui_basic_controls::init_imgui(GLFWwindow *glfw_window) {
 	// Setup Dear ImGui context
